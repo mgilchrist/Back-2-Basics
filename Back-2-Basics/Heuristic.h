@@ -22,6 +22,9 @@
 #ifndef OpenSource_Heuristic_h
 #define OpenSource_Heuristic_h
 
+#include "Collection.h"
+#include "Stack.h"
+
 template <class HeuristicType>
 class Heuristic {
   

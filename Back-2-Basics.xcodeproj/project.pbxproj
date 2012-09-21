@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2C898846160C434C0087B09C /* NeuralNetwork.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2C898845160C434C0087B09C /* NeuralNetwork.cpp */; };
 		2CA2150A160C17C100347D58 /* HashTable.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA214F0160C17C100347D58 /* HashTable.h */; };
 		2CA2150B160C17C100347D58 /* Heap.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA214F1160C17C100347D58 /* Heap.h */; };
 		2CA2150C160C17C100347D58 /* Stack.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA214F2160C17C100347D58 /* Stack.h */; };
@@ -29,6 +30,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		2C898845160C434C0087B09C /* NeuralNetwork.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NeuralNetwork.cpp; sourceTree = "<group>"; };
 		2CA21462160C0DFD00347D58 /* libBack-2-Basics.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = "libBack-2-Basics.dylib"; sourceTree = BUILT_PRODUCTS_DIR; };
 		2CA214F0160C17C100347D58 /* HashTable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HashTable.h; sourceTree = "<group>"; };
 		2CA214F1160C17C100347D58 /* Heap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Heap.h; sourceTree = "<group>"; };
@@ -149,6 +151,7 @@
 			isa = PBXGroup;
 			children = (
 				2CA21500160C17C100347D58 /* NeuralNetwork.h */,
+				2C898845160C434C0087B09C /* NeuralNetwork.cpp */,
 			);
 			name = Heuristic;
 			path = "Back-2-Basics/Heuristic";
@@ -260,6 +263,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2CA21518160C17C100347D58 /* main.cpp in Sources */,
+				2C898846160C434C0087B09C /* NeuralNetwork.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

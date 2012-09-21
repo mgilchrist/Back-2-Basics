@@ -2,3 +2,7 @@
 *.xcsettings
 
 *.xcuserstate
+
+*.pbxproj
+
+*.xcuserstate
