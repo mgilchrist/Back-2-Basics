@@ -1,0 +1,360 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		2CA2150A160C17C100347D58 /* HashTable.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA214F0160C17C100347D58 /* HashTable.h */; };
+		2CA2150B160C17C100347D58 /* Heap.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA214F1160C17C100347D58 /* Heap.h */; };
+		2CA2150C160C17C100347D58 /* Stack.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA214F2160C17C100347D58 /* Stack.h */; };
+		2CA2150D160C17C100347D58 /* Array.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA214F3160C17C100347D58 /* Array.h */; };
+		2CA2150E160C17C100347D58 /* ArrayList.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA214F5160C17C100347D58 /* ArrayList.h */; };
+		2CA2150F160C17C100347D58 /* List.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA214F6160C17C100347D58 /* List.h */; };
+		2CA21510160C17C100347D58 /* Collection.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA214F7160C17C100347D58 /* Collection.h */; };
+		2CA21511160C17C100347D58 /* Map.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA214F9160C17C100347D58 /* Map.h */; };
+		2CA21512160C17C100347D58 /* Network.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA214FA160C17C100347D58 /* Network.h */; };
+		2CA21513160C17C100347D58 /* RedBlackTree.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA214FC160C17C100347D58 /* RedBlackTree.h */; };
+		2CA21514160C17C100347D58 /* Tree.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA214FD160C17C100347D58 /* Tree.h */; };
+		2CA21515160C17C100347D58 /* Graph.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA214FE160C17C100347D58 /* Graph.h */; };
+		2CA21516160C17C100347D58 /* NeuralNetwork.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA21500160C17C100347D58 /* NeuralNetwork.h */; };
+		2CA21517160C17C100347D58 /* Heuristic.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA21501160C17C100347D58 /* Heuristic.h */; };
+		2CA21518160C17C100347D58 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2CA21502160C17C100347D58 /* main.cpp */; };
+		2CA21519160C17C100347D58 /* Metaheuristic.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA21503160C17C100347D58 /* Metaheuristic.h */; };
+		2CA2151A160C17C100347D58 /* Genetic.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA21507160C17C100347D58 /* Genetic.h */; };
+		2CA2151B160C17C100347D58 /* Stochastic.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA21508160C17C100347D58 /* Stochastic.h */; };
+		2CA2151C160C17C100347D58 /* Optimization.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA21509160C17C100347D58 /* Optimization.h */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		2CA21462160C0DFD00347D58 /* libBack-2-Basics.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = "libBack-2-Basics.dylib"; sourceTree = BUILT_PRODUCTS_DIR; };
+		2CA214F0160C17C100347D58 /* HashTable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HashTable.h; sourceTree = "<group>"; };
+		2CA214F1160C17C100347D58 /* Heap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Heap.h; sourceTree = "<group>"; };
+		2CA214F2160C17C100347D58 /* Stack.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Stack.h; sourceTree = "<group>"; };
+		2CA214F3160C17C100347D58 /* Array.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Array.h; sourceTree = "<group>"; };
+		2CA214F5160C17C100347D58 /* ArrayList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ArrayList.h; sourceTree = "<group>"; };
+		2CA214F6160C17C100347D58 /* List.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = List.h; sourceTree = "<group>"; };
+		2CA214F7160C17C100347D58 /* Collection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Collection.h; path = "Back-2-Basics/Collection.h"; sourceTree = "<group>"; };
+		2CA214F9160C17C100347D58 /* Map.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Map.h; sourceTree = "<group>"; };
+		2CA214FA160C17C100347D58 /* Network.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Network.h; sourceTree = "<group>"; };
+		2CA214FC160C17C100347D58 /* RedBlackTree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RedBlackTree.h; sourceTree = "<group>"; };
+		2CA214FD160C17C100347D58 /* Tree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Tree.h; sourceTree = "<group>"; };
+		2CA214FE160C17C100347D58 /* Graph.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Graph.h; path = "Back-2-Basics/Graph.h"; sourceTree = "<group>"; };
+		2CA21500160C17C100347D58 /* NeuralNetwork.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NeuralNetwork.h; sourceTree = "<group>"; };
+		2CA21501160C17C100347D58 /* Heuristic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Heuristic.h; path = "Back-2-Basics/Heuristic.h"; sourceTree = "<group>"; };
+		2CA21502160C17C100347D58 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = "Back-2-Basics/main.cpp"; sourceTree = "<group>"; };
+		2CA21503160C17C100347D58 /* Metaheuristic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Metaheuristic.h; path = "Back-2-Basics/Metaheuristic.h"; sourceTree = "<group>"; };
+		2CA21507160C17C100347D58 /* Genetic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Genetic.h; sourceTree = "<group>"; };
+		2CA21508160C17C100347D58 /* Stochastic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Stochastic.h; sourceTree = "<group>"; };
+		2CA21509160C17C100347D58 /* Optimization.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Optimization.h; path = "Back-2-Basics/Optimization.h"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		2CA2145F160C0DFD00347D58 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		2CA21457160C0DFD00347D58 = {
+			isa = PBXGroup;
+			children = (
+				2CA21463160C0DFD00347D58 /* Products */,
+				2CA214C2160C0FA300347D58 /* Back-2-Basics */,
+			);
+			sourceTree = "<group>";
+		};
+		2CA21463160C0DFD00347D58 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				2CA21462160C0DFD00347D58 /* libBack-2-Basics.dylib */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		2CA214C2160C0FA300347D58 /* Back-2-Basics */ = {
+			isa = PBXGroup;
+			children = (
+				2CA214EE160C17C100347D58 /* Collection */,
+				2CA214F7160C17C100347D58 /* Collection.h */,
+				2CA214F8160C17C100347D58 /* Graph */,
+				2CA214FE160C17C100347D58 /* Graph.h */,
+				2CA214FF160C17C100347D58 /* Heuristic */,
+				2CA21501160C17C100347D58 /* Heuristic.h */,
+				2CA21502160C17C100347D58 /* main.cpp */,
+				2CA21503160C17C100347D58 /* Metaheuristic.h */,
+				2CA21504160C17C100347D58 /* Optimization */,
+				2CA21509160C17C100347D58 /* Optimization.h */,
+			);
+			name = "Back-2-Basics";
+			sourceTree = "<group>";
+		};
+		2CA214EE160C17C100347D58 /* Collection */ = {
+			isa = PBXGroup;
+			children = (
+				2CA214EF160C17C100347D58 /* Array */,
+				2CA214F3160C17C100347D58 /* Array.h */,
+				2CA214F4160C17C100347D58 /* List */,
+				2CA214F6160C17C100347D58 /* List.h */,
+			);
+			name = Collection;
+			path = "Back-2-Basics/Collection";
+			sourceTree = "<group>";
+		};
+		2CA214EF160C17C100347D58 /* Array */ = {
+			isa = PBXGroup;
+			children = (
+				2CA214F0160C17C100347D58 /* HashTable.h */,
+				2CA214F1160C17C100347D58 /* Heap.h */,
+				2CA214F2160C17C100347D58 /* Stack.h */,
+			);
+			path = Array;
+			sourceTree = "<group>";
+		};
+		2CA214F4160C17C100347D58 /* List */ = {
+			isa = PBXGroup;
+			children = (
+				2CA214F5160C17C100347D58 /* ArrayList.h */,
+			);
+			path = List;
+			sourceTree = "<group>";
+		};
+		2CA214F8160C17C100347D58 /* Graph */ = {
+			isa = PBXGroup;
+			children = (
+				2CA214F9160C17C100347D58 /* Map.h */,
+				2CA214FA160C17C100347D58 /* Network.h */,
+				2CA214FB160C17C100347D58 /* Tree */,
+				2CA214FD160C17C100347D58 /* Tree.h */,
+			);
+			name = Graph;
+			path = "Back-2-Basics/Graph";
+			sourceTree = "<group>";
+		};
+		2CA214FB160C17C100347D58 /* Tree */ = {
+			isa = PBXGroup;
+			children = (
+				2CA214FC160C17C100347D58 /* RedBlackTree.h */,
+			);
+			path = Tree;
+			sourceTree = "<group>";
+		};
+		2CA214FF160C17C100347D58 /* Heuristic */ = {
+			isa = PBXGroup;
+			children = (
+				2CA21500160C17C100347D58 /* NeuralNetwork.h */,
+			);
+			name = Heuristic;
+			path = "Back-2-Basics/Heuristic";
+			sourceTree = "<group>";
+		};
+		2CA21504160C17C100347D58 /* Optimization */ = {
+			isa = PBXGroup;
+			children = (
+				2CA21505160C17C100347D58 /* Offline */,
+				2CA21506160C17C100347D58 /* Online */,
+				2CA21508160C17C100347D58 /* Stochastic.h */,
+			);
+			name = Optimization;
+			path = "Back-2-Basics/Optimization";
+			sourceTree = "<group>";
+		};
+		2CA21505160C17C100347D58 /* Offline */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Offline;
+			sourceTree = "<group>";
+		};
+		2CA21506160C17C100347D58 /* Online */ = {
+			isa = PBXGroup;
+			children = (
+				2CA21507160C17C100347D58 /* Genetic.h */,
+			);
+			path = Online;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		2CA21460160C0DFD00347D58 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2CA2150A160C17C100347D58 /* HashTable.h in Headers */,
+				2CA2150B160C17C100347D58 /* Heap.h in Headers */,
+				2CA2150C160C17C100347D58 /* Stack.h in Headers */,
+				2CA2150D160C17C100347D58 /* Array.h in Headers */,
+				2CA2150E160C17C100347D58 /* ArrayList.h in Headers */,
+				2CA2150F160C17C100347D58 /* List.h in Headers */,
+				2CA21510160C17C100347D58 /* Collection.h in Headers */,
+				2CA21511160C17C100347D58 /* Map.h in Headers */,
+				2CA21512160C17C100347D58 /* Network.h in Headers */,
+				2CA21513160C17C100347D58 /* RedBlackTree.h in Headers */,
+				2CA21514160C17C100347D58 /* Tree.h in Headers */,
+				2CA21515160C17C100347D58 /* Graph.h in Headers */,
+				2CA21516160C17C100347D58 /* NeuralNetwork.h in Headers */,
+				2CA21517160C17C100347D58 /* Heuristic.h in Headers */,
+				2CA21519160C17C100347D58 /* Metaheuristic.h in Headers */,
+				2CA2151A160C17C100347D58 /* Genetic.h in Headers */,
+				2CA2151B160C17C100347D58 /* Stochastic.h in Headers */,
+				2CA2151C160C17C100347D58 /* Optimization.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		2CA21461160C0DFD00347D58 /* Back-2-Basics */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2CA21466160C0DFD00347D58 /* Build configuration list for PBXNativeTarget "Back-2-Basics" */;
+			buildPhases = (
+				2CA2145E160C0DFD00347D58 /* Sources */,
+				2CA2145F160C0DFD00347D58 /* Frameworks */,
+				2CA21460160C0DFD00347D58 /* Headers */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "Back-2-Basics";
+			productName = "Back-2-Basics";
+			productReference = 2CA21462160C0DFD00347D58 /* libBack-2-Basics.dylib */;
+			productType = "com.apple.product-type.library.dynamic";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		2CA21459160C0DFD00347D58 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0450;
+				ORGANIZATIONNAME = "Marcus Gilchrist";
+			};
+			buildConfigurationList = 2CA2145C160C0DFD00347D58 /* Build configuration list for PBXProject "Back-2-Basics" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 2CA21457160C0DFD00347D58;
+			productRefGroup = 2CA21463160C0DFD00347D58 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				2CA21461160C0DFD00347D58 /* Back-2-Basics */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		2CA2145E160C0DFD00347D58 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2CA21518160C17C100347D58 /* main.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		2CA21464160C0DFD00347D58 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		2CA21465160C0DFD00347D58 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		2CA21467160C0DFD00347D58 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				EXECUTABLE_PREFIX = lib;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		2CA21468160C0DFD00347D58 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				EXECUTABLE_PREFIX = lib;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		2CA2145C160C0DFD00347D58 /* Build configuration list for PBXProject "Back-2-Basics" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2CA21464160C0DFD00347D58 /* Debug */,
+				2CA21465160C0DFD00347D58 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		2CA21466160C0DFD00347D58 /* Build configuration list for PBXNativeTarget "Back-2-Basics" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2CA21467160C0DFD00347D58 /* Debug */,
+				2CA21468160C0DFD00347D58 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 2CA21459160C0DFD00347D58 /* Project object */;
+}
