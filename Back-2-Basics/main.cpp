@@ -23,6 +23,32 @@ using namespace std;
 
 int main(int argc, const char * argv[])
 {
+  return 0;
+}
+
+
+int testHeap() {
+  return 0;
+}
+
+int testStack() {
+  return 0;
+}
+
+int testLinkedList() {
+  return 0;
+}
+
+int testArrayList() {
+  return 0;
+}
+
+int testNeuralNetwork() {
+  return 0;
+}
+
+int testMetaheuristic() {
+  
   Collection::Array<double> *input = new Collection::Array<double>(INPUT_SIZE);
   double *reality = new double[OUTPUT_SIZE];
   double expectation;
@@ -39,14 +65,14 @@ int main(int argc, const char * argv[])
       expectation = masterMind->getConsensus();
       reality[ix] = 1.0;
       /*if ((input->atIndex(ix%INPUT_SIZE)) +
-          (input->atIndex((ix+1)%INPUT_SIZE)) +
-          (input->atIndex((ix+2)%INPUT_SIZE)) > 2.5) {
-        reality[ix] = 1.0;
-      } else if ((input->atIndex(ix%INPUT_SIZE)) +
-                 (input->atIndex((ix+1)%INPUT_SIZE)) +
-                 (input->atIndex((ix+2)%INPUT_SIZE)) < 0.5) {
-        reality[ix] = 0.0;
-      }*/
+       (input->atIndex((ix+1)%INPUT_SIZE)) +
+       (input->atIndex((ix+2)%INPUT_SIZE)) > 2.5) {
+       reality[ix] = 1.0;
+       } else if ((input->atIndex(ix%INPUT_SIZE)) +
+       (input->atIndex((ix+1)%INPUT_SIZE)) +
+       (input->atIndex((ix+2)%INPUT_SIZE)) < 0.5) {
+       reality[ix] = 0.0;
+       }*/
       masterMind->postResult(reality[ix]);
       cout << "Expecting ";
       cout << expectation;
@@ -59,4 +85,6 @@ int main(int argc, const char * argv[])
   
   delete input;
   delete masterMind;
+  
+  return 0;
 }
