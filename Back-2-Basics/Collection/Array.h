@@ -42,6 +42,7 @@ namespace Collection {
   public:
     Array();
     Array(uint64_t size);
+    Array(ElementType *data, uint64_t size);
     void swap(uint64_t a,uint64_t b);
     ElementType atIndex(uint64_t index);
     ElementType *ptrToIndex(uint64_t index);
@@ -75,6 +76,13 @@ namespace Collection {
   template <class ElementType>
   Array<ElementType>::Array(uint64_t size) {
     this->collection = new ElementType[size];
+    this->size = size;
+    this->capacity = size;
+  }
+  
+  template <class ElementType>
+  Array<ElementType>::Array(ElementType *data, uint64_t size) {
+    this->collection = data;
     this->size = size;
     this->capacity = size;
   }
