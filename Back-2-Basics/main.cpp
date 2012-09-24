@@ -22,8 +22,9 @@
 #include <iostream>
 using namespace std;
 
-
 #include "Array.h"
+#include "Heap.h"
+#include "HashTable.h"
 #include "Graph.h"
 #include "NeuralNetwork.h"
 #include "Genetic.h"
@@ -40,7 +41,16 @@ int main(int argc, const char * argv[])
 }
 
 
+int testHashTable() {
+  Collection::HashTable<uint64_t,uint64_t> *hashTable = new Collection::HashTable<uint64_t,uint64_t>();
+  
+  return 0;
+}
+
+
 int testHeap() {
+  Collection::Heap<uint64_t,uint64_t> *heap = new Collection::Heap<uint64_t,uint64_t>();
+  
   return 0;
 }
 

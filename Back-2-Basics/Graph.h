@@ -39,8 +39,6 @@ namespace Graph {
   class Graph;
   
   
-  
-  
   template <class NodeType>
   class Edge
   {

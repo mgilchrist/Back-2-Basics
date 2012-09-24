@@ -42,6 +42,8 @@ namespace Collection {
 
     
     Comparable();
+    
+    Comparable(ElementType data, KeyType key);
   };
   
   /* Indexed Comparable */
@@ -51,6 +53,13 @@ namespace Collection {
     this->data = NULL;
     this->key = 0;
     this->index = NULL;
+  }
+  
+  template <class ElementType, class KeyType>
+  Comparable<ElementType,KeyType>::Comparable(ElementType data, KeyType key) {
+    this->data = data;
+    this->key = key;
+    this->index = new uint64_t;
   }
   
   template <class ElementType, class KeyType>
