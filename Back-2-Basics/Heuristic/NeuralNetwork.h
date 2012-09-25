@@ -106,7 +106,7 @@ namespace NeuralNetwork
     
   public:
     NeuralNetwork();
-    NeuralNetwork (Collection::Array<double> *);
+    NeuralNetwork (Collection::Array<double *> *);
     NeuralNetwork *clone(double);
     
     void calculateExpectation(void);

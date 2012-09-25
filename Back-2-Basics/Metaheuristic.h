@@ -98,11 +98,12 @@ Metaheuristic<OptimizationType,HeuristicType,DataType>::Metaheuristic() {
 template <class OptimizationType, class HeuristicType, class DataType>
 Metaheuristic<OptimizationType,HeuristicType,DataType>::Metaheuristic(Collection::Array<DataType> *input) {
   HeuristicType *thisTheory;
-  Collection::Comparable<HeuristicType *, double> comp;
+  Collection::Comparable<HeuristicType *, double> *comp;
   uint64_t tmpSize;
   Collection::Stack<double *> *thisInput;
   
   theory = new Collection::ArrayList<HeuristicType *,double>(numCandidates);
+  comp = new Collection::Comparable<HeuristicType *, double>();
   
   epoch = 0;
   
@@ -114,10 +115,10 @@ Metaheuristic<OptimizationType,HeuristicType,DataType>::Metaheuristic(Collection
       thisInput->push(input->ptrToIndex(jx));
     }
     
-    thisTheory = new HeuristicType(input);
+    thisTheory = new HeuristicType(thisInput);
     
-    comp.data = thisTheory;
-    comp.key = 0.5;
+    comp->data = thisTheory;
+    comp->key = 0.5;
     
     theory->setIndex(ix, comp);
     delete thisInput;
@@ -139,7 +140,7 @@ void Metaheuristic<OptimizationType,HeuristicType,DataType>::postResult(DataType
    */
   
   for (int ix = 0; ix < theory->getSize(); ix++) {
-    theory->atIndex(ix).data->doCorrection(result,0.0);
+    theory->atIndex(ix)->data->doCorrection(result,0.0);
   }
 }
 
@@ -177,11 +178,11 @@ DataType Metaheuristic<OptimizationType,HeuristicType,DataType>::getConsensus() 
   double expectation = 0.0;
   
   for (int ix = 0; ix < theory->getSize(); ix++) {
-    if (theory->atIndex(ix).data == NULL) {
+    if (theory->atIndex(ix)->data == NULL) {
       continue;
     }
-    theory->atIndex(ix).data->calculateExpectation();
-    expectation += theory->atIndex(ix).data->getExpectation();
+    theory->atIndex(ix)->data->calculateExpectation();
+    expectation += theory->atIndex(ix)->data->getExpectation();
     
   }
   

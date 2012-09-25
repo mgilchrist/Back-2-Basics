@@ -30,7 +30,7 @@ namespace Collection {
   /* First 64 bits of fractional part of the
    square root of {2,3,5,7,11,13,17,19} */
   
-  uint64_t sha_2_h[8] =
+  const uint64_t sha_2_h[8] =
   {
     0x6a09e667f3bcc908, 0xbb67ae8584caa73b, 0x3c6ef372fe94f82b, 0xa54ff53a5f1d36f1,
     0x510e527fade682d1, 0x9b05688c2b3e6c1f, 0x1f83d9abfb41bd6b, 0x5be0cd19137e2179
@@ -39,7 +39,7 @@ namespace Collection {
   /* First 64 bits of fractional part of the
    cube root of first 64 primes */
   
-  uint64_t sha_2_k[80] =
+  const uint64_t sha_2_k[80] =
   {
     0x428a2f98d728ae22, 0x7137449123ef65cd, 0xb5c0fbcfec4d3b2f, 0xe9b5dba58189dbbc,
     0x3956c25bf348b538, 0x59f111f1b605d019, 0x923f82a4af194f9b, 0xab1c5ed5da6d8118,

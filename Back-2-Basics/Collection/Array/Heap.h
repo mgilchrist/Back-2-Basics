@@ -113,6 +113,7 @@ namespace Collection {
   void Heap<ElementType,KeyType>::heapifyDown(uint64_t i) {
     
     uint64_t left, right, j;
+    
     uint64_t n = this->size;
     
     if ((2*i) > n) {
@@ -141,6 +142,19 @@ namespace Collection {
     tmp = new Comparable<ElementType,KeyType>(element,key);
     tmp->index = new uint64_t;
     *(tmp->index) = this->size;
+    
+    if (this->size >= this->capacity) {
+      Comparable<ElementType,KeyType> **nHeap = new Comparable<ElementType,KeyType>*[this->capacity * 2];
+      
+      for (int ix = 0; ix < this->size; ix++) {
+        nHeap[ix] = this->collection[ix];
+      }
+      
+      delete this->collection;
+      
+      this->collection = nHeap;
+      this->capacity *= 2;
+    }
     
     this->collection[this->size++] = tmp;
     

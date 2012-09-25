@@ -28,15 +28,15 @@
 namespace Collection {
   
   template <class ElementType, class KeyType>
-  class ArrayList : public List<ElementType,KeyType>, public Array<Comparable<ElementType, KeyType>>
+  class ArrayList : public List<ElementType,KeyType>, public Array<Comparable<ElementType, KeyType> *>
   {
     
   public:
     ArrayList();
     ArrayList(uint64_t size);
     
-    Comparable<ElementType,KeyType> atIndex(uint64_t index);
-    Comparable<ElementType,KeyType> *ptrToIndex(uint64_t index);
+    Comparable<ElementType,KeyType> *atIndex(uint64_t index);
+    //Comparable<ElementType,KeyType> **ptrToIndex(uint64_t index);
     
     uint8_t median5(Comparable<ElementType,KeyType> *array, uint8_t size);
     uint64_t medianOfMedians(uint64_t l, uint64_t r);
@@ -52,21 +52,28 @@ namespace Collection {
     
     
     
-    void swap(uint64_t a,uint64_t b) {
-      Comparable<ElementType,KeyType> tmp;
+    void swap(uint64_t first, uint64_t second) {
+      Comparable<ElementType,KeyType> *a, *b;
       
-      tmp = this->collection[a];
-      this->collection[b] = this->collection[a];
-      this->collection[a] = tmp;
+      a = this->collection[first];
+      b = this->collection[second];
+      
+      
+      swapComparables(a,b);
     } 
     
     
     void swapComparables(Comparable<ElementType,KeyType> *a, Comparable<ElementType,KeyType> *b) {
-      Comparable<ElementType,KeyType> tmp;
+      uint64_t tmp;
       
-      tmp = *a;
-      *a = *b;
-      *b = tmp;
+      
+      this->collection[*(a->index)] = b;
+      this->collection[*(b->index)] = a;
+      
+      tmp = *(a->index);
+      *(a->index) = *(b->index);
+      *(b->index) = tmp;
+      
     }
     
     uint64_t choosePivot(uint64_t l, uint64_t r) {
@@ -75,23 +82,23 @@ namespace Collection {
     
     uint64_t partition(uint64_t p, uint64_t l, uint64_t r) {
       
-      uint64_t pValue = this->collection[p].key;
+      uint64_t pValue = this->collection[p]->key;
       uint64_t i = l;
       uint64_t j;
       
       // Move pivot out of the way
-      swapComparables(&(this->collection[r]), &(this->collection[p]));
+      swapComparables(this->collection[r], this->collection[p]);
       
       for (j = l + 1; j < r; j++) {
         // Move to left if value is less than pivot
-        if (this->collection[j].key <= pValue) {
+        if (this->collection[j]->key <= pValue) {
           i++;
-          swapComparables(&(this->collection[i]), &(this->collection[j]));
+          swapComparables(this->collection[i], this->collection[j]);
         }
       }
       
       // move pivot to median
-      swapComparables(&(this->collection[i]), &(this->collection[p]));
+      swapComparables(this->collection[i], this->collection[p]);
       
       return i;
       
@@ -116,27 +123,29 @@ namespace Collection {
   
   template <class ElementType, class KeyType>
   ArrayList<ElementType,KeyType>::ArrayList() {
-    this->collection = new Comparable<ElementType,KeyType>[STD_COLLECTION_SIZE];
+    this->collection = new Comparable<ElementType,KeyType>*[STD_COLLECTION_SIZE];
     this->size = STD_COLLECTION_SIZE;
     this->capacity = STD_COLLECTION_SIZE;
   }
   
   template <class ElementType, class KeyType>
   ArrayList<ElementType,KeyType>::ArrayList(uint64_t size) {
-    this->collection = new Comparable<ElementType,KeyType>[size];
+    this->collection = new Comparable<ElementType,KeyType>*[size];
     this->size = size;
     this->capacity = size;
   }
     
   template <class ElementType, class KeyType>
-  Comparable<ElementType,KeyType> ArrayList<ElementType,KeyType>::atIndex(uint64_t index) {
+  Comparable<ElementType,KeyType> *ArrayList<ElementType,KeyType>::atIndex(uint64_t index) {
     return this->collection[index];
   }
-  
+ 
+  /*
   template <class ElementType, class KeyType>
   Comparable<ElementType,KeyType> *ArrayList<ElementType,KeyType>::ptrToIndex(uint64_t index) {
     return &(this->collection[index]);
   }
+   */
   
   template <class ElementType, class KeyType>
   uint8_t ArrayList<ElementType,KeyType>::median5(Comparable<ElementType,KeyType> *array, uint8_t size) {

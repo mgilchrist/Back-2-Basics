@@ -35,12 +35,6 @@ using namespace std;
 #define ITERATIONS    (1024)
 
 
-int main(int argc, const char * argv[])
-{
-  return 0;
-}
-
-
 int testHashTable() {
   Collection::HashTable<uint64_t,uint64_t> *hashTable = new Collection::HashTable<uint64_t,uint64_t>();
   
@@ -55,18 +49,26 @@ int testHeap() {
 }
 
 int testStack() {
+  Collection::Stack<uint64_t> *stack = new Collection::Stack<uint64_t>();
   return 0;
 }
 
+/*
 int testLinkedList() {
+  
   return 0;
 }
+ */
 
 int testArrayList() {
+  Collection::ArrayList<uint64_t,uint64_t> *arrayList = new Collection::ArrayList<uint64_t,uint64_t>();
   return 0;
 }
 
 int testNeuralNetwork() {
+  Collection::Array<double *> *inputs = new Collection::Array<double *>(16);
+  NeuralNetwork::NeuralNetwork *NNetwork = new NeuralNetwork::NeuralNetwork(inputs);
+  
   return 0;
 }
 
@@ -110,4 +112,21 @@ int testMetaheuristic() {
   delete masterMind;
   
   return 0;
+}
+
+
+int main(int argc, const char * argv[])
+{
+  int ret = 0;
+  
+  cout << "Back-2-Basics\n";
+  cout << "Created by Marcus Gilchrist on 9/24/12.\n";
+  cout << "Copyright (c) 2012 Marcus Gilchrist. All rights reserved.\n";
+  cout << "This program comes with ABSOLUTELY NO WARRANTY; for details type `show w'.\n";
+  cout << "This is free software, and you are welcome to redistribute it\n";
+  cout << "under certain conditions; type `show c' for details.\n";
+  
+  ret |= testMetaheuristic();
+  
+  return ret;
 }
