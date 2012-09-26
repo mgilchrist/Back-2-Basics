@@ -111,7 +111,7 @@ Metaheuristic<OptimizationType,HeuristicType,DataType>::Metaheuristic(Collection
   for (int ix = 0; ix < numCandidates; ix++) {
     tmpSize = (random() % input->getSize()) + 1;
     thisInput = new Collection::Stack<double *>(tmpSize);
-    for (int jx = 0; jx < thisInput->getSize(); jx++) {
+    for (int jx = 0; jx < tmpSize; jx++) {
       thisInput->push(input->ptrToIndex(jx));
     }
     
