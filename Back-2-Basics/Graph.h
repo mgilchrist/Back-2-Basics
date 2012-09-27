@@ -80,8 +80,8 @@ namespace Graph {
     
     Node();
     virtual void setIndex(uint64_t);
-    virtual uint64_t getIndex();
-    virtual uint64_t getNumEdges();
+    uint64_t getIndex();
+    uint64_t getNumEdges();
     virtual void addAdjacentEdge(EdgeType *adjacent);
     virtual EdgeType *removeNewestEdge();
     virtual EdgeType *getAdjacentEdge(uint64_t index);
@@ -114,8 +114,8 @@ namespace Graph {
     Graph();
     ~Graph();
     
-    virtual void add(NodeType *node);
-    virtual void addEdge(EdgeType *edge);
+    void add(NodeType *node);
+    void addEdgeObj(EdgeType *edge);
     
     virtual Collection::Stack<Collection::Stack<NodeType *> *> *getLayers();
     
@@ -386,7 +386,7 @@ namespace Graph {
   }
   
   template <class NodeType, class EdgeType>
-  void Graph<NodeType,EdgeType>::addEdge(EdgeType *edge) {
+  void Graph<NodeType,EdgeType>::addEdgeObj(EdgeType *edge) {
     edge->setIndex(edges->getSize());
     edges->push(edge);
   }

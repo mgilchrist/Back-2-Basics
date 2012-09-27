@@ -35,18 +35,18 @@ namespace Collection {
     
   private:
     void swap(uint64_t i,uint64_t j);
-    Comparable<ElementType,KeyType> *peekAtHeapEntry(int index);
     Comparable<ElementType,KeyType> *removeHeapEntry(int index);
     
   public:
     
     Heap();
     
-    virtual void heapifyUp(uint64_t i);
-    virtual void heapifyDown(uint64_t i);
-    virtual uint64_t *push(ElementType,KeyType);
-    virtual ElementType pop();
-    virtual ElementType peek(uint64_t);
+    ElementType peekAtHeapEntry(int index);
+    void heapifyUp(uint64_t i);
+    void heapifyDown(uint64_t i);
+    uint64_t *push(ElementType,KeyType);
+    ElementType pop();
+    ElementType peek(uint64_t);
     
   };
   
@@ -163,6 +163,15 @@ namespace Collection {
     return tmp->index;
     
   }
+  
+  template <class ElementType, class KeyType>
+  ElementType Heap<ElementType,KeyType>::peekAtHeapEntry(int index) {
+    
+    Comparable<ElementType,KeyType> *entry = this->collection[index];
+    
+    return entry->data;
+  }
+  
   
   
 }

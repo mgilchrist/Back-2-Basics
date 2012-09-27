@@ -25,16 +25,18 @@
 #include <iostream>
 
 #include "ArrayList.h"
+#include "Optimization.h"
+#include "Heuristic.h"
+
 
 #define STD_NUM_CANDIDATES  4
-
 
 template <class OptimizationType, class HeuristicType, class DataType>
 class Metaheuristic {
   
 private:
-  OptimizationType *optFunction;
-  Collection::ArrayList<HeuristicType *, double> *theory;
+  Optimization<OptimizationType> *optFunction;
+  Collection::ArrayList<Heuristic<HeuristicType> *, double> *theory;
   double *theoryRating;
   double *theoryExpectation;
   uint64_t numCandidates = STD_NUM_CANDIDATES;
@@ -98,12 +100,12 @@ Metaheuristic<OptimizationType,HeuristicType,DataType>::Metaheuristic() {
 template <class OptimizationType, class HeuristicType, class DataType>
 Metaheuristic<OptimizationType,HeuristicType,DataType>::Metaheuristic(Collection::Array<DataType> *input) {
   HeuristicType *thisTheory;
-  Collection::Comparable<HeuristicType *, double> *comp;
+  Collection::Comparable<Heuristic<HeuristicType> *, double> *comp;
   uint64_t tmpSize;
   Collection::Stack<double *> *thisInput;
   
-  theory = new Collection::ArrayList<HeuristicType *,double>(numCandidates);
-  comp = new Collection::Comparable<HeuristicType *, double>();
+  theory = new Collection::ArrayList<Heuristic<HeuristicType> *,double>(numCandidates);
+  comp = new Collection::Comparable<Heuristic<HeuristicType> *, double>();
   
   epoch = 0;
   

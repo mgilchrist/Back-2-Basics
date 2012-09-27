@@ -68,7 +68,7 @@ namespace NeuralNetwork
     
     for (int ix = 0; ix < input->getSize(); ix++) {
       synapse = new Synapse(this, input->atIndex(ix), RANDOM_INFLUENCE);
-      network->addEdge(synapse);
+      network->addEdgeObj(synapse);
       this->addAdjacentEdge(synapse);
       
     }
@@ -142,7 +142,7 @@ namespace NeuralNetwork
     
     Synapse *nLink = new Synapse(this, input, RANDOM_INFLUENCE);
     
-    network->addEdge(nLink);
+    network->addEdgeObj(nLink);
     
     this->addAdjacentEdge(nLink);
     

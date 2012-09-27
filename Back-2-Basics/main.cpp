@@ -26,6 +26,8 @@ using namespace std;
 #include "Heap.h"
 #include "HashTable.h"
 #include "Graph.h"
+#include "Navigation.h"
+#include "Network.h"
 #include "NeuralNetwork.h"
 #include "Genetic.h"
 #include "Metaheuristic.h"
@@ -70,6 +72,12 @@ int testNeuralNetwork() {
   NeuralNetwork::NeuralNetwork *NNetwork = new NeuralNetwork::NeuralNetwork(inputs);
   
   return 0;
+}
+
+int testNavigation() {
+  Graph::Navigation *navigation;
+  
+  navigation = new Graph::Navigation();
 }
 
 int testMetaheuristic() {

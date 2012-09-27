@@ -129,7 +129,7 @@ namespace Graph {
     
     for (int ix = 0; ix < this->getNumEdges(); ix++) {
       thisEdge = this->edgeAtIndex(ix);
-      auxGraph->addEdge(thisEdge);
+      auxGraph->addEdgeObj(thisEdge);
       
       thisEdge = new EdgeType(thisEdge->getBackward(), thisEdge->getForward(),
                               thisEdge->capacity);
