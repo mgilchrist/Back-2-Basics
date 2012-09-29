@@ -7,8 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		2C00342F1617A4F700CCC166 /* Navigation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2C00342D1617A4F700CCC166 /* Navigation.cpp */; };
-		2C0034301617A4F700CCC166 /* Navigation.h in Headers */ = {isa = PBXBuildFile; fileRef = 2C00342E1617A4F700CCC166 /* Navigation.h */; };
+		2C00343A1617AC1A00CCC166 /* Navigation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2C0034381617AC1A00CCC166 /* Navigation.cpp */; };
+		2C00343B1617AC1A00CCC166 /* Navigation.h in Headers */ = {isa = PBXBuildFile; fileRef = 2C0034391617AC1A00CCC166 /* Navigation.h */; };
 		2C898846160C434C0087B09C /* NeuralNetwork.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2C898845160C434C0087B09C /* NeuralNetwork.cpp */; };
 		2CA2150A160C17C100347D58 /* HashTable.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA214F0160C17C100347D58 /* HashTable.h */; };
 		2CA2150B160C17C100347D58 /* Heap.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA214F1160C17C100347D58 /* Heap.h */; };
@@ -32,8 +32,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		2C00342D1617A4F700CCC166 /* Navigation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Navigation.cpp; sourceTree = "<group>"; };
-		2C00342E1617A4F700CCC166 /* Navigation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Navigation.h; sourceTree = "<group>"; };
+		2C0034381617AC1A00CCC166 /* Navigation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Navigation.cpp; sourceTree = "<group>"; };
+		2C0034391617AC1A00CCC166 /* Navigation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Navigation.h; sourceTree = "<group>"; };
 		2C898845160C434C0087B09C /* NeuralNetwork.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NeuralNetwork.cpp; sourceTree = "<group>"; };
 		2CA21462160C0DFD00347D58 /* libBack-2-Basics.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = "libBack-2-Basics.dylib"; sourceTree = BUILT_PRODUCTS_DIR; };
 		2CA214F0160C17C100347D58 /* HashTable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HashTable.h; sourceTree = "<group>"; };
@@ -68,14 +68,21 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		2C00342C1617A4F700CCC166 /* Navigation */ = {
+		2C0034361617AC1A00CCC166 /* Map */ = {
 			isa = PBXGroup;
 			children = (
-				2C00342D1617A4F700CCC166 /* Navigation.cpp */,
-				2C00342E1617A4F700CCC166 /* Navigation.h */,
+				2C0034371617AC1A00CCC166 /* Navigation */,
+				2C0034391617AC1A00CCC166 /* Navigation.h */,
 			);
-			name = Navigation;
-			path = "Back-2-Basics/Navigation";
+			path = Map;
+			sourceTree = "<group>";
+		};
+		2C0034371617AC1A00CCC166 /* Navigation */ = {
+			isa = PBXGroup;
+			children = (
+				2C0034381617AC1A00CCC166 /* Navigation.cpp */,
+			);
+			path = Navigation;
 			sourceTree = "<group>";
 		};
 		2CA21457160C0DFD00347D58 = {
@@ -104,7 +111,6 @@
 				2CA214FF160C17C100347D58 /* Heuristic */,
 				2CA21501160C17C100347D58 /* Heuristic.h */,
 				2CA21502160C17C100347D58 /* main.cpp */,
-				2C00342C1617A4F700CCC166 /* Navigation */,
 				2CA21503160C17C100347D58 /* Metaheuristic.h */,
 				2CA21504160C17C100347D58 /* Optimization */,
 				2CA21509160C17C100347D58 /* Optimization.h */,
@@ -145,6 +151,7 @@
 		2CA214F8160C17C100347D58 /* Graph */ = {
 			isa = PBXGroup;
 			children = (
+				2C0034361617AC1A00CCC166 /* Map */,
 				2CA214F9160C17C100347D58 /* Map.h */,
 				2CA214FA160C17C100347D58 /* Network.h */,
 				2CA214FB160C17C100347D58 /* Tree */,
@@ -223,7 +230,7 @@
 				2CA2151A160C17C100347D58 /* Genetic.h in Headers */,
 				2CA2151B160C17C100347D58 /* Stochastic.h in Headers */,
 				2CA2151C160C17C100347D58 /* Optimization.h in Headers */,
-				2C0034301617A4F700CCC166 /* Navigation.h in Headers */,
+				2C00343B1617AC1A00CCC166 /* Navigation.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -280,7 +287,7 @@
 			files = (
 				2CA21518160C17C100347D58 /* main.cpp in Sources */,
 				2C898846160C434C0087B09C /* NeuralNetwork.cpp in Sources */,
-				2C00342F1617A4F700CCC166 /* Navigation.cpp in Sources */,
+				2C00343A1617AC1A00CCC166 /* Navigation.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
