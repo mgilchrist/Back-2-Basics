@@ -38,20 +38,24 @@ using namespace std;
 
 
 int testHashTable() {
-  Collection::HashTable<uint64_t,uint64_t> *hashTable = new Collection::HashTable<uint64_t,uint64_t>();
+  Collection::HashTable<uint64_t,uint64_t> *hashTable;
+  hashTable = new Collection::HashTable<uint64_t,uint64_t>();
   
   return 0;
 }
 
 
 int testHeap() {
-  Collection::Heap<uint64_t,uint64_t> *heap = new Collection::Heap<uint64_t,uint64_t>();
+  Collection::Heap<uint64_t,uint64_t> *heap;
+  heap = new Collection::Heap<uint64_t,uint64_t>();
   
   return 0;
 }
 
 int testStack() {
-  Collection::Stack<uint64_t> *stack = new Collection::Stack<uint64_t>();
+  Collection::Stack<uint64_t> *stack;
+  stack = new Collection::Stack<uint64_t>();
+  
   return 0;
 }
 
@@ -63,13 +67,16 @@ int testLinkedList() {
  */
 
 int testArrayList() {
-  Collection::ArrayList<uint64_t,uint64_t> *arrayList = new Collection::ArrayList<uint64_t,uint64_t>();
+  Collection::ArrayList<uint64_t,uint64_t> *arrayList;
+  arrayList = new Collection::ArrayList<uint64_t,uint64_t>();
+  
   return 0;
 }
 
 int testNeuralNetwork() {
   Collection::Array<double *> *inputs = new Collection::Array<double *>(16);
-  NeuralNetwork::NeuralNetwork *NNetwork = new NeuralNetwork::NeuralNetwork(inputs);
+  NeuralNetwork::NeuralNetwork *NNetwork;
+  NNetwork = new NeuralNetwork::NeuralNetwork(inputs);
   
   return 0;
 }
@@ -78,6 +85,8 @@ int testNavigation() {
   Graph::Navigation *navigation;
   
   navigation = new Graph::Navigation();
+  
+  return 0;
 }
 
 int testMetaheuristic() {
