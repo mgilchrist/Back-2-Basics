@@ -22,7 +22,7 @@
 #ifndef OpenSource_Optimization_h
 #define OpenSource_Optimization_h
 
-template <class OptimizationType>
+
 class Optimization {
   
 private:
@@ -33,10 +33,7 @@ public:
 };
 
 
-
-
-template <class OptimizationType>
-Optimization<OptimizationType>::Optimization() {
+Optimization::Optimization() {
   
 }
 

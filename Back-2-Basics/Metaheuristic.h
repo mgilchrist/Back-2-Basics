@@ -31,12 +31,12 @@
 
 #define STD_NUM_CANDIDATES  4
 
-template <class OptimizationType, class HeuristicType, class DataType>
+template <class DataType>
 class Metaheuristic {
   
 private:
-  Optimization<OptimizationType> *optFunction;
-  Collection::ArrayList<Heuristic<HeuristicType> *, double> *theory;
+  Optimization *optFunction;
+  Collection::ArrayList<Heuristic *, double> *theory;
   double *theoryRating;
   double *theoryExpectation;
   uint64_t numCandidates = STD_NUM_CANDIDATES;
@@ -47,7 +47,7 @@ private:
   
 public:
   Metaheuristic();
-  Metaheuristic(Collection::Array<DataType> *input);
+  Metaheuristic(Collection::Array<DataType> *input, Collection::Array<Heuristic *> *candidates);
   
   virtual void postResult(DataType result);
   virtual DataType getConsensus();
@@ -75,11 +75,11 @@ public:
  };
  */
 
-
-template <class OptimizationType, class HeuristicType, class DataType>
-void Metaheuristic<OptimizationType,HeuristicType,DataType>::rPostResult(uint64_t current, DataType result) {
+/*
+template <class DataType>
+void Metaheuristic<DataType>::rPostResult(uint64_t current, DataType result) {
   
-  HeuristicType *tmp;
+  Heuristic *tmp;
   
   if ((tmp = theory->nodeAtIndex(theory->getLeft(current))) != NULL) {
     tmp->doCorrection(result, 0.0);
@@ -91,45 +91,38 @@ void Metaheuristic<OptimizationType,HeuristicType,DataType>::rPostResult(uint64_
     rPostResult(theory->getRight(current), result);
   }
 }
+ */
 
-template <class OptimizationType, class HeuristicType, class DataType>
-Metaheuristic<OptimizationType,HeuristicType,DataType>::Metaheuristic() {
+template <class DataType>
+Metaheuristic<DataType>::Metaheuristic() {
   
 }
 
-template <class OptimizationType, class HeuristicType, class DataType>
-Metaheuristic<OptimizationType,HeuristicType,DataType>::Metaheuristic(Collection::Array<DataType> *input) {
-  HeuristicType *thisTheory;
-  Collection::Comparable<Heuristic<HeuristicType> *, double> *comp;
-  uint64_t tmpSize;
-  Collection::Stack<double *> *thisInput;
+template <class DataType>
+Metaheuristic<DataType>::Metaheuristic(Collection::Array<DataType> *input, Collection::Array<Heuristic *> *candidates) {
+  Heuristic *thisTheory;
+  Collection::Comparable<Heuristic *, double> *comp;
   
-  theory = new Collection::ArrayList<Heuristic<HeuristicType> *,double>(numCandidates);
-  comp = new Collection::Comparable<Heuristic<HeuristicType> *, double>();
+  theory = new Collection::ArrayList<Heuristic *,double>(numCandidates);
+  comp = new Collection::Comparable<Heuristic *, double>();
   
   epoch = 0;
   
   
   for (int ix = 0; ix < numCandidates; ix++) {
-    tmpSize = (random() % input->getSize()) + 1;
-    thisInput = new Collection::Stack<double *>(tmpSize);
-    for (int jx = 0; jx < tmpSize; jx++) {
-      thisInput->push(input->ptrToIndex(jx));
-    }
     
-    thisTheory = new HeuristicType(thisInput);
+    thisTheory = candidates->atIndex(ix);
     
     comp->data = thisTheory;
     comp->key = 0.5;
     
     theory->setIndex(ix, comp);
-    delete thisInput;
   }
   
 }
 
-template <class OptimizationType, class HeuristicType, class DataType>
-void Metaheuristic<OptimizationType,HeuristicType,DataType>::postResult(DataType result) {
+template <class DataType>
+void Metaheuristic<DataType>::postResult(DataType result) {
   /*
   HeuristicType *tmp;
   
@@ -146,10 +139,11 @@ void Metaheuristic<OptimizationType,HeuristicType,DataType>::postResult(DataType
   }
 }
 
-template <class OptimizationType, class HeuristicType, class DataType>
-DataType Metaheuristic<OptimizationType,HeuristicType,DataType>::rConsensus(uint64_t current) {
+/*
+template <class DataType>
+DataType Metaheuristic<DataType>::rConsensus(uint64_t current) {
   
-  HeuristicType *tmp;
+  Heuristic *tmp;
   double expectation = 0.0;
   
   if ((tmp = theory->nodeAtIndex(theory->getLeft(current))) != NULL) {
@@ -172,9 +166,10 @@ DataType Metaheuristic<OptimizationType,HeuristicType,DataType>::rConsensus(uint
   return expectation;
   
 }
+ */
 
-template <class OptimizationType, class HeuristicType, class DataType>
-DataType Metaheuristic<OptimizationType,HeuristicType,DataType>::getConsensus() {
+template <class DataType>
+DataType Metaheuristic<DataType>::getConsensus() {
   //HeuristicType *tmp;
   //uint64_t current = theory->getTreeRoot();
   double expectation = 0.0;

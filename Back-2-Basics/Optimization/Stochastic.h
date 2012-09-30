@@ -25,7 +25,7 @@
 #include "Optimization.h"
 
 template <class OptimizationType>
-class Stoichastic : public Optimization<OptimizationType> {
+class Stoichastic : public Optimization {
   
 private:
   

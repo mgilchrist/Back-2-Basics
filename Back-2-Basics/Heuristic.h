@@ -25,14 +25,13 @@
 #include "Collection.h"
 #include "Stack.h"
 
-template <class HeuristicType>
 class Heuristic {
   
 private:
   
 public:
-  Heuristic<HeuristicType>();
-  Heuristic<HeuristicType>(Collection::Array<double> *);
+  Heuristic();
+  Heuristic(Collection::Array<double> *);
   
   virtual void calculateExpectation(void) =0;
   virtual double getExpectation(void) =0;
@@ -40,10 +39,6 @@ public:
   
 };
 
-template <class HeuristicType>
-Heuristic<HeuristicType>::Heuristic() {
-  
-}
 
 
 #endif

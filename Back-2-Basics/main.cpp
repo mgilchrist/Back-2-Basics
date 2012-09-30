@@ -92,11 +92,26 @@ int testNavigation() {
 int testMetaheuristic() {
   
   Collection::Array<double> *input = new Collection::Array<double>(INPUT_SIZE);
+  Collection::Array<Heuristic *> *candidates = new Collection::Array<Heuristic *>();
   double *reality = new double[OUTPUT_SIZE];
   double expectation;
   uint64_t iterations = 0;
+  uint64_t tmpSize;
+  Collection::Stack<double *> *thisInput;
   
-  Metaheuristic<Genetic,NeuralNetwork::NeuralNetwork,double> *masterMind = new Metaheuristic<Genetic,NeuralNetwork::NeuralNetwork, double>(input);
+  for (int ix = 0; ix < 16; ix ++) {
+    tmpSize = (random() % input->getSize()) + 1;
+    thisInput = new Collection::Stack<double *>(tmpSize);
+    for (int jx = 0; jx < tmpSize; jx++) {
+      thisInput->push(input->ptrToIndex(jx));
+    }
+    
+    candidates->setIndex(ix, new NeuralNetwork::NeuralNetwork(thisInput));
+    
+    delete thisInput;
+  }
+  
+  Metaheuristic<double> *masterMind = new Metaheuristic<double>(input, candidates);
   
   cout << "Training\n";
   do {

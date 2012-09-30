@@ -92,7 +92,7 @@ namespace NeuralNetwork
   };
   
   
-  class NeuralNetwork : public Graph::Network<Neuron,Synapse> , public Heuristic<NeuralNetwork>
+  class NeuralNetwork : public Graph::Network<Neuron,Synapse> , public Heuristic
   {
   private:
     
