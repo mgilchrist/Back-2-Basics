@@ -25,200 +25,210 @@
 #include "Graph.h"
 
 
+#define LEFT  0
+#define RIGHT 1
+
 namespace Graph {
   
+  template <class TreeNodeType, class DataType, class KeyType>
+  class TreeNode
+  {
+  private:
+    TreeNodeType **children;
+    
+  public:
+    DataType data = NULL;
+    TreeNodeType *parent = NULL;
+    
+    KeyType key;
+    KeyType lowestDesendant;
+    
+    
+    TreeNode() {
+      children = new TreeNodeType*[2];
+      
+      for (int ix = 0; ix < 2; ix++) {
+        children[ix] = NULL;
+      }
+    }
+    
+    TreeNode(uint8_t numChildren) {
+      children = new TreeNodeType*[numChildren];
+      
+      for (int ix = 0; ix < numChildren; ix++) {
+        children[ix] = NULL;
+      }
+    }
+    
+    ~TreeNode(uint8_t numChildren) {
+      delete children;
+    }
+    
+    TreeNodeType *getChild(uint8_t index) {
+      return children[index];
+    }
+    
+    void setChild(uint8_t index, TreeNodeType *tNode) {
+      children[index] = tNode;
+    }
+  }
   
   /* Tree */
   
-  template <class EntryType, class KeyType>
+  template <class TreeNodeType, class DataType, class KeyType>
   class Tree
   {
     
   private:
-    Collection::Stack<EntryType> *entryList;
-    Collection::Stack<KeyType> *lowValList;
-    Collection::Stack<KeyType> *keys;
-    uint64_t treeRoot = 0;
+    TreeNodeType *treeRoot;
     
   protected:
-    virtual uint64_t findOpening(KeyType key, uint64_t current);
-    virtual uint64_t parentOf(uint64_t entry);
-    virtual uint64_t sonOf(uint64_t entry);
-    virtual uint64_t daughterOf(uint64_t entry);
+    virtual TreeNode *findOpening(KeyType key, TreeNodeType *current);
+    TreeNodeType *getNode(KeyType key, TreeNodeType *current);
+    TreeNodeType *getTreeRoot();
+    TreeNodeType insert_r(DataType data, KeyType key);
     
   public:
     Tree();
     
-    virtual uint64_t getParent(uint64_t entry);
-    virtual uint64_t getLeft(uint64_t entry);
-    virtual uint64_t getRight(uint64_t entry);
-    virtual uint64_t getTreeRoot();
-    virtual void swap(uint64_t a, uint64_t b);
-    virtual void move(uint64_t from, uint64_t to);
-    virtual EntryType nodeAtIndex(uint64_t);
-    virtual uint64_t insertTreeNode(EntryType node, KeyType key);
-    virtual void removeTreeNode(uint64_t index);
-    virtual uint64_t getTreeNode(KeyType key, uint64_t current);
+    virtual void insert(DataType data, KeyType key);
+    virtual DataType remove(KeyType key);
+    virtual DataType search(KeyType key);
   };
-  
-  
   
   
   /* Tree */
   
-  template <class EntryType, class KeyType>
-  Tree<EntryType,KeyType>::Tree() {
-    this->entryList = new Collection::Stack<EntryType>();
-    this->lowValList = new Collection::Stack<KeyType>();
-    this->keys = new Collection::Stack<KeyType>();
-    
-    entryList->setIndex(0, NULL);
+  template <class TreeNodeType, class DataType, class KeyType>
+  Tree<<TreeNodeType,DataType,KeyType>::Tree() {
+    treeRoot = new TreeNodeType();
   }
   
-  template <class EntryType, class KeyType>
-  uint64_t Tree<EntryType,KeyType>::findOpening(KeyType key, uint64_t current) {
+  template <class TreeNodeType, class DataType, class KeyType>
+  uint64_t Tree<<TreeNodeType,DataType,KeyType>::findOpening(KeyType key, TreeNode *current) {
     
+    uint8_t tmp;
     
-    if (entryList->atIndex(current) == NULL) {
+    if (current->getChild(LEFT) == NULL) {
       return current;
     }
     
-    if (keys->atIndex(current) >= key) {
-      if (lowValList->atIndex(current) > key) {
-        lowValList[current] = key;
+    if (current->key >= key) {
+      if (current->lowestDesendant > key) {
+        current->lowestDesendant = key;
       }
-      return findOpening(key, sonOf(current));
+      tmp = LEFT;
       
     } else {
-      return findOpening(key, daughterOf(current));
+      tmp = RIGHT;
     }
     
-  }
-  
-  
-  template <class EntryType, class KeyType>
-  uint64_t Tree<EntryType,KeyType>::insertTreeNode(EntryType node, KeyType key) {
-    
-    uint64_t current = findOpening(key, 0);
-    
-    entryList->setIndex(current, node);
-    keys->setIndex(current, key);
-    
-    entryList->setIndex(sonOf(current), NULL);
-    entryList->setIndex(daughterOf(current), NULL);
-    
-    return current;
+    return findOpening(key, current->getChild(tmp));
     
   }
   
-  template <class EntryType, class KeyType>
-  void Tree<EntryType,KeyType>::removeTreeNode(uint64_t index) {
+  template <class TreeNodeType, class DataType, class KeyType>
+  TreeNodeType Tree<<TreeNodeType,DataType,KeyType>::insert_r(DataType data, KeyType key) {
     
-    entryList->setIndex(index, entryList->atIndex(getRight(index)));
+    TreeNodeType *tNode = findOpening(key, treeRoot);
     
-    if (entryList->atIndex(index) != NULL) {
-      removeTreeNode(getRight(index));
+    TreeNodeType *left = new TreeNodeType(2);
+    TreeNodeType *right = new TreeNodeType(2);
+    
+    left->parent = tNode;
+    right->parent = tNode;
+    
+    tNode->setChild(LEFT, left);
+    tNode->setChild(RIGHT, right);
+    tNode->key = key;
+    tNode->lowestDesendant = key;
+    
+  }
+  
+  
+  template <class TreeNodeType, class DataType, class KeyType>
+  void Tree<<TreeNodeType,DataType,KeyType>::insert(DataType data, KeyType key) {
+    
+    insert_r(data,key);
+    
+  }
+  
+  template <class TreeNodeType, class DataType, class KeyType>
+  void Tree<TreeNodeType,DataType,KeyType>::remove(KeyType key) {
+    
+    TreeNode *parent, *victim, *tmp, *opening;
+    
+    tmp = NULL;
+    victim = getNode(key, treeRoot);
+    parent = victim->parent;
+    
+    if (parent->getChild(LEFT) == victim) {
+      parent->setChild(LEFT, victim->getChild(RIGHT));
+      if (victim->getChild(LEFT)->getChild(0) != NULL) {
+        tmp = victim->getChild(LEFT);
+      } else {
+        parent->lowestDesendant = victim->getChild(RIGHT)->lowestDesendant;
+      }
+    } else {
+      parent->setChild(RIGHT, victim->getChild(LEFT));
+      if (victim->getChild(RIGHT)->getChild(0) != NULL) {
+        tmp = victim->getChild(RIGHT);
+      }
     }
     
+    if (tmp != NULL) {
+      opening = findOpening(victim->key);
+      
+      parent = opening->parent;
+      tmp->parent = parent;
+      
+      if (parent->getChild(LEFT) == opening) {
+        parent->getChild(LEFT) = tmp;
+      } else {
+        parent->getChild(RIGHT) = tmp;
+      }
+      
+      delete opening;
+    }
+    
+    
+    delete victim;
+    
   }
   
-  template <class EntryType, class KeyType>
-  uint64_t Tree<EntryType,KeyType>::getTreeRoot() {
+  template <class TreeNodeType, class DataType, class KeyType>
+  TreeNodeType *Tree<<TreeNodeType,DataType,KeyType>::getTreeRoot() {
     
     return treeRoot;
     
   }
   
-  template <class EntryType, class KeyType>
-  uint64_t Tree<EntryType,KeyType>::getTreeNode(KeyType key, uint64_t current) {
+  template <class TreeNodeType, class DataType, class KeyType>
+  TreeNodeType *Tree<TreeNodeType,DataType,KeyType>::getNode(KeyType key, TreeNode *current) {
     
-    if (keys->atIndex(current) == key) {
+    uint8_t tmp;
+    
+    if (current->key == key) {
       return current;
     }
     
-    if ((keys->atIndex(sonOf(current))) >= key) {
-      return findOpening(key, sonOf(current));
+    if (key < current->lowestDesendant) {
+      return NULL;
     }
     
-    if ((keys->atIndex(daughterOf(current))) >= key) {
-      
-      if (lowValList->atIndex(daughterOf(current)) >= key) {
-        return findOpening(key, sonOf(current));
-      } else {
-        return findOpening(key, daughterOf(current));
-      }
+    if (key < current->key) {
+      tmp = LEFT;
+    } else {
+      tmp = RIGHT;
     }
     
-    return findOpening(key, daughterOf(current));
+    return getNode(key, current->getChild(tmp));
   }
   
-  template <class EntryType, class KeyType>
-  EntryType Tree<EntryType,KeyType>::nodeAtIndex(uint64_t index) {
+  template <class TreeNodeType, class DataType, class KeyType>
+  DataType Tree<<TreeNodeType,DataType,KeyType>::search(KeyType key) {
     
-    return entryList->atIndex(index);
-    
-  }
-  
-  template <class EntryType, class KeyType>
-  uint64_t Tree<EntryType,KeyType>::parentOf(uint64_t entry) {
-    
-    return (entry - 1) / 2;
-    
-  }
-  
-  template <class EntryType, class KeyType>
-  uint64_t Tree<EntryType,KeyType>::sonOf(uint64_t entry) {
-    
-    return (entry * 2) + 1;
-    
-  }
-  
-  template <class EntryType, class KeyType>
-  uint64_t Tree<EntryType,KeyType>::daughterOf(uint64_t entry) {
-    
-    return (entry * 2) + 2;
-    
-  }
-  
-  template <class EntryType, class KeyType>
-  uint64_t Tree<EntryType,KeyType>::getParent(uint64_t entry) {
-    
-    return parentOf(entry);
-    
-  }
-  
-  template <class EntryType, class KeyType>
-  uint64_t Tree<EntryType,KeyType>::getLeft(uint64_t entry) {
-    
-    return sonOf(entry);
-    
-  }
-  
-  template <class EntryType, class KeyType>
-  uint64_t Tree<EntryType,KeyType>::getRight(uint64_t entry) {
-    
-    return daughterOf(entry);
-    
-  }
-  
-  
-  template <class EntryType, class KeyType>
-  void Tree<EntryType,KeyType>::swap(uint64_t a, uint64_t b) {
-    EntryType tmpEntry;
-    
-    tmpEntry = this->entryList->atIndex(a);
-    this->entryList->setIndex(a, this->entryList->atIndex(b));
-    this->entryList->setIndex(b, tmpEntry);
-    
-  }
-  
-  template <class EntryType, class KeyType>
-  void Tree<EntryType,KeyType>::move(uint64_t from, uint64_t to) {
-    
-    this->entryList->setIndex(sonOf(to),
-                              this->entryList->atIndex(from));
-    
-    this->entryList->setIndex(sonOf(from), NULL);
+    return getNode(key,treeRoot)->data;
   }
   
   

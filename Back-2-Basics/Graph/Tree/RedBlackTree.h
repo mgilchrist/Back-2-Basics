@@ -11,222 +11,193 @@
 
 #include "Tree.h"
 
+#define SON       0
+#define DAUGHTER  1
 
 namespace Graph {
   
   template <class EntryType, class KeyType>
-  class RedBlackTree : public Tree<EntryType,KeyType>
+  class RedBlackTreeNode : public TreeNode
   {
-    
   private:
     enum Color {
       RED,
       BLACK
     };
     
-    Collection::Stack<Color> *colorList;
+    Color color = RED;
     
-    virtual bool isSon(uint64_t entry);
-    virtual bool isDaughter(uint64_t entry);
-    virtual void move(uint64_t from, uint64_t to);
+    RedBlackTreeNode() {
+      TreeNode(2);
+    }
+  }
+  
+  template <class EntryType, class KeyType>
+  class RedBlackTree : public Tree<RedBlackTreeNode,EntryType,KeyType>
+  {
     
-    virtual void recolor(uint64_t nodePosition);
-    virtual void rotateLeft(uint64_t nodePosition);
-    virtual void rotateRight(uint64_t nodePosition);
+  private:
+    
+    bool isSon(RedBlackTreeNode *entry);
+    bool isDaughter(RedBlackTreeNode *entry);
+    
+    void recolor(RedBlackTreeNode *node);
+    void rotateLeft(RedBlackTreeNode *node);
+    void rotateRight(RedBlackTreeNode *node);
     
   public:
     RedBlackTree();
     
-    virtual void insertRedBlackNode(EntryType n, KeyType key);
-    void printRBTree(uint64_t start);
-    
+    void insert(EntryType n, KeyType key);    
     
   };
   
   
   template <class EntryType, class KeyType>
   RedBlackTree<EntryType,KeyType>::RedBlackTree() {
-    this->colorList = new Collection::Stack<Color>();
+  
   }
   
   template <class EntryType, class KeyType>
-  void RedBlackTree<EntryType,KeyType>::move(uint64_t from, uint64_t to) {
+  bool RedBlackTree<EntryType,KeyType>::isSon(RedBlackTreeNode *node) {
     
-    Tree<EntryType,KeyType>::move(from, to);
-    
-    this->colorList->setIndex(this->sonOf(to),
-                              this->colorList->atIndex(from));
-    
-    this->colorList->setIndex(this->sonOf(from), BLACK);
-  }
-  
-  template <class EntryType, class KeyType>
-  bool RedBlackTree<EntryType,KeyType>::isSon(uint64_t entry) {
-    
-    if (entry == 0) {
+    if (node->parent == NULL) {
       return false;
     }
     
-    return (entry % 2) ? true : false;
+    return (node->parent->getChild(SON) == node) ? true : false;
   }
   
   template <class EntryType, class KeyType>
-  bool RedBlackTree<EntryType,KeyType>::isDaughter(uint64_t entry) {
+  bool RedBlackTree<EntryType,KeyType>::isDaughter(RedBlackTreeNode *node) {
     
-    if (entry == 0) {
+    if (node->parent == NULL) {
       return false;
     }
     
-    return (entry % 2) ? false : true;
+    return (node->parent->getChild(DAUGHTER) == node) ? true : false;
   }
   
-  template <class EntryType, class KeyType>
-  void RedBlackTree<EntryType,KeyType>::printRBTree(uint64_t start) {
-    
-    uint64_t last = 0, ix = 0;
-    
-    while(1) {
-      for (uint64_t jx = last; jx < ((2 ^ ix) + last); jx++) {
-        if (this->nodeAtIndex(jx) != NULL) {
-          cout << ((this->colorList->atIndex(start) == BLACK) ? "B " : "R ");
-        } else {
-          cout << "  ";
-        }
-      }
-      cout << "\n";
-      last = (2 ^ ix) + last;
-      ix++;
-    }
-    
-  }
   
   template <class EntryType, class KeyType>
-  void RedBlackTree<EntryType,KeyType>::insertRedBlackNode(EntryType n, KeyType key) {
+  void RedBlackTree<EntryType,KeyType>::insert(EntryType n, KeyType key) {
     
-    uint64_t nodePosition;
+    RedBlackTreeNode *node;
     
     cout << "inserting tree node\n";
     
-    nodePosition = this->insertTreeNode(n,key);
+    node = this->insert_r(n,key);
     
     cout << "maintaining red/black rules.\n";
     
-    this->colorList->push(RED);
-    
-    while ((nodePosition != 0) && (this->colorList->atIndex(this->parentOf(nodePosition)) == RED)) {
-      cout << "parent of ";
-      cout << nodePosition;
-      cout << " is red\n";
+    while ((node != NULL) && (node->parent != NULL) && (node->parent->color == RED)) {
+      cout << "parent is red\n";
       
-      if ((this->parentOf(nodePosition) != 0) &&
-          (isSon(this->parentOf(nodePosition)))) {
-        uint64_t aunt = this->daughterOf(this->parentOf(this->parentOf(nodePosition)));
+      if (isSon(node->parent)) {
+        RedBlackTreeNode *aunt = node->parent->parent->getChild(DAUGHTER);
         
-        if (this->colorList->atIndex(aunt) == RED) {
+        if (aunt->color == RED) {
           cout << "aunt is also red, just recoloring\n";
-          recolor(nodePosition);
+          recolor(node);
         } else {
-          if (isDaughter(nodePosition)) {
+          if (isDaughter(node)) {
             cout << "this is daughter, rotating left\n";
-            rotateLeft(nodePosition);
+            rotateLeft(node);
           }
           cout << "rotating right\n";
-          rotateRight(nodePosition);
+          rotateRight(node);
         }
-      } else {
-        uint64_t uncle = this->sonOf(this->parentOf(this->parentOf(nodePosition)));
-        if (this->colorList->atIndex(uncle) == RED) {
+      } else if (isDaughter(node->parent)) {
+        RedBlackTreeNode *uncle = node->parent->parent->getChild(SON);
+        if (uncle->color == RED) {
           cout << "uncle is also red, just recoloring\n";
-          recolor(nodePosition);
+          recolor(node);
         } else {
-          if (isSon(nodePosition)) {
+          if (isSon(node)) {
             cout << "this is son, rotating right\n";
-            rotateRight(nodePosition);
+            rotateRight(node);
           }
           cout << "rotating left\n";
-          rotateLeft(nodePosition);
+          rotateLeft(node);
         }
       }
       
       cout << "Moving up tree\n";
-      nodePosition = this->parentOf(nodePosition);
+      node = node->parent;
     }
     
     
-    this->colorList->setIndex(0, BLACK);
+    this->getTreeRoot->color = BLACK;
     
     printRBTree(0);
   }
   
   template <class EntryType, class KeyType>
-  void RedBlackTree<EntryType,KeyType>::recolor(uint64_t nodePosition) {
+  void RedBlackTree<EntryType,KeyType>::recolor(RedBlackTreeNode *node) {
     
+    node->parent->parent->color = RED;
     
-    this->colorList->setIndex(this->parentOf(this->parentOf(nodePosition)), RED);
-    
-    this->colorList->setIndex(this->sonOf(this->parentOf(this->parentOf(nodePosition))), BLACK);
-    this->colorList->setIndex(this->daughterOf(this->parentOf(this->parentOf(nodePosition))), BLACK);
+    node->parent->parent->getChild(SON)->color = BLACK;
+    node->parent->parent->getChild(DAUGHTER)->color = BLACK;
     
   }
   
   template <class EntryType, class KeyType>
-  void RedBlackTree<EntryType,KeyType>::rotateLeft(uint64_t nodePosition) {
+  void RedBlackTree<EntryType,KeyType>::rotateLeft(RedBlackTreeNode *node) {
     
-    uint64_t parent = this->parentOf(nodePosition);
-    uint64_t grandParent = this->parentOf(parent);
-    
-    
-    
+    RedBlackTreeNode *parent = node->parent;
+    RedBlackTreeNode *grandParent = parent->parent;
+        
     if (parent == this->sonOf(grandParent)) {
       if (!isSon(nodePosition)) {
-        uint64_t son = this->sonOf(nodePosition);
+        RedBlackTreeNode *son = node->getChild(SON);
         
         /* Staightening */
-        move(parent, this->sonOf(nodePosition));
-        move(grandParent, parent);
-        move(nodePosition, this->sonOf(grandParent));
-        move(son, this->daughterOf(parent));
+        node->setChild(SON, parent);
+        node->parent = grandParent;
+        grandParent->setChild(SON, node);
+        parent->setChild(DAUGHTER, son);
       }
     } else {
       if (!isSon(nodePosition)) {
-        uint64_t brother = this->sonOf(parent);
+        RedBlackTreeNode *brother = parent->getChild(SON));
         
         /* Flattening */
-        move(grandParent, this->sonOf(parent));
-        move(this->parentOf(grandParent), grandParent);
-        move(parent, this->parentOf(grandParent));
-        move(brother, this->daughterOf(grandParent));
+        parent->setChild(SON,grandParent);
+        parent->parent = grandParent->parent;
+        grandParent->parent = parent;
+        grandParent->setChild(DAUGHTER, brother);
         
       }
     }
   }
   
   template <class EntryType, class KeyType>
-  void RedBlackTree<EntryType,KeyType>::rotateRight(uint64_t nodePosition) {
+  void RedBlackTree<EntryType,KeyType>::rotateRight(RedBlackTreeNode *node) {
     
-    uint64_t parent = this->parentOf(nodePosition);
-    uint64_t grandParent = this->parentOf(parent);
+    RedBlackTreeNode *parent = node->parent;
+    RedBlackTreeNode *grandParent = parent->parent;
     
     if (isSon(parent)) {
-      if (isSon(nodePosition)) {
-        uint64_t sister = this->daughterOf(parent);
+      if (isSon(node)) {
+        RedBlackTreeNode *sister = parent->getChild(DAUGHTER));
         
         /* Flattening */
-        move(grandParent, this->daughterOf(parent));
-        move(this->parentOf(grandParent), grandParent);
-        move(parent, this->parentOf(grandParent));
-        move(sister, this->sonOf(grandParent));
+        parent->setChild(DAUGHTER,grandParent);
+        parent->parent = grandParent->parent
+        grandParent->parent = parent;
+        grandParent->setChild(SON, sister);
         
       }
     } else {
-      if (isSon(nodePosition)) {
-        uint64_t daughter = this->daughterOf(nodePosition);
+      if (isSon(node)) {
+        RedBlackTreeNode *daughter = node->getChild(DAUGHTER));
         
         /* Staightening */
-        move(parent, this->daughterOf(nodePosition));
-        move(grandParent, parent);
-        move(nodePosition, this->daughterOf(grandParent));
-        move(daughter, this->sonOf(parent));
+        node->setChild(DAUGHTER,parent);
+        node->parent = grandParent;
+        grandParent->setChild(DAUGHTER,node);
+        parent->getChild(SON,daughter);
       }
     }
     
