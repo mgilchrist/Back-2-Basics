@@ -110,8 +110,8 @@ namespace Graph {
     ~Map();
     
     virtual EdgeType *addEdge(NodeType *a, NodeType *b, double location);
-    virtual void setStart(NodeType *start);
-    virtual void setTerminal(NodeType *terminal);
+    void setStart(NodeType *start);
+    void setTerminal(NodeType *terminal);
     virtual Collection::Stack<EdgeType *> *getShortestPath();
     
   };

@@ -73,7 +73,7 @@ namespace Collection {
     uint64_t *fullHashMap;
     
     Array<uint64_t> *SHA_2_Prep(uint8_t *data, uint64_t dataSize);
-    Array<uint64_t> *SHA_2(KeyType);
+    uint64_t *SHA_2(KeyType);
     void grow();
     
   public:
@@ -81,11 +81,24 @@ namespace Collection {
     uint64_t search(KeyType);
     ElementType remove(uint64_t);
     void insert(ElementType, KeyType);
+    ElementType get(uint64_t);
+    void update(uint64_t,ElementType);
     //ElementType *clone();
   };
   
   
   /* Class: HashTable */
+  
+  template <class ElementType, class KeyType>
+  ElementType HashTable<ElementType,KeyType>::get(uint64_t index) {
+    return this->collection[index];
+  }
+  
+  template <class ElementType, class KeyType>
+  void HashTable<ElementType,KeyType>::update(uint64_t index, ElementType data) {
+    this->collection[index] = data;
+  }
+
   
   template <class ElementType, class KeyType>
   HashTable<ElementType,KeyType>::HashTable() {
@@ -103,8 +116,8 @@ namespace Collection {
   template <class ElementType, class KeyType>
   void HashTable<ElementType,KeyType>::grow() {
     ElementType *nArray = new ElementType[2 * this->capacity];
-    ElementType *nKeyArray = new KeyType[2 * this->capacity];
-    ElementType *nHashArray = new uint64_t[2 * this->capacity];
+    KeyType *nKeyArray = new KeyType[2 * this->capacity];
+    uint64_t *nHashArray = new uint64_t[2 * this->capacity];
 
     uint64_t newIndex;
     
@@ -123,8 +136,7 @@ namespace Collection {
     delete this->keyMap;
     delete this->fullHashMap;
     
-    nArray->size = this->size;
-    nArray->capacity = 2 * this->capacity;
+    this->capacity = 2 * this->capacity;
   }
   
   template <class ElementType, class KeyType>
@@ -133,7 +145,7 @@ namespace Collection {
     uint8_t useHash;
     uint64_t index;
     
-    Array<uint64_t> *hash = SHA_2(key);
+    uint64_t *hash = SHA_2(key);
     useHash = 8;
     
     while (useHash) {
@@ -167,8 +179,9 @@ namespace Collection {
   template <class ElementType, class KeyType>
   void HashTable<ElementType,KeyType>::insert(ElementType data, KeyType key) {
     
-    Array<uint64_t> *hash = SHA_2(key);
+    uint64_t *hash = SHA_2(key);
     uint8_t useHash = 8;
+    uint64_t index;
     
     do {
       while (useHash) {
@@ -216,12 +229,15 @@ namespace Collection {
   }
   
   template <class ElementType, class KeyType>
-  Array<uint64_t> *HashTable<ElementType,KeyType>::SHA_2(KeyType key) {
+  uint64_t *HashTable<ElementType,KeyType>::SHA_2(KeyType key) {
     Array<uint64_t> *conditionedMsg;
     uint64_t subArray[80];
-    uint64_t tmpHash[8], hash[8];
+    uint64_t tmpHash[8];
+    uint64_t *hash;
     uint64_t tmpInt0, tmpInt1;
     uint64_t tap0, tap1, majority, change;
+    
+    hash = new uint64_t[8];
     
     
     if (sizeof(KeyType) != sizeof(key)) {
@@ -288,7 +304,9 @@ namespace Collection {
       }
     }
     
+    delete conditionedMsg;
     
+    return hash;
   }
   
 }

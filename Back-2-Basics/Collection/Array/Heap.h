@@ -35,13 +35,13 @@ namespace Collection {
     
   private:
     void swap(uint64_t i,uint64_t j);
-    Comparable<ElementType,KeyType> *removeHeapEntry(int index);
     
   public:
     
     Heap();
     
-    ElementType peekAtHeapEntry(int index);
+    Comparable<ElementType,KeyType> *removeHeapEntry(uint64_t index);
+    ElementType peekAtHeapEntry(uint64_t index);
     void heapifyUp(uint64_t i);
     void heapifyDown(uint64_t i);
     uint64_t *push(ElementType,KeyType);
@@ -80,7 +80,7 @@ namespace Collection {
   }
   
   template <class ElementType, class KeyType>
-  Comparable<ElementType,KeyType> *Heap<ElementType,KeyType>::removeHeapEntry(int index) {
+  Comparable<ElementType,KeyType> *Heap<ElementType,KeyType>::removeHeapEntry(uint64_t index) {
     
     Comparable<ElementType,KeyType> *entry = this->collection[index];
     
@@ -165,7 +165,7 @@ namespace Collection {
   }
   
   template <class ElementType, class KeyType>
-  ElementType Heap<ElementType,KeyType>::peekAtHeapEntry(int index) {
+  ElementType Heap<ElementType,KeyType>::peekAtHeapEntry(uint64_t index) {
     
     Comparable<ElementType,KeyType> *entry = this->collection[index];
     

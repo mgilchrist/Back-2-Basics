@@ -11,6 +11,7 @@
 
 #include <iostream>
 
+#include "Stack.h"
 #include "Map.h"
 #include "Heuristic.h"
 
@@ -51,7 +52,9 @@ namespace Graph {
   class Navigation : public Map<Coordinate,Path>
   {
     
-    
+  private:
+    void aStar();
+    Collection::Array<double> *costHeuristic;
     
   public:
     
@@ -62,6 +65,8 @@ namespace Graph {
     void getOriginCooridinate(double *,double *,double *);
     void addSubMap(Map<Coordinate,Path> *map, Coordinate *origin, Heuristic *);
     void removeSubMap(uint64_t);
+    Collection::Stack<Path *> *getShortestPath();
+
     
     
   };
