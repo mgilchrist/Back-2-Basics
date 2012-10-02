@@ -29,7 +29,6 @@ namespace Graph {
     
     // set initial distances to infinity
     for (int ix = 0; ix < this->getNumNodes(); ix++) {
-      this->nodeAtIndex(ix)->distanceFromStart = 1.0/0.0;
       this->nodeAtIndex(ix)->previousEdge = NULL;
     }
     

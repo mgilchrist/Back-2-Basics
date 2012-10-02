@@ -16,34 +16,36 @@
 
 namespace Graph {
   
-  template <class EntryType, class KeyType>
-  class RedBlackTreeNode : public TreeNode
+  enum Color {
+    RED,
+    BLACK
+  };
+
+  
+  template <class DataType, class KeyType>
+  class RedBlackTreeNode : public TreeNode<RedBlackTreeNode<DataType,KeyType>,DataType,KeyType>
   {
-  private:
-    enum Color {
-      RED,
-      BLACK
-    };
+  public:
     
     Color color = RED;
     
     RedBlackTreeNode() {
-      TreeNode(2);
+      TreeNode<RedBlackTreeNode<DataType,KeyType>,DataType,KeyType>(2);
     }
-  }
+  };
   
   template <class EntryType, class KeyType>
-  class RedBlackTree : public Tree<RedBlackTreeNode,EntryType,KeyType>
+  class RedBlackTree : public Tree<RedBlackTreeNode<EntryType,KeyType>,EntryType,KeyType>
   {
     
   private:
     
-    bool isSon(RedBlackTreeNode *entry);
-    bool isDaughter(RedBlackTreeNode *entry);
+    bool isSon(RedBlackTreeNode<EntryType,KeyType> *entry);
+    bool isDaughter(RedBlackTreeNode<EntryType,KeyType> *entry);
     
-    void recolor(RedBlackTreeNode *node);
-    void rotateLeft(RedBlackTreeNode *node);
-    void rotateRight(RedBlackTreeNode *node);
+    void recolor(RedBlackTreeNode<EntryType,KeyType> *node);
+    void rotateLeft(RedBlackTreeNode<EntryType,KeyType> *node);
+    void rotateRight(RedBlackTreeNode<EntryType,KeyType> *node);
     
   public:
     RedBlackTree();
@@ -59,145 +61,131 @@ namespace Graph {
   }
   
   template <class EntryType, class KeyType>
-  bool RedBlackTree<EntryType,KeyType>::isSon(RedBlackTreeNode *node) {
+  bool RedBlackTree<EntryType,KeyType>::isSon(RedBlackTreeNode<EntryType,KeyType> *node) {
     
     if (node->parent == NULL) {
       return false;
     }
     
-    return (node->parent->getChild(SON) == node) ? true : false;
+    return (node->parent->getLeaf(SON) == node) ? true : false;
   }
   
   template <class EntryType, class KeyType>
-  bool RedBlackTree<EntryType,KeyType>::isDaughter(RedBlackTreeNode *node) {
+  bool RedBlackTree<EntryType,KeyType>::isDaughter(RedBlackTreeNode<EntryType,KeyType> *node) {
     
     if (node->parent == NULL) {
       return false;
     }
     
-    return (node->parent->getChild(DAUGHTER) == node) ? true : false;
+    return (node->parent->getLeaf(DAUGHTER) == node) ? true : false;
   }
   
   
   template <class EntryType, class KeyType>
   void RedBlackTree<EntryType,KeyType>::insert(EntryType n, KeyType key) {
     
-    RedBlackTreeNode *node;
-    
-    cout << "inserting tree node\n";
-    
+    RedBlackTreeNode<EntryType,KeyType> *node;
+        
     node = this->insert_r(n,key);
     
-    cout << "maintaining red/black rules.\n";
-    
     while ((node != NULL) && (node->parent != NULL) && (node->parent->color == RED)) {
-      cout << "parent is red\n";
       
       if (isSon(node->parent)) {
-        RedBlackTreeNode *aunt = node->parent->parent->getChild(DAUGHTER);
+        RedBlackTreeNode<EntryType,KeyType> *aunt = node->parent->parent->getLeaf(DAUGHTER);
         
         if (aunt->color == RED) {
-          cout << "aunt is also red, just recoloring\n";
           recolor(node);
         } else {
           if (isDaughter(node)) {
-            cout << "this is daughter, rotating left\n";
             rotateLeft(node);
           }
-          cout << "rotating right\n";
           rotateRight(node);
         }
       } else if (isDaughter(node->parent)) {
-        RedBlackTreeNode *uncle = node->parent->parent->getChild(SON);
+        RedBlackTreeNode<EntryType,KeyType> *uncle = node->parent->parent->getLeaf(SON);
         if (uncle->color == RED) {
-          cout << "uncle is also red, just recoloring\n";
           recolor(node);
         } else {
           if (isSon(node)) {
-            cout << "this is son, rotating right\n";
             rotateRight(node);
           }
-          cout << "rotating left\n";
           rotateLeft(node);
         }
       }
       
-      cout << "Moving up tree\n";
       node = node->parent;
     }
     
     
-    this->getTreeRoot->color = BLACK;
-    
-    printRBTree(0);
+    this->getTreeRoot()->color = BLACK;
   }
   
   template <class EntryType, class KeyType>
-  void RedBlackTree<EntryType,KeyType>::recolor(RedBlackTreeNode *node) {
+  void RedBlackTree<EntryType,KeyType>::recolor(RedBlackTreeNode<EntryType,KeyType> *node) {
     
     node->parent->parent->color = RED;
     
-    node->parent->parent->getChild(SON)->color = BLACK;
-    node->parent->parent->getChild(DAUGHTER)->color = BLACK;
+    node->parent->parent->getLeaf(SON)->color = BLACK;
+    node->parent->parent->getLeaf(DAUGHTER)->color = BLACK;
     
   }
   
   template <class EntryType, class KeyType>
-  void RedBlackTree<EntryType,KeyType>::rotateLeft(RedBlackTreeNode *node) {
+  void RedBlackTree<EntryType,KeyType>::rotateLeft(RedBlackTreeNode<EntryType,KeyType> *node) {
     
-    RedBlackTreeNode *parent = node->parent;
-    RedBlackTreeNode *grandParent = parent->parent;
+    RedBlackTreeNode<EntryType,KeyType> *parent = node->parent;
+    RedBlackTreeNode<EntryType,KeyType> *grandParent = parent->parent;
         
-    if (parent == this->sonOf(grandParent)) {
-      if (!isSon(nodePosition)) {
-        RedBlackTreeNode *son = node->getChild(SON);
+    if (parent == grandParent->getLeaf(SON)) {
+      if (!isSon(node)) {
+        RedBlackTreeNode<EntryType,KeyType> *son = node->getLeaf(SON);
         
         /* Staightening */
-        node->setChild(SON, parent);
+        node->setLeaf(SON, parent);
         node->parent = grandParent;
-        grandParent->setChild(SON, node);
-        parent->setChild(DAUGHTER, son);
+        grandParent->setLeaf(SON, node);
+        parent->setLeaf(DAUGHTER, son);
       }
     } else {
-      if (!isSon(nodePosition)) {
-        RedBlackTreeNode *brother = parent->getChild(SON));
+      if (!isSon(node)) {
+        RedBlackTreeNode<EntryType,KeyType> *brother = parent->getLeaf(SON);
         
         /* Flattening */
-        parent->setChild(SON,grandParent);
+        parent->setLeaf(SON,grandParent);
         parent->parent = grandParent->parent;
         grandParent->parent = parent;
-        grandParent->setChild(DAUGHTER, brother);
+        grandParent->setLeaf(DAUGHTER, brother);
         
       }
     }
   }
   
   template <class EntryType, class KeyType>
-  void RedBlackTree<EntryType,KeyType>::rotateRight(RedBlackTreeNode *node) {
+  void RedBlackTree<EntryType,KeyType>::rotateRight(RedBlackTreeNode<EntryType,KeyType> *node) {
     
-    RedBlackTreeNode *parent = node->parent;
-    RedBlackTreeNode *grandParent = parent->parent;
+    RedBlackTreeNode<EntryType,KeyType> *parent = node->parent;
+    RedBlackTreeNode<EntryType,KeyType> *grandParent = parent->parent;
     
     if (isSon(parent)) {
       if (isSon(node)) {
-        RedBlackTreeNode *sister = parent->getChild(DAUGHTER));
+        RedBlackTreeNode<EntryType,KeyType> *sister = parent->getLeaf(DAUGHTER);
         
         /* Flattening */
-        parent->setChild(DAUGHTER,grandParent);
-        parent->parent = grandParent->parent
+        parent->setLeaf(DAUGHTER,grandParent);
+        parent->parent = grandParent->parent;
         grandParent->parent = parent;
-        grandParent->setChild(SON, sister);
+        grandParent->setLeaf(SON, sister);
         
       }
     } else {
       if (isSon(node)) {
-        RedBlackTreeNode *daughter = node->getChild(DAUGHTER));
+        RedBlackTreeNode<EntryType,KeyType> *daughter = node->getLeaf(DAUGHTER);
         
         /* Staightening */
-        node->setChild(DAUGHTER,parent);
+        node->setLeaf(DAUGHTER, parent);
         node->parent = grandParent;
-        grandParent->setChild(DAUGHTER,node);
-        parent->getChild(SON,daughter);
+        grandParent->setLeaf(DAUGHTER,node);
+        parent->setLeaf(SON,daughter);
       }
     }
     

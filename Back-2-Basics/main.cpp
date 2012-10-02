@@ -26,6 +26,7 @@ using namespace std;
 #include "Heap.h"
 #include "HashTable.h"
 #include "Graph.h"
+#include "RedBlackTree.h"
 #include "Navigation.h"
 #include "Network.h"
 #include "NeuralNetwork.h"
@@ -58,6 +59,14 @@ int testStack() {
   
   return 0;
 }
+
+int testRBTree() {
+  Graph::RedBlackTree<u_int64_t, uint64_t> *rbTree;
+  rbTree = new Graph::RedBlackTree<u_int64_t, uint64_t>();
+  
+  return 0;
+}
+
 
 /*
 int testLinkedList() {

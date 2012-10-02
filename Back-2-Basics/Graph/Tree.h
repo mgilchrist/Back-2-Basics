@@ -34,7 +34,8 @@ namespace Graph {
   class TreeNode
   {
   private:
-    TreeNodeType **children;
+    TreeNodeType **leafs;
+    uint8_t numLeafs;
     
   public:
     DataType data = NULL;
@@ -45,33 +46,38 @@ namespace Graph {
     
     
     TreeNode() {
-      children = new TreeNodeType*[2];
+      leafs = new TreeNodeType*[2];
       
       for (int ix = 0; ix < 2; ix++) {
-        children[ix] = NULL;
+        leafs[ix] = NULL;
       }
     }
     
-    TreeNode(uint8_t numChildren) {
-      children = new TreeNodeType*[numChildren];
+    TreeNode(uint8_t numLeafs) {
+      leafs = new TreeNodeType*[numLeafs];
+      this->numLeafs = numLeafs;
       
-      for (int ix = 0; ix < numChildren; ix++) {
-        children[ix] = NULL;
+      for (int ix = 0; ix < numLeafs; ix++) {
+        leafs[ix] = NULL;
       }
     }
     
-    ~TreeNode(uint8_t numChildren) {
-      delete children;
+    ~TreeNode() {
+      delete leafs;
     }
     
-    TreeNodeType *getChild(uint8_t index) {
-      return children[index];
+    TreeNodeType *getLeaf(uint8_t index) {
+      return leafs[index];
     }
     
-    void setChild(uint8_t index, TreeNodeType *tNode) {
-      children[index] = tNode;
+    void setLeaf(uint8_t index, TreeNodeType *tNode) {
+      leafs[index] = tNode;
     }
-  }
+    
+    TreeNodeType *numberOfLeafs(uint8_t index) {
+      return this->numLeafs;
+    }
+  };
   
   /* Tree */
   
@@ -83,16 +89,16 @@ namespace Graph {
     TreeNodeType *treeRoot;
     
   protected:
-    virtual TreeNode *findOpening(KeyType key, TreeNodeType *current);
+    virtual TreeNodeType *findOpening(KeyType key, TreeNodeType *current);
     TreeNodeType *getNode(KeyType key, TreeNodeType *current);
     TreeNodeType *getTreeRoot();
-    TreeNodeType insert_r(DataType data, KeyType key);
+    TreeNodeType *insert_r(DataType data, KeyType key);
     
   public:
     Tree();
     
     virtual void insert(DataType data, KeyType key);
-    virtual DataType remove(KeyType key);
+    virtual void remove(KeyType key);
     virtual DataType search(KeyType key);
   };
   
@@ -100,16 +106,16 @@ namespace Graph {
   /* Tree */
   
   template <class TreeNodeType, class DataType, class KeyType>
-  Tree<<TreeNodeType,DataType,KeyType>::Tree() {
+  Tree<TreeNodeType,DataType,KeyType>::Tree() {
     treeRoot = new TreeNodeType();
   }
   
   template <class TreeNodeType, class DataType, class KeyType>
-  uint64_t Tree<<TreeNodeType,DataType,KeyType>::findOpening(KeyType key, TreeNode *current) {
+  TreeNodeType *Tree<TreeNodeType,DataType,KeyType>::findOpening(KeyType key, TreeNodeType *current) {
     
     uint8_t tmp;
     
-    if (current->getChild(LEFT) == NULL) {
+    if (current->getLeaf(LEFT) == NULL) {
       return current;
     }
     
@@ -123,31 +129,32 @@ namespace Graph {
       tmp = RIGHT;
     }
     
-    return findOpening(key, current->getChild(tmp));
+    return findOpening(key, current->getLeaf(tmp));
     
   }
   
   template <class TreeNodeType, class DataType, class KeyType>
-  TreeNodeType Tree<<TreeNodeType,DataType,KeyType>::insert_r(DataType data, KeyType key) {
+  TreeNodeType *Tree<TreeNodeType,DataType,KeyType>::insert_r(DataType data, KeyType key) {
     
     TreeNodeType *tNode = findOpening(key, treeRoot);
     
-    TreeNodeType *left = new TreeNodeType(2);
-    TreeNodeType *right = new TreeNodeType(2);
+    TreeNodeType *left = new TreeNodeType();
+    TreeNodeType *right = new TreeNodeType();
     
     left->parent = tNode;
     right->parent = tNode;
     
-    tNode->setChild(LEFT, left);
-    tNode->setChild(RIGHT, right);
+    tNode->setLeaf(LEFT, left);
+    tNode->setLeaf(RIGHT, right);
     tNode->key = key;
     tNode->lowestDesendant = key;
     
+    return tNode;
   }
   
   
   template <class TreeNodeType, class DataType, class KeyType>
-  void Tree<<TreeNodeType,DataType,KeyType>::insert(DataType data, KeyType key) {
+  void Tree<TreeNodeType,DataType,KeyType>::insert(DataType data, KeyType key) {
     
     insert_r(data,key);
     
@@ -156,36 +163,36 @@ namespace Graph {
   template <class TreeNodeType, class DataType, class KeyType>
   void Tree<TreeNodeType,DataType,KeyType>::remove(KeyType key) {
     
-    TreeNode *parent, *victim, *tmp, *opening;
+    TreeNodeType *parent, *victim, *tmp, *opening;
     
     tmp = NULL;
     victim = getNode(key, treeRoot);
     parent = victim->parent;
     
-    if (parent->getChild(LEFT) == victim) {
-      parent->setChild(LEFT, victim->getChild(RIGHT));
-      if (victim->getChild(LEFT)->getChild(0) != NULL) {
-        tmp = victim->getChild(LEFT);
+    if (parent->getLeaf(LEFT) == victim) {
+      parent->setLeaf(LEFT, victim->getLeaf(RIGHT));
+      if (victim->getLeaf(LEFT)->getLeaf(0) != NULL) {
+        tmp = victim->getLeaf(LEFT);
       } else {
-        parent->lowestDesendant = victim->getChild(RIGHT)->lowestDesendant;
+        parent->lowestDesendant = victim->getLeaf(RIGHT)->lowestDesendant;
       }
     } else {
-      parent->setChild(RIGHT, victim->getChild(LEFT));
-      if (victim->getChild(RIGHT)->getChild(0) != NULL) {
-        tmp = victim->getChild(RIGHT);
+      parent->setLeaf(RIGHT, victim->getLeaf(LEFT));
+      if (victim->getLeaf(RIGHT)->getLeaf(0) != NULL) {
+        tmp = victim->getLeaf(RIGHT);
       }
     }
     
     if (tmp != NULL) {
-      opening = findOpening(victim->key);
+      opening = findOpening(tmp->key, victim);
       
       parent = opening->parent;
       tmp->parent = parent;
       
-      if (parent->getChild(LEFT) == opening) {
-        parent->getChild(LEFT) = tmp;
+      if (parent->getLeaf(LEFT) == opening) {
+        parent->setLeaf(LEFT, tmp);
       } else {
-        parent->getChild(RIGHT) = tmp;
+        parent->setLeaf(RIGHT, tmp);
       }
       
       delete opening;
@@ -197,14 +204,14 @@ namespace Graph {
   }
   
   template <class TreeNodeType, class DataType, class KeyType>
-  TreeNodeType *Tree<<TreeNodeType,DataType,KeyType>::getTreeRoot() {
+  TreeNodeType *Tree<TreeNodeType,DataType,KeyType>::getTreeRoot() {
     
     return treeRoot;
     
   }
   
   template <class TreeNodeType, class DataType, class KeyType>
-  TreeNodeType *Tree<TreeNodeType,DataType,KeyType>::getNode(KeyType key, TreeNode *current) {
+  TreeNodeType *Tree<TreeNodeType,DataType,KeyType>::getNode(KeyType key, TreeNodeType *current) {
     
     uint8_t tmp;
     
@@ -222,11 +229,11 @@ namespace Graph {
       tmp = RIGHT;
     }
     
-    return getNode(key, current->getChild(tmp));
+    return getNode(key, current->getLeaf(tmp));
   }
   
   template <class TreeNodeType, class DataType, class KeyType>
-  DataType Tree<<TreeNodeType,DataType,KeyType>::search(KeyType key) {
+  DataType Tree<TreeNodeType,DataType,KeyType>::search(KeyType key) {
     
     return getNode(key,treeRoot)->data;
   }
