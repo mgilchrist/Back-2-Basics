@@ -30,8 +30,13 @@ class Heuristic {
 private:
   
 public:
-  Heuristic();
-  Heuristic(Collection::Array<double> *);
+  Heuristic() {
+    
+  }
+  
+  Heuristic(Collection::Array<double> *) {
+    
+  }
   
   virtual void calculateExpectation(void) =0;
   virtual double getExpectation(void) =0;

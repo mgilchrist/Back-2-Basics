@@ -50,7 +50,8 @@ namespace Graph {
   public:
     RedBlackTree();
     
-    void insert(EntryType n, KeyType key);    
+    void insert(EntryType n, KeyType key);
+    void remove(KeyType key);
     
   };
   
@@ -189,6 +190,13 @@ namespace Graph {
       }
     }
     
+  }
+  
+  template <class EntryType, class KeyType>
+  void RedBlackTree<EntryType,KeyType>::remove(KeyType key) {
+    RedBlackTreeNode<EntryType,KeyType> *victim;
+    
+    victim = this->remove_r(key);
   }
   
 }

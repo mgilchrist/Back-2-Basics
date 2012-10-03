@@ -93,6 +93,7 @@ namespace Graph {
     TreeNodeType *getNode(KeyType key, TreeNodeType *current);
     TreeNodeType *getTreeRoot();
     TreeNodeType *insert_r(DataType data, KeyType key);
+    TreeNodeType *remove_r(KeyType key);
     
   public:
     Tree();
@@ -161,7 +162,7 @@ namespace Graph {
   }
   
   template <class TreeNodeType, class DataType, class KeyType>
-  void Tree<TreeNodeType,DataType,KeyType>::remove(KeyType key) {
+  TreeNodeType *Tree<TreeNodeType,DataType,KeyType>::remove_r(KeyType key) {
     
     TreeNodeType *parent, *victim, *tmp, *opening;
     
@@ -198,8 +199,13 @@ namespace Graph {
       delete opening;
     }
     
+    return victim;
     
-    delete victim;
+  }
+  
+  template <class TreeNodeType, class DataType, class KeyType>
+  void Tree<TreeNodeType,DataType,KeyType>::remove(KeyType key) {
+    delete remove_r(key);
     
   }
   

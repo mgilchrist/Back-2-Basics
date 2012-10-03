@@ -15,7 +15,7 @@
 namespace Graph {
   
   
-  void Navigation::aStar() {
+  void HeuristicMap::aStar() {
     Collection::Heap<Coordinate *,double> *open;
     Collection::HashTable<bool, Coordinate *> *openTable;
     Collection::HashTable<double, Coordinate *> *closed;
@@ -34,7 +34,7 @@ namespace Graph {
     
     this->start->distanceFromStart = 0.0;
     
-    this->nodeAtIndex(0)->auxIndex = open->push(this->start,0);
+    this->nodeAtIndex(0)->auxIndex = open->push(this->start,0.0);
     openTable->insert(true, this->start);
     
     while (open->getSize()) {
@@ -74,13 +74,12 @@ namespace Graph {
           
           if (opIndex == ERROR) {
             openTable->insert(true, v);
-            open->push(v, cost + costHeuristic->atIndex(v->getIndex()));
           } else {
             openTable->update(opIndex, true);
             open->removeHeapEntry(*(v->auxIndex));
-            open->push(v, cost + costHeuristic->atIndex(v->getIndex()));
           }
-          
+          this->nodeAtIndex(v->getIndex())->auxIndex =
+            open->push(v, cost + costHeuristic->atIndex(v->getIndex())->getExpectation());
           v->previousEdge = u->getAdjacentEdge(ix);
           
         }
@@ -106,7 +105,7 @@ namespace Graph {
     
   }
   
-  Collection::Stack<Path *> *Navigation::getShortestPath() {
+  Collection::Stack<Path *> *HeuristicMap::getShortestPath() {
     
     if (shortestPathToTerminal != NULL) {
       delete shortestPathToTerminal;
@@ -123,11 +122,6 @@ namespace Graph {
     this->u = u;
     this->v = v;
     this->length = length;
-  }
-  
-  Navigation::Navigation() {
-    
-  }
-  
+  }  
   
 }
