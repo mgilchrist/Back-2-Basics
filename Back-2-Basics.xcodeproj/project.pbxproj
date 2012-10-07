@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		2C00343A1617AC1A00CCC166 /* Navigation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2C0034381617AC1A00CCC166 /* Navigation.cpp */; };
 		2C00343B1617AC1A00CCC166 /* Navigation.h in Headers */ = {isa = PBXBuildFile; fileRef = 2C0034391617AC1A00CCC166 /* Navigation.h */; };
+		2C166A3616212642005904C8 /* Key.h in Headers */ = {isa = PBXBuildFile; fileRef = 2C166A3516212642005904C8 /* Key.h */; };
 		2C898846160C434C0087B09C /* NeuralNetwork.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2C898845160C434C0087B09C /* NeuralNetwork.cpp */; };
 		2CA2150A160C17C100347D58 /* HashTable.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA214F0160C17C100347D58 /* HashTable.h */; };
 		2CA2150B160C17C100347D58 /* Heap.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA214F1160C17C100347D58 /* Heap.h */; };
@@ -34,6 +35,7 @@
 /* Begin PBXFileReference section */
 		2C0034381617AC1A00CCC166 /* Navigation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Navigation.cpp; sourceTree = "<group>"; };
 		2C0034391617AC1A00CCC166 /* Navigation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Navigation.h; sourceTree = "<group>"; };
+		2C166A3516212642005904C8 /* Key.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Key.h; sourceTree = "<group>"; };
 		2C898845160C434C0087B09C /* NeuralNetwork.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NeuralNetwork.cpp; sourceTree = "<group>"; };
 		2CA21462160C0DFD00347D58 /* libBack-2-Basics.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = "libBack-2-Basics.dylib"; sourceTree = BUILT_PRODUCTS_DIR; };
 		2CA214F0160C17C100347D58 /* HashTable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HashTable.h; sourceTree = "<group>"; };
@@ -125,6 +127,7 @@
 				2CA214F3160C17C100347D58 /* Array.h */,
 				2CA214F4160C17C100347D58 /* List */,
 				2CA214F6160C17C100347D58 /* List.h */,
+				2C166A3516212642005904C8 /* Key.h */,
 			);
 			name = Collection;
 			path = "Back-2-Basics/Collection";
@@ -231,6 +234,7 @@
 				2CA2151B160C17C100347D58 /* Stochastic.h in Headers */,
 				2CA2151C160C17C100347D58 /* Optimization.h in Headers */,
 				2C00343B1617AC1A00CCC166 /* Navigation.h in Headers */,
+				2C166A3616212642005904C8 /* Key.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

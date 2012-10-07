@@ -17,15 +17,15 @@ namespace Graph {
   
   void HeuristicMap::aStar() {
     Collection::Heap<Coordinate *,double> *open;
-    Collection::HashTable<bool, Coordinate *> *openTable;
-    Collection::HashTable<double, Coordinate *> *closed;
+    Collection::HashTable<bool,Coordinate *> *openTable;
+    Collection::HashTable<double,Coordinate *> *closed;
     Coordinate *u;
     Collection::Stack<Path *> *ret;
     uint64_t opIndex;
     
     open = new Collection::Heap<Coordinate *,double>();
-    openTable = new Collection::HashTable<bool, Coordinate *>();
-    closed = new Collection::HashTable<double, Coordinate *>();
+    openTable = new Collection::HashTable<bool,Coordinate *>();
+    closed = new Collection::HashTable<double,Coordinate *>();
     
     // set initial distances to infinity
     for (int ix = 0; ix < this->getNumNodes(); ix++) {
@@ -35,6 +35,7 @@ namespace Graph {
     this->start->distanceFromStart = 0.0;
     
     this->nodeAtIndex(0)->auxIndex = open->push(this->start,0.0);
+
     openTable->insert(true, this->start);
     
     while (open->getSize()) {
@@ -54,6 +55,7 @@ namespace Graph {
         
         Coordinate *v = u->getAdjacentEdge(ix)->getForward();
         double cost = u->distanceFromStart + u->getAdjacentEdge(ix)->length;
+
         opIndex = openTable->search(v);
         uint64_t cIndex = closed->search(v);
         

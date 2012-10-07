@@ -11,6 +11,7 @@
 
 #include <iostream>
 #include <math.h>
+#include <string>
 
 #include "Stack.h"
 #include "HashTable.h"
@@ -151,7 +152,9 @@ namespace Graph {
           double deltaY = path->getForward()->Y - path->getBackward()->Y;
           double deltaZ = path->getForward()->Z - path->getBackward()->Z;
           
-          path->length = sqrt((deltaX * deltaX) + (deltaY * deltaY) + (deltaZ * deltaZ));
+          path->length = sqrt((deltaX * deltaX) +
+                              (deltaY * deltaY) +
+                              (deltaZ * deltaZ));
         }
       }
       
@@ -169,7 +172,7 @@ namespace Graph {
   private:
     
     
-    Collection::HashTable<HeuristicMap *, const char *> *maps;
+    Collection::HashTable<HeuristicMap *,std::string> *maps;
     Vector *origin;
     
     Coordinate *start;
@@ -178,7 +181,7 @@ namespace Graph {
   public:
     
     Navigation() {
-      maps = new Collection::HashTable<HeuristicMap *, const char *>();
+      maps = new Collection::HashTable<HeuristicMap *,std::string>();
       origin = new Vector();
       origin->X = 0.0;
       origin->Y = 0.0;

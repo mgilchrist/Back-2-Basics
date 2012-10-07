@@ -22,8 +22,12 @@
 #ifndef OpenSource_HashTable_h
 #define OpenSource_HashTable_h
 
+#include <vector>
 #include "Strings.h"
 #include "Array.h"
+#include "Key.h"
+
+/* Need to correct KeyType */
 
 namespace Collection {
   
@@ -66,20 +70,21 @@ namespace Collection {
   
   /* Class: HashTable */
   template <class ElementType, class KeyType>
-  class HashTable : protected Array<ElementType>
+  class HashTable
   {
   private:
-    KeyType *keyMap;
-    uint64_t *fullHashMap;
+    std::vector<ElementType> collection;
+    std::vector<Key<KeyType> *> keyMap;
+    std::vector<uint64_t> fullHashMap;
     
-    Array<uint64_t> *SHA_2_Prep(uint8_t *data, uint64_t dataSize);
+    std::vector<uint64_t> *SHA_2_Prep(uint8_t *data, uint64_t dataSize);
     uint64_t *SHA_2(KeyType);
     void grow();
     
   public:
     HashTable();
     uint64_t search(KeyType);
-    ElementType remove(uint64_t);
+    void remove(uint64_t);
     void insert(ElementType, KeyType);
     ElementType get(uint64_t);
     void update(uint64_t,ElementType);
@@ -91,52 +96,49 @@ namespace Collection {
   
   template <class ElementType, class KeyType>
   ElementType HashTable<ElementType,KeyType>::get(uint64_t index) {
-    return this->collection[index];
+    return collection[index];
   }
   
   template <class ElementType, class KeyType>
   void HashTable<ElementType,KeyType>::update(uint64_t index, ElementType data) {
-    this->collection[index] = data;
+    collection[index] = data;
   }
-
+  
   
   template <class ElementType, class KeyType>
   HashTable<ElementType,KeyType>::HashTable() {
-    this->collection = new ElementType[STD_COLLECTION_SIZE];
-    keyMap = new KeyType[STD_COLLECTION_SIZE];
-    this->size = 0;
-    this->capacity = STD_COLLECTION_SIZE;
+    /*
+    collection = new std::vector<ElementType>(STD_COLLECTION_SIZE);
+    keyMap = new std::vector<Key *>(STD_COLLECTION_SIZE);
+    fullHashMap = new std::vector<uint64_t>(STD_COLLECTION_SIZE);
+     */
     
-    for (int ix = 0; ix < STD_COLLECTION_SIZE; ix++) {
-      keyMap[ix] = NULL;
-    }
-
   }
   
   template <class ElementType, class KeyType>
   void HashTable<ElementType,KeyType>::grow() {
-    ElementType *nArray = new ElementType[2 * this->capacity];
-    KeyType *nKeyArray = new KeyType[2 * this->capacity];
-    uint64_t *nHashArray = new uint64_t[2 * this->capacity];
-
+        
     uint64_t newIndex;
     
-    for (int ix = 0; ix < (this->capacity*2); ix++) {
-      nKeyArray[ix] = NULL;
+    collection.resize(collection.size()*2);
+    keyMap.resize(keyMap.size()*2);
+    fullHashMap.resize(fullHashMap.size()*2);
+    
+    for (int ix = 0; ix < fullHashMap.size(); ix++) {
+      newIndex = fullHashMap[ix] % fullHashMap.size();
+      
+      if (ix != newIndex) {
+        collection[newIndex] = collection[ix];
+        keyMap[newIndex] = keyMap[ix];
+        fullHashMap[newIndex] = fullHashMap[ix];
+        collection[ix] = (ElementType)NULL;
+        keyMap[ix] = NULL;
+        fullHashMap[ix] = NULL;
+
+      }
     }
     
-    for (int ix = 0; ix < this->capacity; ix++) {
-      newIndex = fullHashMap[ix] % this->size;
-      nArray[newIndex] = this->collection[ix];
-      nKeyArray[newIndex] = this->keyMap[ix];
-      nHashArray[newIndex] = this->fullHashMap[ix];
-    }
     
-    delete this->collection;
-    delete this->keyMap;
-    delete this->fullHashMap;
-    
-    this->capacity = 2 * this->capacity;
   }
   
   template <class ElementType, class KeyType>
@@ -150,9 +152,9 @@ namespace Collection {
     
     while (useHash) {
       useHash--;
-      index = hash[useHash] % this->size;
+      index = hash[useHash] % keyMap.size();
       if ((sizeof(key) == sizeof(keyMap[index])) &&
-          (!bcmp(keyMap[index],key,sizeof(key)))) {
+          (*keyMap[index] == key)) {
         delete hash;
         return index;
       }
@@ -164,16 +166,9 @@ namespace Collection {
   }
   
   template <class ElementType, class KeyType>
-  ElementType HashTable<ElementType,KeyType>::remove(uint64_t index) {
-    if (keyMap[index] == NULL) {
-      return NULL;
-    }
-    
-    this->size--;
+  void HashTable<ElementType,KeyType>::remove(uint64_t index) {
     delete keyMap[index];
-    keyMap = NULL;
-    
-    return this->collection[index];
+    keyMap[index] = NULL;
   }
   
   template <class ElementType, class KeyType>
@@ -186,12 +181,11 @@ namespace Collection {
     do {
       while (useHash) {
         useHash--;
-        index = hash[useHash] % this->size;
+        index = hash[useHash] % keyMap.size();
         if (keyMap[index] == NULL) {
-          keyMap[index] = key;
+          keyMap[index] = new Key<KeyType>(key);
           fullHashMap[index] = hash[useHash];
-          this->collection[index] = data;
-          this->size++;
+          collection[index] = data;
           
           delete hash;
           return;
@@ -199,7 +193,7 @@ namespace Collection {
       }
       
       this->grow();
-    
+      
     } while ((1));
     
     
@@ -208,12 +202,11 @@ namespace Collection {
   }
   
   template <class ElementType, class KeyType>
-  Array<uint64_t> *HashTable<ElementType,KeyType>::SHA_2_Prep(uint8_t *data, uint64_t dataSize) {
-    Array<uint64_t> *arrayRet;
+  std::vector<uint64_t> *HashTable<ElementType,KeyType>::SHA_2_Prep(uint8_t *data, uint64_t dataSize) {
     uint8_t arraySize = (112 - (dataSize % 128) % 111) + dataSize;
     uint8_t *ret = new uint8_t[arraySize];
     
-    for (int ix = 0; ix < dataSize; ix++) {
+    for (int ix = 0; ix < dataSize; ix+=8) {
       ret[ix] = data[ix];
     }
     
@@ -223,14 +216,12 @@ namespace Collection {
     
     *((uint64_t *)(&ret[arraySize-8])) = dataSize;
     
-    arrayRet = new Array<uint64_t>((uint64_t *)ret, arraySize);
-    
-    return arrayRet;
+    return (std::vector<uint64_t> *)ret;
   }
   
   template <class ElementType, class KeyType>
   uint64_t *HashTable<ElementType,KeyType>::SHA_2(KeyType key) {
-    Array<uint64_t> *conditionedMsg;
+    std::vector<uint64_t> *conditionedMsg;
     uint64_t subArray[80];
     uint64_t tmpHash[8];
     uint64_t *hash;
@@ -240,19 +231,15 @@ namespace Collection {
     hash = new uint64_t[8];
     
     
-    if (sizeof(KeyType) != sizeof(key)) {
-      conditionedMsg = SHA_2_Prep((uint8_t *)key, sizeof(key));
-    } else {
-      conditionedMsg = SHA_2_Prep((uint8_t *)&key, sizeof(ElementType));
-    }
+    conditionedMsg = SHA_2_Prep((uint8_t *)key, sizeof(key));
     
     for (int jx = 0; jx < 8; jx++) {
       hash[jx] = 0;
     }
     
-    for (int ix = 0; ix < conditionedMsg->getSize(); ix += 16) {
+    for (int ix = 0; ix < conditionedMsg->size(); ix += 16) {
       for (int jx = 0; jx < 16; jx++) {
-        subArray[jx] = conditionedMsg->atIndex(ix+jx);
+        subArray[jx] = conditionedMsg->at(ix+jx);
       }
       
       for (int jx = 16; jx < 80; jx++) {

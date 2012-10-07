@@ -90,14 +90,14 @@ namespace Graph {
     
   protected:
     virtual TreeNodeType *findOpening(KeyType key, TreeNodeType *current);
-    TreeNodeType *getNode(KeyType key, TreeNodeType *current);
-    TreeNodeType *getTreeRoot();
     TreeNodeType *insert_r(DataType data, KeyType key);
     TreeNodeType *remove_r(KeyType key);
     
   public:
     Tree();
     
+    TreeNodeType *getNode(KeyType key, TreeNodeType *current);
+    TreeNodeType *getTreeRoot();
     virtual void insert(DataType data, KeyType key);
     virtual void remove(KeyType key);
     virtual DataType search(KeyType key);

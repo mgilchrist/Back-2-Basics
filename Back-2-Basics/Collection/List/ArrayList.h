@@ -41,7 +41,7 @@ namespace Collection {
     uint8_t median5(Comparable<ElementType,KeyType> *array, uint8_t size);
     uint64_t medianOfMedians(uint64_t l, uint64_t r);
     
-    Comparable<ElementType,KeyType> *cloneSort();
+    ArrayList<ElementType,KeyType> *cloneSort();
     
     ArrayList<ElementType,KeyType> *mergeSort(uint64_t l, uint64_t r);
     ArrayList<ElementType,KeyType> *merge(ArrayList<ElementType,KeyType> *l,
@@ -50,7 +50,9 @@ namespace Collection {
     uint64_t binary_search_first_term(uint64_t key, uint64_t min, uint64_t max);
     uint64_t binary_search_last_term(uint64_t key, uint64_t min, uint64_t max);
     
-    
+    void inPlaceSort() {
+      this->quickSort(0, this->size-1);
+    }
     
     void swap(uint64_t first, uint64_t second) {
       Comparable<ElementType,KeyType> *a, *b;
@@ -82,7 +84,7 @@ namespace Collection {
     
     uint64_t partition(uint64_t p, uint64_t l, uint64_t r) {
       
-      uint64_t pValue = this->collection[p]->key;
+      KeyType pValue = this->collection[p]->key;
       uint64_t i = l;
       uint64_t j;
       
@@ -233,12 +235,17 @@ namespace Collection {
   ArrayList<ElementType, KeyType> *ArrayList<ElementType,KeyType>::merge(ArrayList<ElementType,KeyType> *leftList,
                                                                     ArrayList<ElementType,KeyType> *rightList) {
     Comparable<ElementType, KeyType> *left, *right;
-    uint64_t pos;
+    uint64_t pos, leftPos, rightPos;
     uint64_t leftLength = leftList->getSize();
     uint64_t rightLength = rightList->getSize();
     
-    right = &rightList->collection[0];
-    left = &leftList->collection[0];
+    right = rightList->atIndex(0);
+    left = leftList->atIndex(0);
+    
+    pos = 0;
+    leftPos = 0;
+    rightPos = 0;
+    
     ArrayList<ElementType,KeyType> *mergedArray;
     
     mergedArray = new ArrayList<ElementType,KeyType>(leftLength+rightLength);
@@ -246,21 +253,21 @@ namespace Collection {
     while ((leftLength > 0) or (rightLength > 0)) {
       if ((leftLength > 0) and (rightLength > 0)) {
         if (left->key <= right->key) {
-          mergedArray->collection[pos] = *left;
-          left++;
+          mergedArray->setIndex(pos, left);
+          left = leftList->atIndex(++leftPos);
           leftLength--;
         } else {
-          mergedArray->collection[pos] = *right;
-          right++;
+          mergedArray->setIndex(pos, right);
+          right = rightList->atIndex(++rightPos);
           rightLength--;
         }
       } else if (leftLength > 0) {
-        mergedArray->collection[pos] = *left;
-        left++;
+        mergedArray->setIndex(pos, left);
+        left = leftList->atIndex(++leftPos);
         leftLength--;
       } else if (rightLength > 0) {
-        mergedArray->collection[pos] = *right;
-        right++;
+        mergedArray->setIndex(pos, right);
+        right = rightList->atIndex(++rightPos);
         rightLength--;
       }
       pos++;
@@ -278,8 +285,8 @@ namespace Collection {
     ArrayList *left, *right;
     
     if (l == r) {
-      ArrayList *ret = new ArrayList();
-      ret->add(this->elements->atIndex(l), this->keys->atIndex(l));
+      ArrayList *ret = new ArrayList(1);
+      ret->setIndex(0, this->atIndex(l));
       return ret;
     }
     
@@ -332,6 +339,11 @@ namespace Collection {
     } else {
       return ERROR;
     }
+  }
+  
+  template <class ElementType, class KeyType>
+  ArrayList<ElementType,KeyType> *ArrayList<ElementType,KeyType>::cloneSort() {
+    return mergeSort(0,this->getSize()-1);
   }
   
  

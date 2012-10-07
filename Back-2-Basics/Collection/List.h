@@ -85,7 +85,7 @@ namespace Collection {
     
     List();
     
-    void inPlaceSort();
+    virtual void inPlaceSort() =0;
     
   };
   
@@ -94,12 +94,6 @@ namespace Collection {
   template <class ElementType, class KeyType>
   List<ElementType,KeyType>::List() {
     
-  }
-  
-  
-  template <class ElementType, class KeyType>
-  void List<ElementType,KeyType>::inPlaceSort() {
-    quickSort(0, this->size-1);
   }
   
   

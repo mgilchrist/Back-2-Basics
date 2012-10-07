@@ -36,11 +36,63 @@ using namespace std;
 #define INPUT_SIZE    32
 #define OUTPUT_SIZE   32
 #define ITERATIONS    (1024)
+#define TEST_SIZE     0x100000
 
 
 int testHashTable() {
   Collection::HashTable<uint64_t,uint64_t> *hashTable;
   hashTable = new Collection::HashTable<uint64_t,uint64_t>();
+  uint64_t *verify = new uint64_t[TEST_SIZE];
+  uint64_t index;
+  
+  for (int ix = 0; ix < TEST_SIZE; ix++) {
+    uint64_t value = random();
+    hashTable->insert(value, value);
+    verify[ix] = value;
+  }
+  
+  for (int ix = 0; ix < TEST_SIZE; ix++) {
+    
+    if ((index = hashTable->search(verify[ix])) == ERROR) {
+      cout << "Index ";
+      cout << ix;
+      cout << " is not present!\n";
+    }
+    
+    if (verify[ix] != hashTable->get(index)) {
+      cout << "Index ";
+      cout << ix;
+      cout << " does not match!\n";
+    }
+    
+    if ((ix % 4) == 3) {
+      hashTable->remove(index);
+    }
+  }
+  
+  for (int ix = 0; ix < TEST_SIZE; ix++) {
+    
+    if ((ix % 4) == 3) {
+      continue;
+    }
+    
+    if ((index = hashTable->search(verify[ix])) == ERROR) {
+      cout << "Index ";
+      cout << ix;
+      cout << " is not present!\n";
+    }
+    
+    if (verify[ix] != hashTable->get(index)) {
+      cout << "Index ";
+      cout << ix;
+      cout << " does not match!\n";
+    }
+    
+    if ((index % 4) == 3) {
+      hashTable->remove(index);
+    }
+  }
+
   
   return 0;
 }
@@ -49,6 +101,27 @@ int testHashTable() {
 int testHeap() {
   Collection::Heap<uint64_t,uint64_t> *heap;
   heap = new Collection::Heap<uint64_t,uint64_t>();
+  
+  uint64_t tmp, tmp1;
+  
+  for (int ix = 0; ix < TEST_SIZE; ix++) {
+    uint64_t value = random();
+    heap->push(value, value);
+  }
+
+  if (heap->peek(0) != (tmp = heap->pop())) {
+    cout << "Heap Error!\n";
+  }
+  
+  for (int ix = 1; ix < TEST_SIZE; ix++) {
+    if (heap->peek(0) != (tmp1 = heap->pop()) || (tmp > tmp1)) {
+      cout << "Index ";
+      cout << ix;
+      cout << " lower than previous!\n";
+    }
+    
+    tmp = tmp1;
+  }
   
   return 0;
 }
@@ -60,24 +133,126 @@ int testStack() {
   return 0;
 }
 
+Graph::RedBlackTreeNode<uint64_t,uint64_t> *rTreeLeftMost(Graph::RedBlackTreeNode<uint64_t,uint64_t> *tNode) {
+  Graph::RedBlackTreeNode<uint64_t,uint64_t> *rTNode;
+  
+  if ((rTNode = tNode->getLeaf(0)->getLeaf(0)) != NULL) {
+    return rTreeLeftMost(rTNode);
+  }
+  
+  return tNode;
+}
+
 int testRBTree() {
   Graph::RedBlackTree<u_int64_t, uint64_t> *rbTree;
+  Collection::ArrayList<uint64_t,uint64_t> *arrayList;
+  
   rbTree = new Graph::RedBlackTree<u_int64_t, uint64_t>();
+  arrayList = new Collection::ArrayList<uint64_t,uint64_t>(TEST_SIZE);
+  
+  for (int ix = 0; ix < TEST_SIZE; ix++) {
+    uint64_t value = random();
+    rbTree->insert(value, value);
+    arrayList->setIndex(ix, new Collection::Comparable<uint64_t,uint64_t>(value, value));
+  }
+  
+  rTreeLeftMost(rbTree->getTreeRoot());
+  
+  
+  
+  
   
   return 0;
 }
 
 
 /*
-int testLinkedList() {
-  
-  return 0;
-}
+ int testLinkedList() {
+ 
+ return 0;
+ }
  */
 
 int testArrayList() {
-  Collection::ArrayList<uint64_t,uint64_t> *arrayList;
+  Collection::ArrayList<uint64_t,uint64_t> *arrayList, *arrayListClone;
   arrayList = new Collection::ArrayList<uint64_t,uint64_t>();
+  uint64_t *verify = new uint64_t[arrayList->getSize()];
+  uint64_t tmp;
+  
+  for (int ix = 0; ix < arrayList->getSize(); ix++) {
+    uint64_t value = random();
+    arrayList->setIndex(ix, new Collection::Comparable<uint64_t,uint64_t>(value, value));
+    verify[ix] = value;
+  }
+  
+  for (int ix = 0; ix < arrayList->getSize(); ix++) {
+    if (arrayList->atIndex(ix)->data != verify[ix]) {
+      cout << "Index ";
+      cout << ix;
+      cout << " does not match!\n";
+    }
+  }
+  
+  delete arrayList;
+  delete verify;
+  
+  arrayList = new Collection::ArrayList<uint64_t,uint64_t>(TEST_SIZE);
+  verify = new uint64_t[arrayList->getSize()];
+  
+  for (int ix = 0; ix < arrayList->getSize(); ix++) {
+    uint64_t value = random();
+    arrayList->setIndex(ix, new Collection::Comparable<uint64_t,uint64_t>(value, value));
+    verify[ix] = value;
+  }
+  
+  for (int ix = 0; ix < arrayList->getSize(); ix++) {
+    if (arrayList->atIndex(ix)->data != verify[ix]) {
+      cout << "Index ";
+      cout << ix;
+      cout << " does not match!\n";
+    }
+  }
+  
+  delete arrayList;
+  delete verify;
+  
+  arrayList = new Collection::ArrayList<uint64_t,uint64_t>(TEST_SIZE);
+  
+  for (int ix = 0; ix < arrayList->getSize(); ix++) {
+    uint64_t value = random();
+    arrayList->setIndex(ix, new Collection::Comparable<uint64_t,uint64_t>(value, value));
+  }
+  
+  arrayListClone = arrayList->cloneSort();
+  
+  arrayList->inPlaceSort();
+  
+  tmp = arrayList->atIndex(0)->key;
+  
+  for (int ix = 1; ix < arrayList->getSize(); ix++) {
+    if (arrayList->atIndex(ix)->key < tmp) {
+      cout << "Index ";
+      cout << ix;
+      cout << " not sorted!\n";
+    }
+    
+    if (arrayListClone->atIndex(ix)->key < tmp) {
+      cout << "Index ";
+      cout << ix;
+      cout << " not sorted!\n";
+    }
+    
+    if (arrayList->atIndex(ix)->key != arrayListClone->atIndex(ix)->key) {
+      cout << "Index ";
+      cout << ix;
+      cout << " not identical!\n";
+    }
+    
+    tmp = arrayList->atIndex(ix)->key;
+  }
+  
+  delete arrayList;
+  delete arrayListClone;
   
   return 0;
 }
