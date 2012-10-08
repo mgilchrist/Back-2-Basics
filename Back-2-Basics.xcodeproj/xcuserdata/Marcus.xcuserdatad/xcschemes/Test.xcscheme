@@ -14,9 +14,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "2CA21461160C0DFD00347D58"
-               BuildableName = "libBack-2-Basics.dylib"
-               BlueprintName = "Back-2-Basics"
+               BlueprintIdentifier = "2C84AB651622793300572AF7"
+               BuildableName = "Test"
+               BlueprintName = "Test"
                ReferencedContainer = "container:Back-2-Basics.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -66,6 +66,15 @@
       useCustomWorkingDirectory = "NO"
       buildConfiguration = "Release"
       debugDocumentVersioning = "YES">
+      <BuildableProductRunnable>
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "2C84AB651622793300572AF7"
+            BuildableName = "Test"
+            BlueprintName = "Test"
+            ReferencedContainer = "container:Back-2-Basics.xcodeproj">
+         </BuildableReference>
+      </BuildableProductRunnable>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">

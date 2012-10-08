@@ -36,7 +36,7 @@ using namespace std;
 #define INPUT_SIZE    32
 #define OUTPUT_SIZE   32
 #define ITERATIONS    (1024)
-#define TEST_SIZE     0x100000
+#define TEST_SIZE     0x100
 
 
 int testHashTable() {
@@ -92,7 +92,7 @@ int testHashTable() {
       hashTable->remove(index);
     }
   }
-
+  
   
   return 0;
 }
@@ -108,7 +108,7 @@ int testHeap() {
     uint64_t value = random();
     heap->push(value, value);
   }
-
+  
   if (heap->peek(0) != (tmp = heap->pop())) {
     cout << "Heap Error!\n";
   }
@@ -230,22 +230,29 @@ int testArrayList() {
   tmp = arrayList->atIndex(0)->key;
   
   for (int ix = 1; ix < arrayList->getSize(); ix++) {
+    cout << arrayList->atIndex(ix)->key;
+    cout << ":";
+    cout << arrayListClone->atIndex(ix)->key;
+    cout << ", ";
+    
+    cout << "\n";
+    
     if (arrayList->atIndex(ix)->key < tmp) {
-      cout << "Index ";
-      cout << ix;
-      cout << " not sorted!\n";
+      //cout << "Index ";
+      //cout << ix;
+      //cout << " not sorted!\n";
     }
     
     if (arrayListClone->atIndex(ix)->key < tmp) {
-      cout << "Index ";
-      cout << ix;
-      cout << " not sorted!\n";
+      //cout << "Index ";
+      //cout << ix;
+      //cout << " not sorted!\n";
     }
     
     if (arrayList->atIndex(ix)->key != arrayListClone->atIndex(ix)->key) {
-      cout << "Index ";
+      /*cout << "Index ";
       cout << ix;
-      cout << " not identical!\n";
+      cout << " not identical!\n";*/
     }
     
     tmp = arrayList->atIndex(ix)->key;
@@ -257,10 +264,56 @@ int testArrayList() {
   return 0;
 }
 
+#if 0
 int testNeuralNetwork() {
-  Collection::Array<double *> *inputs = new Collection::Array<double *>(16);
+  Collection::Array<double> *input = new Collection::Array<double>(INPUT_SIZE);
   NeuralNetwork::NeuralNetwork *NNetwork;
-  NNetwork = new NeuralNetwork::NeuralNetwork(inputs);
+  double *reality = new double[OUTPUT_SIZE];
+  double expectation;
+  uint64_t iterations = 0;
+  uint64_t tmpSize;
+  Collection::Stack<double *> *thisInput;
+  
+  tmpSize = (random() % input->getSize()) + 1;
+  thisInput = new Collection::Stack<double *>(tmpSize);
+  
+  for (int jx = 0; jx < tmpSize; jx++) {
+    thisInput->push(input->ptrToIndex(jx));
+  }
+  
+  NNetwork = new NeuralNetwork::NeuralNetwork(thisInput);
+  
+  cout << "Training\n";
+  
+  do {
+    for (int ix = 0; ix < 1 /*OUTPUT_SIZE*/; ix++) {
+      for (int jx = 0; jx < input->getSize(); jx++) {
+        *(thisInput->atIndex(jx)) = 0.1 * (random()%10);
+      }
+      
+      NNetwork->calculateExpectation();
+      expectation = NNetwork->getExpectation();
+      reality[ix] = 1.0;
+      /*if ((input->atIndex(ix%INPUT_SIZE)) +
+       (input->atIndex((ix+1)%INPUT_SIZE)) +
+       (input->atIndex((ix+2)%INPUT_SIZE)) > 2.5) {
+       reality[ix] = 1.0;
+       } else if ((input->atIndex(ix%INPUT_SIZE)) +
+       (input->atIndex((ix+1)%INPUT_SIZE)) +
+       (input->atIndex((ix+2)%INPUT_SIZE)) < 0.5) {
+       reality[ix] = 0.0;
+       }*/
+      NNetwork->doCorrection(reality[ix], 0.0);
+      cout << "Expecting ";
+      cout << expectation;
+      cout << ", Reality: ";
+      cout << reality[ix];
+      cout << "\n";
+    }
+    iterations++;
+  } while (iterations < ITERATIONS);
+  
+  delete thisInput;
   
   return 0;
 }
@@ -329,7 +382,7 @@ int testMetaheuristic() {
   
   return 0;
 }
-
+#endif
 
 int main(int argc, const char * argv[])
 {
@@ -342,7 +395,15 @@ int main(int argc, const char * argv[])
   cout << "This is free software, and you are welcome to redistribute it\n";
   cout << "under certain conditions; type `show c' for details.\n";
   
-  ret |= testMetaheuristic();
+  ret |= testArrayList();
+  ret |= testHeap();
+  ret |= testRBTree();
+  ret |= testStack();
+  //ret |= testNeuralNetwork();
+  //ret |= testMetaheuristic();
+  //ret |= testNavigation();
   
   return ret;
 }
+
+

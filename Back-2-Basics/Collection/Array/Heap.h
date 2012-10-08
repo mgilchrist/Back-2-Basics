@@ -22,18 +22,22 @@
 #ifndef OpenSource_Heap_h
 #define OpenSource_Heap_h
 
+#include <vector>
+
 #include "List.h"
-#include "Array.h"
+#include "Stack.h"
 
 namespace Collection {
   
   
   
   template <class ElementType, class KeyType>
-  class Heap : public Array<Comparable<ElementType,KeyType> *>
+  class Heap
   {
     
   private:
+    std::vector<Comparable<ElementType, KeyType> *> *collection;
+    uint64_t size;
     void swap(uint64_t i,uint64_t j);
     
   public:
@@ -47,44 +51,70 @@ namespace Collection {
     uint64_t *push(ElementType,KeyType);
     ElementType pop();
     ElementType peek(uint64_t);
+    uint64_t getSize() {
+      return size;
+    }
     
   };
   
   template <class ElementType, class KeyType>
   Heap<ElementType,KeyType>::Heap() {
-    this->collection = new Comparable<ElementType,KeyType>*[STD_COLLECTION_SIZE];
-    this->size = 0;
-    this->capacity = STD_COLLECTION_SIZE;
+    collection = new std::vector<Comparable<ElementType,KeyType> *>(STD_COLLECTION_SIZE);
+    size = 0;
   }
   
   template <class ElementType, class KeyType>
   void Heap<ElementType,KeyType>::swap(uint64_t i,uint64_t j) {
     Comparable<ElementType,KeyType> *tmp;
-    tmp = this->collection[i];
-    this->collection[i] = this->collection[j];
-    *(this->collection[i]->index) = i;
-    this->collection[j] = tmp;
-    *(this->collection[j]->index) = j;
+    tmp = collection->at(i);
+    
+    collection->at(i) = collection->at(j);
+    
+    if (collection->at(j) != NULL) {
+      *(collection->at(i)->index) = i;
+    }
+    collection->at(j) = tmp;
+    
+    if (tmp != NULL) {
+      *(collection->at(j)->index) = j;
+    }
   }
   
   template <class ElementType, class KeyType>
   ElementType Heap<ElementType,KeyType>::peek(uint64_t index) {
     
-    return this->collection[index]->data;
+    if (collection->at(index) == NULL) {
+      return NULL;
+    }
+    
+    return collection->at(index)->data;
     
   }
   
   template <class ElementType, class KeyType>
   ElementType Heap<ElementType,KeyType>::pop() {
-    return removeHeapEntry(0)->data;
+    
+    Comparable<ElementType,KeyType> *entry;
+    ElementType ret;
+    
+    if ((entry = removeHeapEntry(0)) == NULL) {
+      return NULL;
+    }
+    
+    ret = entry->data;
+    
+    delete entry->index;
+    delete entry;
+    
+    return ret;
   }
   
   template <class ElementType, class KeyType>
   Comparable<ElementType,KeyType> *Heap<ElementType,KeyType>::removeHeapEntry(uint64_t index) {
     
-    Comparable<ElementType,KeyType> *entry = this->collection[index];
+    Comparable<ElementType,KeyType> *entry = collection->at(index);
     
-    this->collection[index] = NULL;
+    collection->at(index) = NULL;
     
     heapifyDown(index);
     
@@ -99,10 +129,10 @@ namespace Collection {
     
     int j;
     
-    if (i > 1) {
-      j = i / 2; // parent of i
+    if (i > 0) {
+      j = (i-1) / 2; // parent of i
       
-      if (this->collection[i]->key < this->collection[j]->key) {
+      if (collection->at(i)->key < collection->at(j)->key) {
         this->swap(i,j);
         this->heapifyUp(j);
       }
@@ -112,26 +142,31 @@ namespace Collection {
   template <class ElementType, class KeyType>
   void Heap<ElementType,KeyType>::heapifyDown(uint64_t i) {
     
-    uint64_t left, right, j;
+    uint64_t left;
+    uint64_t right;
+    uint64_t j;
     
-    uint64_t n = this->size;
+    uint64_t n = size;
     
-    if ((2*i) > n) {
+    if ((2*(i+1)) > n) {
       return;
-    } else if ((2*i) < n) {
-      left = 2 * i;
-      right = (2 * i) + 1;
-      if (this->collection[left]->key < this->collection[right]->key) {
+    } else if ((2*(i+1)) < n) {
+      left = (2 * (i + 1)) - 1;
+      right = 2 * (i + 1);
+      if ((collection->at(left) == NULL) || (collection->at(right) == NULL) ||
+          (collection->at(left)->key < collection->at(right)->key)) {
         j = left;
       } else {
         j = right;
       }
-    } else if (2 * i == n) {
-      j = 2 * i;
+    } else if ((2*(i+1)) == n) {
+      j = n-1;
     }
     
-    if (this->collection[i]->key < this->collection[j]->key) {
+    if ((collection->at(i) == NULL) ||
+        (collection->at(i)->key < collection->at(j)->key)) {
       this->swap(i,j);
+      heapifyDown(j);
     }
   }
   
@@ -143,22 +178,15 @@ namespace Collection {
     tmp->index = new uint64_t;
     *(tmp->index) = this->size;
     
-    if (this->size >= this->capacity) {
-      Comparable<ElementType,KeyType> **nHeap = new Comparable<ElementType,KeyType>*[this->capacity * 2];
-      
-      for (int ix = 0; ix < this->size; ix++) {
-        nHeap[ix] = this->collection[ix];
-      }
-      
-      delete this->collection;
-      
-      this->collection = nHeap;
-      this->capacity *= 2;
+    if (size == collection->size()) {
+      collection->resize(collection->size()*2);
     }
     
-    this->collection[this->size++] = tmp;
+    collection->at(size) = tmp;
     
-    heapifyUp(this->size-1);
+    size++;
+    
+    heapifyUp(size-1);
     
     return tmp->index;
     
@@ -167,7 +195,7 @@ namespace Collection {
   template <class ElementType, class KeyType>
   ElementType Heap<ElementType,KeyType>::peekAtHeapEntry(uint64_t index) {
     
-    Comparable<ElementType,KeyType> *entry = this->collection[index];
+    Comparable<ElementType,KeyType> *entry = collection->at(index);
     
     return entry->data;
   }

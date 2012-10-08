@@ -254,27 +254,27 @@ namespace Collection {
       if ((leftLength > 0) and (rightLength > 0)) {
         if (left->key <= right->key) {
           mergedArray->setIndex(pos, left);
-          left = leftList->atIndex(++leftPos);
+          left = leftList->atIndex(leftPos++);
           leftLength--;
         } else {
           mergedArray->setIndex(pos, right);
-          right = rightList->atIndex(++rightPos);
+          right = rightList->atIndex(rightPos++);
           rightLength--;
         }
       } else if (leftLength > 0) {
         mergedArray->setIndex(pos, left);
-        left = leftList->atIndex(++leftPos);
+        left = leftList->atIndex(leftPos++);
         leftLength--;
       } else if (rightLength > 0) {
         mergedArray->setIndex(pos, right);
-        right = rightList->atIndex(++rightPos);
+        right = rightList->atIndex(rightPos++);
         rightLength--;
       }
       pos++;
     }
     
-    delete left;
-    delete right;
+    delete leftList;
+    delete rightList;
     
     return mergedArray;
   }

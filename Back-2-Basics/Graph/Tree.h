@@ -74,7 +74,7 @@ namespace Graph {
       leafs[index] = tNode;
     }
     
-    TreeNodeType *numberOfLeafs(uint8_t index) {
+    uint8_t numberOfLeafs() {
       return this->numLeafs;
     }
   };
@@ -116,7 +116,7 @@ namespace Graph {
     
     uint8_t tmp;
     
-    if (current->getLeaf(LEFT) == NULL) {
+    if (current->numberOfLeafs() == 0) {
       return current;
     }
     
@@ -184,7 +184,7 @@ namespace Graph {
       }
     }
     
-    if (tmp != NULL) {
+    if (tmp->getLeaf(LEFT) != NULL) {
       opening = findOpening(tmp->key, victim);
       
       parent = opening->parent;
@@ -197,6 +197,8 @@ namespace Graph {
       }
       
       delete opening;
+    } else {
+      delete tmp;
     }
     
     return victim;
