@@ -114,7 +114,13 @@ int testHeap() {
   }
   
   for (int ix = 1; ix < TEST_SIZE; ix++) {
-    if (heap->peek(0) != (tmp1 = heap->pop()) || (tmp > tmp1)) {
+    if (heap->peek(0) != (tmp1 = heap->pop())) {
+      cout << "Index ";
+      cout << ix;
+      cout << " Error!\n";
+    }
+    
+    if (tmp > tmp1) {
       cout << "Index ";
       cout << ix;
       cout << " lower than previous!\n";
@@ -133,30 +139,59 @@ int testStack() {
   return 0;
 }
 
-Graph::RedBlackTreeNode<uint64_t,uint64_t> *rTreeLeftMost(Graph::RedBlackTreeNode<uint64_t,uint64_t> *tNode) {
-  Graph::RedBlackTreeNode<uint64_t,uint64_t> *rTNode;
+Graph::RedBlackTreeNode<uint64_t,uint64_t> *rRightPredeccesor(Graph::RedBlackTreeNode<uint64_t,uint64_t> *tNode) {
   
-  if ((rTNode = tNode->getLeaf(0)->getLeaf(0)) != NULL) {
-    return rTreeLeftMost(rTNode);
+  if (tNode->parent == NULL) {
+    return NULL;
+  }
+  
+  if (tNode->parent->getLeaf(0) == tNode) {
+    return tNode->parent;
+  }
+  
+  return rRightPredeccesor(tNode->parent);
+}
+
+Graph::RedBlackTreeNode<uint64_t,uint64_t> *rLeftSuccesor(Graph::RedBlackTreeNode<uint64_t,uint64_t> *tNode) {
+  
+  if (tNode->getLeaf(0)->getLeaf(0) != NULL) {
+    return rLeftSuccesor(tNode->getLeaf(0));
   }
   
   return tNode;
 }
 
-int testRBTree() {
-  Graph::RedBlackTree<u_int64_t, uint64_t> *rbTree;
-  Collection::ArrayList<uint64_t,uint64_t> *arrayList;
+Graph::RedBlackTreeNode<uint64_t,uint64_t> *nextNode(Graph::RedBlackTreeNode<uint64_t,uint64_t> *tNode) {
   
+  if (tNode->getLeaf(1)->getLeaf(0) != NULL) {
+    return rLeftSuccesor(tNode->getLeaf(1));
+  }
+  
+  return rRightPredeccesor(tNode);
+}
+
+
+int testRBTree() {
+  Graph::RedBlackTree<u_int64_t,uint64_t> *rbTree;
+  Collection::ArrayList<uint64_t,uint64_t> *arrayList;
+  Graph::RedBlackTreeNode<uint64_t,uint64_t> *current;
+
   rbTree = new Graph::RedBlackTree<u_int64_t, uint64_t>();
   arrayList = new Collection::ArrayList<uint64_t,uint64_t>(TEST_SIZE);
   
-  for (int ix = 0; ix < TEST_SIZE; ix++) {
+  for (uint64_t ix = 0; ix < TEST_SIZE; ix++) {
     uint64_t value = random() % 1024;
     rbTree->insert(value, value);
     arrayList->setIndex(ix, new Collection::Comparable<uint64_t,uint64_t>(value, value));
   }
   
-  rTreeLeftMost(rbTree->getTreeRoot());
+  current = rLeftSuccesor(rbTree->getTreeRoot());
+  
+  while (current != NULL) {
+    cout << current->key;
+    cout << "\n";
+    current = nextNode(current);
+  }
   
   
   
@@ -228,38 +263,41 @@ int testArrayList() {
   arrayList->inPlaceSort();
   
   tmp = arrayList->atIndex(0)->key;
-  
+  /*
   cout << arrayList->atIndex(0)->key;
   cout << ":";
   cout << arrayListClone->atIndex(0)->key;
   cout << ", ";
   
   cout << "\n";
+   */
   
   for (int ix = 1; ix < arrayList->getSize(); ix++) {
+    /*
     cout << arrayList->atIndex(ix)->key;
     cout << ":";
     cout << arrayListClone->atIndex(ix)->key;
     cout << ", ";
     
     cout << "\n";
+     */
     
     if (arrayList->atIndex(ix)->key < tmp) {
-      //cout << "Index ";
-      //cout << ix;
-      //cout << " not sorted!\n";
+      cout << "Index ";
+      cout << ix;
+      cout << " not sorted!\n";
     }
     
     if (arrayListClone->atIndex(ix)->key < tmp) {
-      //cout << "Index ";
-      //cout << ix;
-      //cout << " not sorted!\n";
+      cout << "Index ";
+      cout << ix;
+      cout << " not sorted!\n";
     }
     
     if (arrayList->atIndex(ix)->key != arrayListClone->atIndex(ix)->key) {
-      /*cout << "Index ";
+      cout << "Index ";
       cout << ix;
-      cout << " not identical!\n";*/
+      cout << " not identical!\n";
     }
     
     tmp = arrayList->atIndex(ix)->key;

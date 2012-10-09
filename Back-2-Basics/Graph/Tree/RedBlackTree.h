@@ -87,7 +87,11 @@ namespace Graph {
     
     RedBlackTreeNode<EntryType,KeyType> *node;
         
-    node = this->insert_r(n,key);
+    if ((node = this->insert_r(n,key)) == NULL) {
+      return;
+    }
+    
+    return;
     
     while ((node != NULL) && (node->parent != NULL) && (node->parent->color == RED)) {
       

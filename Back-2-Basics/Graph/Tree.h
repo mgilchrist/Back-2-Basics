@@ -42,11 +42,10 @@ namespace Graph {
     TreeNodeType *parent = NULL;
     
     KeyType key;
-    KeyType lowestDesendant;
-    
     
     TreeNode() {
       leafs = new TreeNodeType*[2];
+      this->numLeafs = 2;
       
       for (int ix = 0; ix < 2; ix++) {
         leafs[ix] = NULL;
@@ -116,16 +115,16 @@ namespace Graph {
     
     uint8_t tmp;
     
-    if (current->numberOfLeafs() == 0) {
+    if (current->getLeaf(0) == NULL) {
       return current;
     }
     
-    if (current->key >= key) {
-      if (current->lowestDesendant > key) {
-        current->lowestDesendant = key;
-      }
+    if (key == current->key) {
+      return NULL;
+    }
+    
+    if (key < current->key) {
       tmp = LEFT;
-      
     } else {
       tmp = RIGHT;
     }
@@ -139,6 +138,10 @@ namespace Graph {
     
     TreeNodeType *tNode = findOpening(key, treeRoot);
     
+    if (tNode == NULL) {
+      return NULL;
+    }
+    
     TreeNodeType *left = new TreeNodeType();
     TreeNodeType *right = new TreeNodeType();
     
@@ -147,8 +150,8 @@ namespace Graph {
     
     tNode->setLeaf(LEFT, left);
     tNode->setLeaf(RIGHT, right);
+    tNode->data = data;
     tNode->key = key;
-    tNode->lowestDesendant = key;
     
     return tNode;
   }
@@ -174,8 +177,6 @@ namespace Graph {
       parent->setLeaf(LEFT, victim->getLeaf(RIGHT));
       if (victim->getLeaf(LEFT)->getLeaf(0) != NULL) {
         tmp = victim->getLeaf(LEFT);
-      } else {
-        parent->lowestDesendant = victim->getLeaf(RIGHT)->lowestDesendant;
       }
     } else {
       parent->setLeaf(RIGHT, victim->getLeaf(LEFT));
@@ -225,10 +226,6 @@ namespace Graph {
     
     if (current->key == key) {
       return current;
-    }
-    
-    if (key < current->lowestDesendant) {
-      return NULL;
     }
     
     if (key < current->key) {
