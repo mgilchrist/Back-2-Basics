@@ -22,21 +22,28 @@
 #ifndef OpenSource_ArrayList_h
 #define OpenSource_ArrayList_h
 
+#include <vector>
 #include "List.h"
-#include "Stack.h"
 
 namespace Collection {
   
   template <class ElementType, class KeyType>
-  class ArrayList : public List<ElementType,KeyType>, public Array<Comparable<ElementType, KeyType> *>
+  class ArrayList : public List<ElementType,KeyType>
   {
+  private:
+    
+    vector<Comparable<ElementType, KeyType> *> *collection;
+    uint64_t size;
     
   public:
+    
+    
     ArrayList();
     ArrayList(uint64_t size);
     
     Comparable<ElementType,KeyType> *atIndex(uint64_t index);
-    //Comparable<ElementType,KeyType> **ptrToIndex(uint64_t index);
+    void setIndex(uint64_t index, Comparable<ElementType,KeyType> *data);
+    uint64_t getSize();
     
     uint8_t median5(Comparable<ElementType,KeyType> *array, uint8_t size);
     uint64_t medianOfMedians(uint64_t l, uint64_t r);
@@ -55,26 +62,11 @@ namespace Collection {
     }
     
     void swap(uint64_t first, uint64_t second) {
-      Comparable<ElementType,KeyType> *a, *b;
+      Comparable<ElementType,KeyType> *tmp;
       
-      a = this->collection[first];
-      b = this->collection[second];
-      
-      
-      swapComparables(a,b);
-    } 
-    
-    
-    void swapComparables(Comparable<ElementType,KeyType> *a, Comparable<ElementType,KeyType> *b) {
-      uint64_t tmp;
-      
-      
-      this->collection[*(a->index)] = b;
-      this->collection[*(b->index)] = a;
-      
-      tmp = *(a->index);
-      *(a->index) = *(b->index);
-      *(b->index) = tmp;
+      tmp = collection->at(first);
+      collection->at(first) = collection->at(second);
+      collection->at(second) = tmp;
       
     }
     
@@ -84,23 +76,31 @@ namespace Collection {
     
     uint64_t partition(uint64_t p, uint64_t l, uint64_t r) {
       
-      KeyType pValue = this->collection[p]->key;
-      uint64_t i = l;
+      KeyType pValue = collection->at(p)->key;
+      uint64_t i;
       uint64_t j;
       
-      // Move pivot out of the way
-      swapComparables(this->collection[r], this->collection[p]);
+      if ((r-l) < 2) {
+        if (collection->at(r)->key < collection->at(l)->key) {
+          swap(l, r);
+        }
+        return r;
+      }
       
-      for (j = l + 1; j < r; j++) {
+      // Move pivot out of the way
+      swap(r, p);
+      i = l;
+      
+      for (j = l; j < r; j++) {
         // Move to left if value is less than pivot
-        if (this->collection[j]->key <= pValue) {
+        if (collection->at(j)->key < pValue) {
+          swap(i, j);
           i++;
-          swapComparables(this->collection[i], this->collection[j]);
         }
       }
       
       // move pivot to median
-      swapComparables(this->collection[i], this->collection[p]);
+      swap(i, r);
       
       return i;
       
@@ -110,11 +110,10 @@ namespace Collection {
       ArrayList<ElementType,KeyType> *nArrayList = new ArrayList<ElementType,KeyType>(this->size);
       
       for (int ix = 0; ix < this->size; ix++) {
-        nArrayList->collection[ix] = this->collection[ix];
+        nArrayList->collection[ix] = collection[ix];
       }
       
       nArrayList->size = this->size;
-      nArrayList->capacity = this->size;
       
       return nArrayList;
     }
@@ -125,29 +124,31 @@ namespace Collection {
   
   template <class ElementType, class KeyType>
   ArrayList<ElementType,KeyType>::ArrayList() {
-    this->collection = new Comparable<ElementType,KeyType>*[STD_COLLECTION_SIZE];
-    this->size = STD_COLLECTION_SIZE;
-    this->capacity = STD_COLLECTION_SIZE;
+    collection = new std::vector<Comparable<ElementType,KeyType> *>(STD_COLLECTION_SIZE);
+    this->size = 0;
   }
   
   template <class ElementType, class KeyType>
   ArrayList<ElementType,KeyType>::ArrayList(uint64_t size) {
-    this->collection = new Comparable<ElementType,KeyType>*[size];
+    collection = new std::vector<Comparable<ElementType,KeyType> *>(size);
     this->size = size;
-    this->capacity = size;
   }
     
   template <class ElementType, class KeyType>
   Comparable<ElementType,KeyType> *ArrayList<ElementType,KeyType>::atIndex(uint64_t index) {
-    return this->collection[index];
+    return collection->at(index);
+  }
+  
+  template <class ElementType, class KeyType>
+  void ArrayList<ElementType,KeyType>::setIndex(uint64_t index, Comparable<ElementType,KeyType> *data) {
+    collection->at(index) = data;
   }
  
-  /*
+  
   template <class ElementType, class KeyType>
-  Comparable<ElementType,KeyType> *ArrayList<ElementType,KeyType>::ptrToIndex(uint64_t index) {
-    return &(this->collection[index]);
+  uint64_t ArrayList<ElementType,KeyType>::getSize() {
+    return size;
   }
-   */
   
   template <class ElementType, class KeyType>
   uint8_t ArrayList<ElementType,KeyType>::median5(Comparable<ElementType,KeyType> *array, uint8_t size) {
@@ -234,40 +235,35 @@ namespace Collection {
   template <class ElementType, class KeyType>
   ArrayList<ElementType, KeyType> *ArrayList<ElementType,KeyType>::merge(ArrayList<ElementType,KeyType> *leftList,
                                                                     ArrayList<ElementType,KeyType> *rightList) {
-    Comparable<ElementType, KeyType> *left, *right;
+    ArrayList<ElementType,KeyType> *mergedArray;
     uint64_t pos, leftPos, rightPos;
     uint64_t leftLength = leftList->getSize();
     uint64_t rightLength = rightList->getSize();
-    
-    right = rightList->atIndex(0);
-    left = leftList->atIndex(0);
-    
+      
     pos = 0;
     leftPos = 0;
     rightPos = 0;
-    
-    ArrayList<ElementType,KeyType> *mergedArray;
     
     mergedArray = new ArrayList<ElementType,KeyType>(leftLength+rightLength);
     
     while ((leftLength > 0) or (rightLength > 0)) {
       if ((leftLength > 0) and (rightLength > 0)) {
-        if (left->key <= right->key) {
-          mergedArray->setIndex(pos, left);
-          left = leftList->atIndex(leftPos++);
+        if (leftList->atIndex(leftPos)->key <= rightList->atIndex(rightPos)->key) {
+          mergedArray->setIndex(pos, leftList->atIndex(leftPos));
+          leftPos++;
           leftLength--;
         } else {
-          mergedArray->setIndex(pos, right);
-          right = rightList->atIndex(rightPos++);
+          mergedArray->setIndex(pos, rightList->atIndex(rightPos));
+          rightPos++;
           rightLength--;
         }
       } else if (leftLength > 0) {
-        mergedArray->setIndex(pos, left);
-        left = leftList->atIndex(leftPos++);
+        mergedArray->setIndex(pos, leftList->atIndex(leftPos));
+        leftPos++;
         leftLength--;
       } else if (rightLength > 0) {
-        mergedArray->setIndex(pos, right);
-        right = rightList->atIndex(rightPos++);
+        mergedArray->setIndex(pos, rightList->atIndex(rightPos));
+        rightPos++;
         rightLength--;
       }
       pos++;
@@ -293,7 +289,12 @@ namespace Collection {
     uint64_t middle = ((r - l) / 2) + l;
     
     left = mergeSort(l, middle);
-    right = mergeSort(middle+1, r);
+    
+    if (r > middle) {
+      right = mergeSort(middle+1, r);
+    } else {
+      return left;
+    }
     
     return merge(left, right);
     
@@ -343,7 +344,7 @@ namespace Collection {
   
   template <class ElementType, class KeyType>
   ArrayList<ElementType,KeyType> *ArrayList<ElementType,KeyType>::cloneSort() {
-    return mergeSort(0,this->getSize()-1);
+    return mergeSort(0,size-1);
   }
   
  

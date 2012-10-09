@@ -105,7 +105,7 @@ int testHeap() {
   uint64_t tmp, tmp1;
   
   for (int ix = 0; ix < TEST_SIZE; ix++) {
-    uint64_t value = random();
+    uint64_t value = random() % 1024;
     heap->push(value, value);
   }
   
@@ -151,7 +151,7 @@ int testRBTree() {
   arrayList = new Collection::ArrayList<uint64_t,uint64_t>(TEST_SIZE);
   
   for (int ix = 0; ix < TEST_SIZE; ix++) {
-    uint64_t value = random();
+    uint64_t value = random() % 1024;
     rbTree->insert(value, value);
     arrayList->setIndex(ix, new Collection::Comparable<uint64_t,uint64_t>(value, value));
   }
@@ -180,7 +180,7 @@ int testArrayList() {
   uint64_t tmp;
   
   for (int ix = 0; ix < arrayList->getSize(); ix++) {
-    uint64_t value = random();
+    uint64_t value = random() % 1024;
     arrayList->setIndex(ix, new Collection::Comparable<uint64_t,uint64_t>(value, value));
     verify[ix] = value;
   }
@@ -200,7 +200,7 @@ int testArrayList() {
   verify = new uint64_t[arrayList->getSize()];
   
   for (int ix = 0; ix < arrayList->getSize(); ix++) {
-    uint64_t value = random();
+    uint64_t value = random() % 1024;
     arrayList->setIndex(ix, new Collection::Comparable<uint64_t,uint64_t>(value, value));
     verify[ix] = value;
   }
@@ -219,7 +219,7 @@ int testArrayList() {
   arrayList = new Collection::ArrayList<uint64_t,uint64_t>(TEST_SIZE);
   
   for (int ix = 0; ix < arrayList->getSize(); ix++) {
-    uint64_t value = random();
+    uint64_t value = 255-ix;
     arrayList->setIndex(ix, new Collection::Comparable<uint64_t,uint64_t>(value, value));
   }
   
@@ -228,6 +228,13 @@ int testArrayList() {
   arrayList->inPlaceSort();
   
   tmp = arrayList->atIndex(0)->key;
+  
+  cout << arrayList->atIndex(0)->key;
+  cout << ":";
+  cout << arrayListClone->atIndex(0)->key;
+  cout << ", ";
+  
+  cout << "\n";
   
   for (int ix = 1; ix < arrayList->getSize(); ix++) {
     cout << arrayList->atIndex(ix)->key;

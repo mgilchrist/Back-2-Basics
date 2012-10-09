@@ -39,7 +39,7 @@ namespace Collection {
     ElementType data;
     KeyType key;
     uint64_t *index;
-
+    
     
     Comparable();
     
@@ -74,9 +74,7 @@ namespace Collection {
     virtual uint64_t partition(uint64_t p, uint64_t l, uint64_t r) =0;
     
   public:
-    virtual void swap(uint64_t a, uint64_t b) =0;
     Comparable<ElementType, KeyType> atIndex(uint64_t index);
-    virtual void swapComparables(Comparable<ElementType,KeyType> *a, Comparable<ElementType,KeyType> *b) =0;
     
     void quickSort(uint64_t l, uint64_t r);
     uint64_t selection(uint64_t l, uint64_t r, uint64_t k);
@@ -99,7 +97,7 @@ namespace Collection {
   
   template <class ElementType, class KeyType>
   uint64_t List<ElementType,KeyType>::chooseRandomPivot(uint64_t l, uint64_t r) {
-    return (((random())%(r-l))+l);
+    return (((random())%(r-l+1))+l);
   }
   
   // Best: O(nlogn) Worst: O(n^2) Average: O(nlogn) Space: O(logn)
@@ -113,8 +111,13 @@ namespace Collection {
       p = this->choosePivot(l, r);
       
       pIndex = this->partition(p, l, r);
-      quickSort(l, pIndex-1);
-      quickSort(pIndex+1, r);
+      
+      if (l < pIndex) {
+        quickSort(l, pIndex-1);
+      }
+      if (pIndex < r) {
+        quickSort(pIndex+1, r);
+      }
       
     }
     
