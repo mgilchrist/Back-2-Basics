@@ -146,21 +146,28 @@ namespace Collection {
     uint64_t right;
     uint64_t j;
     
-    uint64_t n = size;
+    uint64_t n = collection->size()-1;
     
     if ((2*(i+1)) > n) {
-      return;
-    } else if ((2*(i+1)) < n) {
+      collection->resize(collection->size()*2);
+      n = collection->size()-1;
+    }
+    
+    if ((2*(i+1)) < n) {
       left = (2 * (i + 1)) - 1;
       right = 2 * (i + 1);
-      if ((collection->at(left) == NULL) || (collection->at(right) == NULL) ||
-          (collection->at(left)->key < collection->at(right)->key)) {
+      if ((collection->at(left) != NULL) &&
+          ((collection->at(right) == NULL) || (collection->at(left)->key < collection->at(right)->key))) {
         j = left;
-      } else {
+      } else if (collection->at(right) != NULL) {
         j = right;
+      } else {
+        return;
       }
-    } else if ((2*(i+1)) == n) {
-      j = n-1;
+    } else if ((collection->at(n)) && ((2*(i+1)) == n)) {
+      j = n;
+    } else {
+      return;
     }
     
     if ((collection->at(i) == NULL) ||

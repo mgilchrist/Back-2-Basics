@@ -19,7 +19,6 @@
 #include "Heuristic.h"
 
 
-
 namespace Graph {
   
   

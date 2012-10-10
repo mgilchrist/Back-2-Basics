@@ -280,9 +280,15 @@ namespace Collection {
     
     ArrayList *left, *right;
     
-    if (l == r) {
-      ArrayList *ret = new ArrayList(1);
-      ret->setIndex(0, this->atIndex(l));
+    if (r - l < 64) {
+      uint64_t tmpSize = r-l+1;
+      ArrayList *ret = new ArrayList(tmpSize);
+      
+      for (uint64_t ix = 0; ix < tmpSize; ix++) {
+        ret->setIndex(ix, this->atIndex(l+ix));
+      }
+      
+      ret->quickSort(0, r-l);
       return ret;
     }
     

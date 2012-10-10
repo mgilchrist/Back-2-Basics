@@ -26,6 +26,7 @@
 #include "Network.h"
 #include "Stack.h"
 
+
 namespace NeuralNetwork
 {
   

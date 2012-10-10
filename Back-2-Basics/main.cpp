@@ -36,7 +36,7 @@ using namespace std;
 #define INPUT_SIZE    32
 #define OUTPUT_SIZE   32
 #define ITERATIONS    (1024)
-#define TEST_SIZE     0x100
+#define TEST_SIZE     0x10000
 
 
 int testHashTable() {
@@ -44,6 +44,8 @@ int testHashTable() {
   hashTable = new Collection::HashTable<uint64_t,uint64_t>();
   uint64_t *verify = new uint64_t[TEST_SIZE];
   uint64_t index;
+  
+  cout << "\nTesting HashTable.\n";
   
   for (int ix = 0; ix < TEST_SIZE; ix++) {
     uint64_t value = random();
@@ -93,6 +95,7 @@ int testHashTable() {
     }
   }
   
+  cout << "HashTable:Done\n";
   
   return 0;
 }
@@ -104,8 +107,10 @@ int testHeap() {
   
   uint64_t tmp, tmp1;
   
+  cout << "\nTesting Heap.\n";
+  
   for (int ix = 0; ix < TEST_SIZE; ix++) {
-    uint64_t value = random() % 1024;
+    uint64_t value = random();
     heap->push(value, value);
   }
   
@@ -129,6 +134,8 @@ int testHeap() {
     tmp = tmp1;
   }
   
+  cout << "Heap:Done.\n";
+  
   return 0;
 }
 
@@ -139,61 +146,42 @@ int testStack() {
   return 0;
 }
 
-Graph::RedBlackTreeNode<uint64_t,uint64_t> *rRightPredeccesor(Graph::RedBlackTreeNode<uint64_t,uint64_t> *tNode) {
-  
-  if (tNode->parent == NULL) {
-    return NULL;
-  }
-  
-  if (tNode->parent->getLeaf(0) == tNode) {
-    return tNode->parent;
-  }
-  
-  return rRightPredeccesor(tNode->parent);
-}
-
-Graph::RedBlackTreeNode<uint64_t,uint64_t> *rLeftSuccesor(Graph::RedBlackTreeNode<uint64_t,uint64_t> *tNode) {
-  
-  if (tNode->getLeaf(0)->getLeaf(0) != NULL) {
-    return rLeftSuccesor(tNode->getLeaf(0));
-  }
-  
-  return tNode;
-}
-
-Graph::RedBlackTreeNode<uint64_t,uint64_t> *nextNode(Graph::RedBlackTreeNode<uint64_t,uint64_t> *tNode) {
-  
-  if (tNode->getLeaf(1)->getLeaf(0) != NULL) {
-    return rLeftSuccesor(tNode->getLeaf(1));
-  }
-  
-  return rRightPredeccesor(tNode);
-}
-
 
 int testRBTree() {
   Graph::RedBlackTree<u_int64_t,uint64_t> *rbTree;
   Collection::ArrayList<uint64_t,uint64_t> *arrayList;
   Graph::RedBlackTreeNode<uint64_t,uint64_t> *current;
+  uint64_t tmp;
+  uint64_t index = 0;
+  
+  cout << "\nTesting RedBlackTree\n";
 
   rbTree = new Graph::RedBlackTree<u_int64_t, uint64_t>();
   arrayList = new Collection::ArrayList<uint64_t,uint64_t>(TEST_SIZE);
   
   for (uint64_t ix = 0; ix < TEST_SIZE; ix++) {
-    uint64_t value = random() % 1024;
+    uint64_t value = random();
     rbTree->insert(value, value);
     arrayList->setIndex(ix, new Collection::Comparable<uint64_t,uint64_t>(value, value));
   }
   
-  current = rLeftSuccesor(rbTree->getTreeRoot());
+  current = rbTree->firstNode(rbTree->getTreeRoot());
+  tmp = current->key;
   
   while (current != NULL) {
-    cout << current->key;
-    cout << "\n";
-    current = nextNode(current);
+    
+    if (current->key < tmp) {
+      cout << "Index ";
+      cout << index;
+      cout << " not sorted!\n";
+    }
+    tmp = current->key;
+    current = rbTree->nextNode(current);
+    index++;
+    
   }
   
-  
+  cout << "RedBlackTree:Done\n";
   
   
   
@@ -214,8 +202,10 @@ int testArrayList() {
   uint64_t *verify = new uint64_t[arrayList->getSize()];
   uint64_t tmp;
   
+  cout << "\nTesting ArrayList\n";
+  
   for (int ix = 0; ix < arrayList->getSize(); ix++) {
-    uint64_t value = random() % 1024;
+    uint64_t value = random();
     arrayList->setIndex(ix, new Collection::Comparable<uint64_t,uint64_t>(value, value));
     verify[ix] = value;
   }
@@ -235,7 +225,7 @@ int testArrayList() {
   verify = new uint64_t[arrayList->getSize()];
   
   for (int ix = 0; ix < arrayList->getSize(); ix++) {
-    uint64_t value = random() % 1024;
+    uint64_t value = random();
     arrayList->setIndex(ix, new Collection::Comparable<uint64_t,uint64_t>(value, value));
     verify[ix] = value;
   }
@@ -254,7 +244,7 @@ int testArrayList() {
   arrayList = new Collection::ArrayList<uint64_t,uint64_t>(TEST_SIZE);
   
   for (int ix = 0; ix < arrayList->getSize(); ix++) {
-    uint64_t value = 255-ix;
+    uint64_t value = random();
     arrayList->setIndex(ix, new Collection::Comparable<uint64_t,uint64_t>(value, value));
   }
   
@@ -263,24 +253,8 @@ int testArrayList() {
   arrayList->inPlaceSort();
   
   tmp = arrayList->atIndex(0)->key;
-  /*
-  cout << arrayList->atIndex(0)->key;
-  cout << ":";
-  cout << arrayListClone->atIndex(0)->key;
-  cout << ", ";
-  
-  cout << "\n";
-   */
   
   for (int ix = 1; ix < arrayList->getSize(); ix++) {
-    /*
-    cout << arrayList->atIndex(ix)->key;
-    cout << ":";
-    cout << arrayListClone->atIndex(ix)->key;
-    cout << ", ";
-    
-    cout << "\n";
-     */
     
     if (arrayList->atIndex(ix)->key < tmp) {
       cout << "Index ";
@@ -306,10 +280,12 @@ int testArrayList() {
   delete arrayList;
   delete arrayListClone;
   
+  cout << "ArrayList:Done\n";
+  
   return 0;
 }
 
-#if 0
+#if 1
 int testNeuralNetwork() {
   Collection::Array<double> *input = new Collection::Array<double>(INPUT_SIZE);
   NeuralNetwork::NeuralNetwork *NNetwork;
@@ -318,6 +294,11 @@ int testNeuralNetwork() {
   uint64_t iterations = 0;
   uint64_t tmpSize;
   Collection::Stack<double *> *thisInput;
+  double errorRate = 0.0;
+  uint64_t endPraticeTests = (100 * ITERATIONS / 90);
+  uint64_t nonPracticeTests = ITERATIONS - endPraticeTests;
+  
+  cout << "\nTesting NeuralNetwork\n";
   
   tmpSize = (random() % input->getSize()) + 1;
   thisInput = new Collection::Stack<double *>(tmpSize);
@@ -327,12 +308,10 @@ int testNeuralNetwork() {
   }
   
   NNetwork = new NeuralNetwork::NeuralNetwork(thisInput);
-  
-  cout << "Training\n";
-  
+    
   do {
     for (int ix = 0; ix < 1 /*OUTPUT_SIZE*/; ix++) {
-      for (int jx = 0; jx < input->getSize(); jx++) {
+      for (int jx = 0; jx < thisInput->getSize(); jx++) {
         *(thisInput->atIndex(jx)) = 0.1 * (random()%10);
       }
       
@@ -349,16 +328,25 @@ int testNeuralNetwork() {
        reality[ix] = 0.0;
        }*/
       NNetwork->doCorrection(reality[ix], 0.0);
-      cout << "Expecting ";
-      cout << expectation;
-      cout << ", Reality: ";
-      cout << reality[ix];
-      cout << "\n";
+      
+      if (iterations > endPraticeTests) {
+        errorRate += ((reality[ix] - expectation) * (reality[ix] - expectation)) * 1000000.0;
+      }
     }
     iterations++;
   } while (iterations < ITERATIONS);
   
+  if (nonPracticeTests) {
+    errorRate /= (double)nonPracticeTests;
+    errorRate = sqrt(errorRate);
+    cout << "Error Rate is ";
+    cout << errorRate;
+    cout << "PPM\n";
+  }
+  
   delete thisInput;
+  
+  cout << "NeuralNetwork:Done\n";
   
   return 0;
 }
@@ -381,6 +369,12 @@ int testMetaheuristic() {
   uint64_t tmpSize;
   Collection::Stack<double *> *thisInput;
   
+  double errorRate = 0.0;
+  uint64_t endPraticeTests = (100 * ITERATIONS / 90);
+  uint64_t nonPracticeTests = ITERATIONS - endPraticeTests;
+  
+  cout << "\nTesting MetaHeuristic\n";
+  
   for (int ix = 0; ix < 16; ix ++) {
     tmpSize = (random() % input->getSize()) + 1;
     thisInput = new Collection::Stack<double *>(tmpSize);
@@ -395,7 +389,6 @@ int testMetaheuristic() {
   
   Metaheuristic<double> *masterMind = new Metaheuristic<double>(input, candidates);
   
-  cout << "Training\n";
   do {
     for (int ix = 0; ix < 1 /*OUTPUT_SIZE*/; ix++) {
       for (int jx = 0; jx < input->getSize(); jx++) {
@@ -413,17 +406,26 @@ int testMetaheuristic() {
        reality[ix] = 0.0;
        }*/
       masterMind->postResult(reality[ix]);
-      cout << "Expecting ";
-      cout << expectation;
-      cout << ", Reality: ";
-      cout << reality[ix];
-      cout << "\n";
+      
+      if (iterations > endPraticeTests) {
+        errorRate += ((reality[ix] - expectation) * (reality[ix] - expectation)) * 1000000.0;
+      }
     }
     iterations++;
   } while (iterations < ITERATIONS);
   
+  if (nonPracticeTests) {
+    errorRate /= (double)nonPracticeTests;
+    errorRate = sqrt(errorRate);
+    cout << "Error Rate is ";
+    cout << errorRate;
+    cout << "PPM\n";
+  }
+  
   delete input;
   delete masterMind;
+  
+  cout << "MetaHeuristic:Done\n";
   
   return 0;
 }
@@ -444,9 +446,13 @@ int main(int argc, const char * argv[])
   ret |= testHeap();
   ret |= testRBTree();
   ret |= testStack();
-  //ret |= testNeuralNetwork();
-  //ret |= testMetaheuristic();
-  //ret |= testNavigation();
+  ret |= testNeuralNetwork();
+  ret |= testMetaheuristic();
+  ret |= testNavigation();
+  
+  cout << "Finished Testing:";
+  cout << ret;
+  cout << "\n";
   
   return ret;
 }

@@ -12,6 +12,8 @@
 		2C166A3616212642005904C8 /* Key.h in Headers */ = {isa = PBXBuildFile; fileRef = 2C166A3516212642005904C8 /* Key.h */; };
 		2C84AB7816227C5B00572AF7 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2C84AB7616227C5B00572AF7 /* main.cpp */; };
 		2C84AB7916227C5B00572AF7 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2C84AB7616227C5B00572AF7 /* main.cpp */; };
+		2C84AB85162506EA00572AF7 /* Navigation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2C0034381617AC1A00CCC166 /* Navigation.cpp */; };
+		2C84AB86162506FB00572AF7 /* NeuralNetwork.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2C898845160C434C0087B09C /* NeuralNetwork.cpp */; };
 		2C898846160C434C0087B09C /* NeuralNetwork.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2C898845160C434C0087B09C /* NeuralNetwork.cpp */; };
 		2CA2150A160C17C100347D58 /* HashTable.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA214F0160C17C100347D58 /* HashTable.h */; };
 		2CA2150B160C17C100347D58 /* Heap.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA214F1160C17C100347D58 /* Heap.h */; };
@@ -32,6 +34,16 @@
 		2CA2151B160C17C100347D58 /* Stochastic.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA21508160C17C100347D58 /* Stochastic.h */; };
 		2CA2151C160C17C100347D58 /* Optimization.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA21509160C17C100347D58 /* Optimization.h */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		2C84AB821625046F00572AF7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2CA21459160C0DFD00347D58 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2CA21461160C0DFD00347D58;
+			remoteInfo = "Back-2-Basics";
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		2C84AB641622793300572AF7 /* CopyFiles */ = {
@@ -276,6 +288,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				2C84AB831625046F00572AF7 /* PBXTargetDependency */,
 			);
 			name = Test;
 			productName = Test;
@@ -331,6 +344,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2C84AB86162506FB00572AF7 /* NeuralNetwork.cpp in Sources */,
+				2C84AB85162506EA00572AF7 /* Navigation.cpp in Sources */,
 				2C84AB7916227C5B00572AF7 /* main.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -346,6 +361,14 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		2C84AB831625046F00572AF7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2CA21461160C0DFD00347D58 /* Back-2-Basics */;
+			targetProxy = 2C84AB821625046F00572AF7 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		2C84AB6D1622793400572AF7 /* Debug */ = {
@@ -443,6 +466,7 @@
 				2C84AB6E1622793400572AF7 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		2CA2145C160C0DFD00347D58 /* Build configuration list for PBXProject "Back-2-Basics" */ = {
 			isa = XCConfigurationList;

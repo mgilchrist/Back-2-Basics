@@ -26,6 +26,7 @@ using namespace std;
 
 #include "NeuralNetwork.h"
 
+//#define NEURALNETWORK_DEBUG
 
 namespace NeuralNetwork
 {
@@ -184,10 +185,12 @@ namespace NeuralNetwork
     
     
     currentStack = new Collection::Stack<Neuron *>(inLayer[0]);
-    
+  
+#ifdef NEURALNETWORK_DEBUG
     cout << "Creating New Input Layer:";
     cout << inLayer[0];
     cout << "\n";
+#endif
     
     for (int jx = 0; jx < inLayer[0]; jx++) {
       //cout << "Creating Input Neuron\n";
@@ -203,9 +206,11 @@ namespace NeuralNetwork
     this->layers->push(currentStack);
     
     for (int ix = 1; ix < layers; ix++) {
+#ifdef NEURALNETWORK_DEBUG
       cout << "Creating New Hidden Layer:";
       cout << inLayer[ix];
       cout << "\n";
+#endif
       previousStack = currentStack;
       currentStack = new Collection::Stack<Neuron *>(inLayer[ix]);
       
@@ -220,8 +225,9 @@ namespace NeuralNetwork
       }
       this->layers->push(currentStack);
     }
-    
+#ifdef NEURALNETWORK_DEBUG    
     cout << "Creating Output Neuron\n";
+#endif
     previousStack = currentStack;
     currentStack = new Collection::Stack<Neuron *>(1);
     
@@ -230,9 +236,11 @@ namespace NeuralNetwork
     this->add(currentNeuron);
     currentStack->push(currentNeuron);
     
+#ifdef NEURALNETWORK_DEBUG
     cout << "  Inputs: ";
     cout << currentNeuron->getNumEdges();
     cout << "\n";
+#endif
     
     this->layers->push(currentStack);
     
