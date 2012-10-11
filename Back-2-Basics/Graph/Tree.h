@@ -38,14 +38,16 @@ namespace Graph {
     uint8_t numLeafs;
     
   public:
-    DataType data = NULL;
-    TreeNodeType *parent = NULL;
+    DataType data;
+    TreeNodeType *parent;
     
     KeyType key;
     
     TreeNode() {
       leafs = new TreeNodeType*[2];
       this->numLeafs = 2;
+      parent = NULL;
+      data = NULL;
       
       for (int ix = 0; ix < 2; ix++) {
         leafs[ix] = NULL;
@@ -55,6 +57,8 @@ namespace Graph {
     TreeNode(uint8_t numLeafs) {
       leafs = new TreeNodeType*[numLeafs];
       this->numLeafs = numLeafs;
+      parent = NULL;
+      data = NULL;
       
       for (int ix = 0; ix < numLeafs; ix++) {
         leafs[ix] = NULL;
@@ -84,10 +88,9 @@ namespace Graph {
   class Tree
   {
     
-  private:
+  protected:
     TreeNodeType *treeRoot;
     
-  protected:
     virtual TreeNodeType *findOpening(KeyType key, TreeNodeType *current);
     TreeNodeType *insert_r(DataType data, KeyType key);
     TreeNodeType *remove_r(KeyType key);
@@ -265,8 +268,8 @@ namespace Graph {
   template <class TreeNodeType, class DataType, class KeyType>
   TreeNodeType *Tree<TreeNodeType,DataType,KeyType>::rLeftSuccesor(TreeNodeType *tNode) {
     
-    if (tNode->getLeaf(0)->getLeaf(0) != NULL) {
-      return rLeftSuccesor(tNode->getLeaf(0));
+    if (tNode->getLeaf(LEFT)->getLeaf(0) != NULL) {
+      return rLeftSuccesor(tNode->getLeaf(LEFT));
     }
     
     return tNode;
@@ -275,8 +278,8 @@ namespace Graph {
   template <class TreeNodeType, class DataType, class KeyType>
   TreeNodeType *Tree<TreeNodeType,DataType,KeyType>::nextNode(TreeNodeType *tNode) {
     
-    if (tNode->getLeaf(1)->getLeaf(0) != NULL) {
-      return rLeftSuccesor(tNode->getLeaf(1));
+    if (tNode->getLeaf(RIGHT)->getLeaf(0) != NULL) {
+      return rLeftSuccesor(tNode->getLeaf(RIGHT));
     }
     
     return rRightPredeccesor(tNode);

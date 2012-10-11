@@ -36,7 +36,7 @@ using namespace std;
 #define INPUT_SIZE    32
 #define OUTPUT_SIZE   32
 #define ITERATIONS    (1024)
-#define TEST_SIZE     0x10000
+#define TEST_SIZE     0x100000
 
 
 int testHashTable() {
@@ -160,21 +160,21 @@ int testRBTree() {
   arrayList = new Collection::ArrayList<uint64_t,uint64_t>(TEST_SIZE);
   
   for (uint64_t ix = 0; ix < TEST_SIZE; ix++) {
-    uint64_t value = random();
+    uint64_t value = ix;
     rbTree->insert(value, value);
-    arrayList->setIndex(ix, new Collection::Comparable<uint64_t,uint64_t>(value, value));
   }
   
   current = rbTree->firstNode(rbTree->getTreeRoot());
   tmp = current->key;
   
   while (current != NULL) {
-    
+
     if (current->key < tmp) {
       cout << "Index ";
       cout << index;
       cout << " not sorted!\n";
     }
+    
     tmp = current->key;
     current = rbTree->nextNode(current);
     index++;
