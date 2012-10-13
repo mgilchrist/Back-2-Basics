@@ -10,67 +10,44 @@
 #define Back_2_Basics_Key_h
 
 #include <iostream>
+#include <vector>
 
 template <class KeyType>
 class Key {
 public:
-  uint8_t *name;
-  uint64_t  size;
+  std::vector<uint8_t> name;
   
   Key(KeyType key)  {
-    size = sizeof(key);
-    name = new uint8_t[size];
-    bcopy(&key, name, size);
+    name.assign((uint8_t *)&key,(uint8_t *)&key + sizeof(KeyType));
   }
   
   Key(KeyType *key)  {
-    size = sizeof(key);
-    name = new uint8_t[size];
-    bcopy(key, name, size);
+    name = new std::vector<uint8_t>((uint8_t *)key,(uint8_t *)key + sizeof(key));
   }
   
-  bool operator== (Key param) {
-    if (size != param.size) {
+  bool operator== (Key &param) {
+    if (name.size() != param.name.size()) {
       return false;
     }
     
-    return (!bcmp(name, param.name, size));
+    return (!memcmp(&name.at(0), &param.name.at(0), name.size()));
   }
   
-  bool operator== (Key *param) {
-    if (size != param->size) {
+  bool operator== (KeyType &param) {
+    if (name.size() != sizeof(KeyType)) {
       return false;
     }
     
-    return (!bcmp(name, param->name, size));
+    return (!memcmp(&name.at(0), &param, name.size()));
   }
   
-  bool operator== (KeyType *param) {
-    if (size != sizeof(param)) {
-      return false;
+  void operator= (KeyType &param) {
+    if (name.size() != sizeof(KeyType)) {
+      delete name;
+      name = new std::vector<uint8_t>((uint8_t *)&param,(uint8_t *)&param + sizeof(KeyType));
+    } else {
+      name.assign((uint8_t *)&param,(uint8_t *)&param + sizeof(KeyType));
     }
-    
-    return (!bcmp(name, param, size));
-  }
-  
-  bool operator== (KeyType param) {
-    if (size != sizeof(param)) {
-      return false;
-    }
-    
-    return (!bcmp(name, &param, size));
-  }
-  
-  void operator= (KeyType *param) {
-    size = sizeof(param);
-    name = new uint8_t[size];
-    bcopy(param, name, size);
-  }
-  
-  void operator= (KeyType param) {
-    size = sizeof(param);
-    name = new uint8_t[size];
-    bcopy(&param, name, size);
   }
   
 };

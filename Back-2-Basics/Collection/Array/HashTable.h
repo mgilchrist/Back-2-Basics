@@ -77,15 +77,15 @@ namespace Collection {
     std::vector<Key<KeyType> *> keyMap;
     std::vector<uint64_t> fullHashMap;
     
-    std::vector<uint64_t> *SHA_2_Prep(uint8_t *data, uint64_t dataSize);
-    uint64_t *SHA_2(KeyType);
+    std::vector<uint64_t> *SHA_2_Prep(std::vector<uint8_t> &data);
+    uint64_t *SHA_2(Key<KeyType> *);
     void grow();
     
   public:
     HashTable();
-    uint64_t search(KeyType);
+    uint64_t search(KeyType&);
     void remove(uint64_t);
-    void insert(ElementType, KeyType);
+    void insert(ElementType, KeyType&);
     ElementType get(uint64_t);
     void update(uint64_t,ElementType);
     //ElementType *clone();
@@ -107,24 +107,25 @@ namespace Collection {
   
   template <class ElementType, class KeyType>
   HashTable<ElementType,KeyType>::HashTable() {
-    /*
-    collection = new std::vector<ElementType>(STD_COLLECTION_SIZE);
-    keyMap = new std::vector<Key *>(STD_COLLECTION_SIZE);
-    fullHashMap = new std::vector<uint64_t>(STD_COLLECTION_SIZE);
-     */
+    
+    collection.resize(STD_COLLECTION_SIZE, 0);
+    keyMap.resize(STD_COLLECTION_SIZE, 0);
+    fullHashMap.resize(STD_COLLECTION_SIZE, 0);
+    
     
   }
   
   template <class ElementType, class KeyType>
   void HashTable<ElementType,KeyType>::grow() {
-        
+    
     uint64_t newIndex;
+    uint64_t oldSize = fullHashMap.size()*2;
     
-    collection.resize(collection.size()*2);
-    keyMap.resize(keyMap.size()*2);
-    fullHashMap.resize(fullHashMap.size()*2);
+    collection.resize(collection.size()*2, 0);
+    keyMap.resize(keyMap.size()*2, 0);
+    fullHashMap.resize(fullHashMap.size()*2, 0);
     
-    for (int ix = 0; ix < fullHashMap.size(); ix++) {
+    for (uint64_t ix = oldSize-1; ix > 0; ix--) {
       newIndex = fullHashMap[ix] % fullHashMap.size();
       
       if (ix != newIndex) {
@@ -132,9 +133,8 @@ namespace Collection {
         keyMap[newIndex] = keyMap[ix];
         fullHashMap[newIndex] = fullHashMap[ix];
         collection[ix] = (ElementType)NULL;
-        keyMap[ix] = NULL;
-        fullHashMap[ix] = NULL;
-
+        keyMap[ix] = (Key<KeyType> *)NULL;
+        fullHashMap[ix] = 0;
       }
     }
     
@@ -142,57 +142,70 @@ namespace Collection {
   }
   
   template <class ElementType, class KeyType>
-  uint64_t HashTable<ElementType,KeyType>::search(KeyType key) {
+  uint64_t HashTable<ElementType,KeyType>::search(KeyType &key) {
     
     uint8_t useHash;
     uint64_t index;
-    
-    uint64_t *hash = SHA_2(key);
+    Key<KeyType> *kKey = new Key<KeyType>(key);
+    uint64_t *hash = SHA_2(kKey);
     useHash = 8;
     
     while (useHash) {
       useHash--;
       index = hash[useHash] % keyMap.size();
-      if ((sizeof(key) == sizeof(keyMap[index])) &&
-          (*keyMap[index] == key)) {
-        delete hash;
-        return index;
+      if (index) {
+        if ((keyMap[index] != NULL) && (*(keyMap[index]) == key)) {
+          delete hash;
+          return index;
+        }
       }
     }
     
     delete hash;
-    return -1;
+    return 0;
     
   }
   
   template <class ElementType, class KeyType>
   void HashTable<ElementType,KeyType>::remove(uint64_t index) {
-    delete keyMap[index];
-    keyMap[index] = NULL;
+    if (keyMap[index] != NULL) {
+      delete keyMap[index];
+      keyMap[index] = NULL;
+      fullHashMap[index] = 0;
+      collection[index] = NULL;
+    }
   }
   
   template <class ElementType, class KeyType>
-  void HashTable<ElementType,KeyType>::insert(ElementType data, KeyType key) {
+  void HashTable<ElementType,KeyType>::insert(ElementType data, KeyType &key) {
     
-    uint64_t *hash = SHA_2(key);
     uint8_t useHash = 8;
     uint64_t index;
+    Key<KeyType> *kKey = new Key<KeyType>(key);
+    uint64_t *hash = SHA_2(kKey);
     
     do {
       while (useHash) {
         useHash--;
         index = hash[useHash] % keyMap.size();
-        if (keyMap[index] == NULL) {
-          keyMap[index] = new Key<KeyType>(key);
-          fullHashMap[index] = hash[useHash];
-          collection[index] = data;
-          
-          delete hash;
-          return;
+        if (index) {
+          if (keyMap[index] == NULL) {
+            keyMap[index] = kKey;
+            fullHashMap[index] = hash[useHash];
+            collection[index] = data;
+            
+            delete hash;
+            return;
+          } else if (*keyMap[index] == *kKey) {
+            delete hash;
+            delete kKey;
+            return;
+          }
         }
       }
       
       this->grow();
+      useHash = 8;
       
     } while ((1));
     
@@ -202,25 +215,21 @@ namespace Collection {
   }
   
   template <class ElementType, class KeyType>
-  std::vector<uint64_t> *HashTable<ElementType,KeyType>::SHA_2_Prep(uint8_t *data, uint64_t dataSize) {
-    uint8_t arraySize = (112 - (dataSize % 128) % 111) + dataSize;
-    uint8_t *ret = new uint8_t[arraySize];
+  std::vector<uint64_t> *HashTable<ElementType,KeyType>::SHA_2_Prep(std::vector<uint8_t> &data) {
+    uint64_t dataSize = data.size();
+    uint64_t arraySize = (128 - (dataSize % 128) % 111) + dataSize;
+    std::vector<uint8_t> *ret = new std::vector<uint8_t>(data.begin(), data.end());
     
-    for (int ix = 0; ix < dataSize; ix+=8) {
-      ret[ix] = data[ix];
-    }
+    ret->resize(arraySize, 0);
+    (*ret)[dataSize] = 0x01;
     
-    ret[dataSize] = 0x01;
-    
-    bzero((void *)ret[dataSize+1], arraySize-(dataSize+9));
-    
-    *((uint64_t *)(&ret[arraySize-8])) = dataSize;
+    *((uint64_t *)(&(*ret)[arraySize-8])) = dataSize;
     
     return (std::vector<uint64_t> *)ret;
   }
   
   template <class ElementType, class KeyType>
-  uint64_t *HashTable<ElementType,KeyType>::SHA_2(KeyType key) {
+  uint64_t *HashTable<ElementType,KeyType>::SHA_2(Key<KeyType> *key) {
     std::vector<uint64_t> *conditionedMsg;
     uint64_t subArray[80];
     uint64_t tmpHash[8];
@@ -231,7 +240,7 @@ namespace Collection {
     hash = new uint64_t[8];
     
     
-    conditionedMsg = SHA_2_Prep((uint8_t *)key, sizeof(key));
+    conditionedMsg = SHA_2_Prep(key->name);
     
     for (int jx = 0; jx < 8; jx++) {
       hash[jx] = 0;

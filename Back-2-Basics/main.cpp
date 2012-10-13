@@ -47,18 +47,19 @@ int testHashTable() {
   
   cout << "\nTesting HashTable.\n";
   
-  for (int ix = 0; ix < TEST_SIZE; ix++) {
+  for (int ix = 0; ix < 16; ix++) {
     uint64_t value = random();
     hashTable->insert(value, value);
     verify[ix] = value;
   }
   
-  for (int ix = 0; ix < TEST_SIZE; ix++) {
+  for (int ix = 0; ix < 16; ix++) {
     
     if ((index = hashTable->search(verify[ix])) == ERROR) {
       cout << "Index ";
       cout << ix;
       cout << " is not present!\n";
+      continue;
     }
     
     if (verify[ix] != hashTable->get(index)) {
@@ -442,6 +443,7 @@ int main(int argc, const char * argv[])
   cout << "This is free software, and you are welcome to redistribute it\n";
   cout << "under certain conditions; type `show c' for details.\n";
   
+  ret |= testHashTable();
   ret |= testArrayList();
   ret |= testHeap();
   ret |= testRBTree();
