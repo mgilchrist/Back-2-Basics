@@ -41,60 +41,46 @@ using namespace std;
 
 int testHashTable() {
   Collection::HashTable<uint64_t,uint64_t> *hashTable;
+  Collection::ArrayList<uint64_t,uint64_t> *verify;
   hashTable = new Collection::HashTable<uint64_t,uint64_t>();
-  uint64_t *verify = new uint64_t[TEST_SIZE];
-  uint64_t index;
+  verify = new Collection::ArrayList<uint64_t,uint64_t>(TEST_SIZE);
   
   cout << "\nTesting HashTable.\n";
   
-  for (int ix = 0; ix < 16; ix++) {
+  for (int ix = 0; ix < TEST_SIZE; ix++) {
     uint64_t value = random();
     hashTable->insert(value, value);
     verify[ix] = value;
   }
   
-  for (int ix = 0; ix < 16; ix++) {
+  for (int ix = 0; ix < TEST_SIZE; ix++) {
     
-    if ((index = hashTable->search(verify[ix])) == ERROR) {
-      cout << "Index ";
-      cout << ix;
-      cout << " is not present!\n";
-      continue;
-    }
-    
-    if (verify[ix] != hashTable->get(index)) {
+    if (verify->atIndex(ix)->data != hashTable->get(verify->atIndex(ix)->data)) {
       cout << "Index ";
       cout << ix;
       cout << " does not match!\n";
     }
     
-    if ((ix % 4) == 3) {
-      hashTable->remove(index);
-    }
+    //if ((ix % 4) == 3) {
+    //  hashTable->remove(index);
+    //}
   }
   
   for (int ix = 0; ix < TEST_SIZE; ix++) {
     
-    if ((ix % 4) == 3) {
-      continue;
-    }
-    
-    if ((index = hashTable->search(verify[ix])) == ERROR) {
-      cout << "Index ";
-      cout << ix;
-      cout << " is not present!\n";
-    }
-    
-    if (verify[ix] != hashTable->get(index)) {
+    if (verify->atIndex(ix)->data != hashTable->remove(verify->atIndex(ix)->data)) {
       cout << "Index ";
       cout << ix;
       cout << " does not match!\n";
     }
     
-    if ((index % 4) == 3) {
-      hashTable->remove(index);
-    }
+    //if ((index % 4) != 3) {
+    //  hashTable->remove(index);
+    //}
   }
+  
+  delete hashTable;
+  delete verify;
   
   cout << "HashTable:Done\n";
   

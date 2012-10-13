@@ -79,15 +79,16 @@ namespace Collection {
     
     std::vector<uint64_t> *SHA_2_Prep(std::vector<uint8_t> &data);
     uint64_t *SHA_2(Key<KeyType> *);
+    uint64_t search(KeyType&);
     void grow();
     
   public:
     HashTable();
-    uint64_t search(KeyType&);
-    void remove(uint64_t);
+    
+    ElementType remove(KeyType &key);
     void insert(ElementType, KeyType&);
-    ElementType get(uint64_t);
-    void update(uint64_t,ElementType);
+    ElementType get(KeyType&);
+    ElementType update(ElementType,KeyType &);
     //ElementType *clone();
   };
   
@@ -95,22 +96,32 @@ namespace Collection {
   /* Class: HashTable */
   
   template <class ElementType, class KeyType>
-  ElementType HashTable<ElementType,KeyType>::get(uint64_t index) {
-    return collection[index];
+  ElementType HashTable<ElementType,KeyType>::get(KeyType &key) {
+    return collection[search(key)];
   }
   
   template <class ElementType, class KeyType>
-  void HashTable<ElementType,KeyType>::update(uint64_t index, ElementType data) {
-    collection[index] = data;
+  ElementType HashTable<ElementType,KeyType>::update(ElementType data, KeyType &key) {
+    uint64_t index = search(key);
+    ElementType ret = NULL;
+    
+    if (index) {
+      ret = collection[index];
+      collection[index] = data;
+    } else {
+      insert(data, key);
+    }
+    
+    return ret;
   }
   
   
   template <class ElementType, class KeyType>
   HashTable<ElementType,KeyType>::HashTable() {
     
-    collection.resize(STD_COLLECTION_SIZE, 0);
-    keyMap.resize(STD_COLLECTION_SIZE, 0);
-    fullHashMap.resize(STD_COLLECTION_SIZE, 0);
+    collection.resize(1024, 0);
+    keyMap.resize(1024, 0);
+    fullHashMap.resize(1024, 0);
     
     
   }
@@ -119,13 +130,17 @@ namespace Collection {
   void HashTable<ElementType,KeyType>::grow() {
     
     uint64_t newIndex;
-    uint64_t oldSize = fullHashMap.size()*2;
+    uint64_t oldSize = fullHashMap.size();
     
     collection.resize(collection.size()*2, 0);
     keyMap.resize(keyMap.size()*2, 0);
     fullHashMap.resize(fullHashMap.size()*2, 0);
     
-    for (uint64_t ix = oldSize-1; ix > 0; ix--) {
+    for (uint64_t ix = 1; ix < oldSize; ix++) {
+      if (!fullHashMap[ix]) {
+        continue;
+      }
+      
       newIndex = fullHashMap[ix] % fullHashMap.size();
       
       if (ix != newIndex) {
@@ -167,13 +182,21 @@ namespace Collection {
   }
   
   template <class ElementType, class KeyType>
-  void HashTable<ElementType,KeyType>::remove(uint64_t index) {
-    if (keyMap[index] != NULL) {
+  ElementType HashTable<ElementType,KeyType>::remove(KeyType &key) {
+    uint64_t index = search(key);
+    ElementType data = NULL;
+    
+    if ((index) && (keyMap[index] != NULL)) {
+      data = collection[index];
+      
       delete keyMap[index];
+      
       keyMap[index] = NULL;
       fullHashMap[index] = 0;
       collection[index] = NULL;
     }
+    
+    return data;
   }
   
   template <class ElementType, class KeyType>

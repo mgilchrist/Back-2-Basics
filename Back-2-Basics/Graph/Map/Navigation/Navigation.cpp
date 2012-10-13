@@ -17,14 +17,13 @@ namespace Graph {
   
   void HeuristicMap::aStar() {
     Collection::Heap<Coordinate *,double> *open;
-    Collection::HashTable<bool,Coordinate *> *openTable;
+    Collection::HashTable<uint8_t,Coordinate *> *openTable;
     Collection::HashTable<double,Coordinate *> *closed;
     Coordinate *u;
     Collection::Stack<Path *> *ret;
-    uint64_t opIndex;
     
     open = new Collection::Heap<Coordinate *,double>();
-    openTable = new Collection::HashTable<bool,Coordinate *>();
+    openTable = new Collection::HashTable<uint8_t,Coordinate *>();
     closed = new Collection::HashTable<double,Coordinate *>();
     
     // set initial distances to infinity
@@ -40,9 +39,8 @@ namespace Graph {
     
     while (open->getSize()) {
       u = open->pop();
-      opIndex = openTable->search(u);
       
-      if ((opIndex == ERROR) || (openTable->get(opIndex) == false)) {
+      if (openTable->get(u) <= 0) {
         break;
       }
       
@@ -55,31 +53,23 @@ namespace Graph {
         
         Coordinate *v = u->getAdjacentEdge(ix)->getForward();
         double cost = u->distanceFromStart + u->getAdjacentEdge(ix)->length;
-
-        opIndex = openTable->search(v);
-        uint64_t cIndex = closed->search(v);
         
         if (cost < v->distanceFromStart) {
-          if ((opIndex != ERROR) && (openTable->get(opIndex) == true)) {
-            openTable->update(opIndex, false);
+          if (openTable->get(v) > 0) {
+            openTable->update(-1, v);
           }
           
-          if (cIndex != ERROR) {
-            closed->remove(cIndex);
-          }
+          closed->remove(v);
         }
         
-        if (((opIndex == ERROR) || (openTable->get(opIndex) == false)) &&
-            (cIndex == ERROR)) {
+        if ((openTable->get(v) <= 0) && (closed->get(v) != 0.0)) {
           
           v->distanceFromStart = cost;
           
-          if (opIndex == ERROR) {
-            openTable->insert(true, v);
-          } else {
-            openTable->update(opIndex, true);
+          if (openTable->update(true, v) > 0) {
             open->removeHeapEntry(*(v->auxIndex));
           }
+          
           this->nodeAtIndex(v->getIndex())->auxIndex =
             open->push(v, cost + costHeuristic->atIndex(v->getIndex())->getExpectation());
           v->previousEdge = u->getAdjacentEdge(ix);

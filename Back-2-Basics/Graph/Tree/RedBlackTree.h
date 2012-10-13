@@ -28,6 +28,7 @@ namespace Graph {
   public:
     
     Color color = BLACK;
+    RedBlackTreeNode<DataType,KeyType> *parent;
     
     RedBlackTreeNode() {
       TreeNode<RedBlackTreeNode<DataType,KeyType>,DataType,KeyType>(2);
@@ -88,16 +89,27 @@ namespace Graph {
   template <class EntryType, class KeyType>
   void RedBlackTree<EntryType,KeyType>::insert(EntryType n, KeyType key) {
     
-    RedBlackTreeNode<EntryType,KeyType> *node;
+    RedBlackTreeNode<EntryType,KeyType> *node = this->findOpening(key, this->treeRoot);
     RedBlackTreeNode<EntryType,KeyType> *parent;
     
-    if ((node = this->insert_r(n,key)) == NULL) {
+    if (node == NULL) {
       return;
     }
     
+    RedBlackTreeNode<EntryType,KeyType> *left = new RedBlackTreeNode<EntryType,KeyType>();
+    RedBlackTreeNode<EntryType,KeyType> *right = new RedBlackTreeNode<EntryType,KeyType>();
+    
+    node->setLeaf(LEFT, left);
+    node->setLeaf(RIGHT, right);
+    
+    left->parent = node;
+    right->parent = node;
+    node->data = n;
+    node->key = key;
+    
     node->color = RED;
-    node->getLeaf(SON)->color = BLACK;
-    node->getLeaf(DAUGHTER)->color = BLACK;
+    node->getLeaf(LEFT)->color = BLACK;
+    node->getLeaf(RIGHT)->color = BLACK;
     
     parent = node->parent;
     
@@ -248,9 +260,7 @@ namespace Graph {
   
   template <class EntryType, class KeyType>
   void RedBlackTree<EntryType,KeyType>::remove(KeyType key) {
-    RedBlackTreeNode<EntryType,KeyType> *victim;
     
-    victim = this->remove_r(key);
   }
   
 }
