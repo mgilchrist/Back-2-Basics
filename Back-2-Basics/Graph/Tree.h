@@ -19,8 +19,8 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef OpenSource_Tree_h
-#define OpenSource_Tree_h
+#ifndef Back_2_Basics_Tree_h
+#define Back_2_Basics_Tree_h
 
 #include "Graph.h"
 
