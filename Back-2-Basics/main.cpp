@@ -27,6 +27,7 @@ using namespace std;
 #include "HashTable.h"
 #include "Graph.h"
 #include "RedBlackTree.h"
+#include "LLRB_Tree.h"
 #include "Navigation.h"
 #include "Network.h"
 #include "NeuralNetwork.h"
@@ -41,21 +42,26 @@ using namespace std;
 
 int testHashTable() {
   Collection::HashTable<uint64_t,uint64_t> *hashTable;
-  Collection::ArrayList<uint64_t,uint64_t> *verify;
-  hashTable = new Collection::HashTable<uint64_t,uint64_t>();
-  verify = new Collection::ArrayList<uint64_t,uint64_t>(TEST_SIZE);
+  vector<uint64_t> *verify = new vector<uint64_t>(TEST_SIZE);
+  hashTable = new Collection::HashTable<uint64_t,uint64_t>(TEST_SIZE);
   
   cout << "\nTesting HashTable.\n";
   
   for (int ix = 0; ix < TEST_SIZE; ix++) {
-    uint64_t value = random();
+    uint64_t value;
+    
+    //do {
+    //  value = random();
+    //} while (hashTable->get(value) != 0);
+    value = ix;
+    
     hashTable->insert(value, value);
-    verify[ix] = value;
+    verify->at(ix) = value;
   }
   
   for (int ix = 0; ix < TEST_SIZE; ix++) {
     
-    if (verify->atIndex(ix)->data != hashTable->get(verify->atIndex(ix)->data)) {
+    if (verify->at(ix) != hashTable->get(verify->at(ix))) {
       cout << "Index ";
       cout << ix;
       cout << " does not match!\n";
@@ -68,7 +74,7 @@ int testHashTable() {
   
   for (int ix = 0; ix < TEST_SIZE; ix++) {
     
-    if (verify->atIndex(ix)->data != hashTable->remove(verify->atIndex(ix)->data)) {
+    if (verify->at(ix) != hashTable->remove(verify->at(ix))) {
       cout << "Index ";
       cout << ix;
       cout << " does not match!\n";
@@ -175,6 +181,46 @@ int testRBTree() {
   return 0;
 }
 
+int testLLRBTree() {
+  Graph::LLRB_Tree<u_int64_t,uint64_t> *rbTree;
+  Collection::ArrayList<uint64_t,uint64_t> *arrayList;
+  Graph::LLRB_TreeNode<uint64_t,uint64_t> *current;
+  uint64_t tmp;
+  uint64_t index = 0;
+  
+  cout << "\nTesting LLRB_Tree\n";
+  
+  rbTree = new Graph::LLRB_Tree<u_int64_t, uint64_t>();
+  arrayList = new Collection::ArrayList<uint64_t,uint64_t>(TEST_SIZE);
+  
+  for (uint64_t ix = 0; ix < TEST_SIZE; ix++) {
+    uint64_t value = ix;
+    rbTree->insert(value, value);
+  }
+  
+  current = rbTree->firstNode(rbTree->getTreeRoot());
+  tmp = current->key;
+  
+  while (current != NULL) {
+    
+    if (current->key < tmp) {
+      cout << "Index ";
+      cout << index;
+      cout << " not sorted!\n";
+    }
+    
+    tmp = current->key;
+    current = rbTree->nextNode(current);
+    index++;
+    
+  }
+  
+  cout << "LLRB_Tree:Done\n";
+  
+  
+  
+  return 0;
+}
 
 /*
  int testLinkedList() {
@@ -433,6 +479,7 @@ int main(int argc, const char * argv[])
   ret |= testArrayList();
   ret |= testHeap();
   ret |= testRBTree();
+  ret |= testLLRBTree();
   ret |= testStack();
   ret |= testNeuralNetwork();
   ret |= testMetaheuristic();

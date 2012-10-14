@@ -28,7 +28,7 @@ namespace Graph {
   public:
     
     Color color = BLACK;
-    RedBlackTreeNode<DataType,KeyType> *parent;
+    RedBlackTreeNode<DataType,KeyType> *parent = NULL;
     
     RedBlackTreeNode() {
       TreeNode<RedBlackTreeNode<DataType,KeyType>,DataType,KeyType>(2);
@@ -145,7 +145,6 @@ namespace Graph {
       node = parent;
       parent = node->parent;
     }
-    
     
     this->getTreeRoot()->color = BLACK;
   }

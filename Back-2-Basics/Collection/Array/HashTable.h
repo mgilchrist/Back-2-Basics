@@ -84,6 +84,7 @@ namespace Collection {
     
   public:
     HashTable();
+    HashTable(uint64_t);
     
     ElementType remove(KeyType &key);
     void insert(ElementType, KeyType&);
@@ -122,6 +123,20 @@ namespace Collection {
     collection.resize(1024, 0);
     keyMap.resize(1024, 0);
     fullHashMap.resize(1024, 0);
+    
+    
+  }
+  
+  template <class ElementType, class KeyType>
+  HashTable<ElementType,KeyType>::HashTable(uint64_t size) {
+    
+    uint64_t actualSize;
+    
+    actualSize = exp2(log2(size)+1);
+    
+    collection.resize(actualSize, 0);
+    keyMap.resize(actualSize, 0);
+    fullHashMap.resize(actualSize, 0);
     
     
   }

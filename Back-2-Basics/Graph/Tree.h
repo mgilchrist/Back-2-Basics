@@ -83,9 +83,9 @@ namespace Graph {
     virtual TreeNodeType *findOpening(KeyType key, TreeNodeType *current);
     TreeNodeType *insert_r(DataType data, KeyType key);
     //TreeNodeType *remove_r(KeyType key);
+    TreeNodeType *getNodeMinGreaterThan(KeyType key, TreeNodeType *current);
     
     TreeNodeType *rLeftSuccesor(TreeNodeType *tNode);
-    TreeNodeType *rLeftSuccesor(TreeNodeType *tNode, KeyType key);
     
   public:
     Tree();
@@ -235,6 +235,28 @@ namespace Graph {
   }
   
   template <class TreeNodeType, class DataType, class KeyType>
+  TreeNodeType *Tree<TreeNodeType,DataType,KeyType>::getNodeMinGreaterThan(KeyType key, TreeNodeType *current) {
+    TreeNodeType *tNode = NULL;
+    
+    if ((current->getLeaf(0) == NULL) || (current->key == key)) {
+      return NULL;
+    }
+    
+    if (key < current->key) {
+      return getNodeMinGreaterThan(key, current->getLeaf(LEFT));
+    }
+    
+    tNode = getNodeMinGreaterThan(key, current->getLeaf(RIGHT));
+    
+    if (tNode == NULL) {
+      return current;
+    }
+    
+    return tNode;
+    
+  }
+  
+  template <class TreeNodeType, class DataType, class KeyType>
   DataType Tree<TreeNodeType,DataType,KeyType>::search(KeyType key) {
     
     return getNode(key,treeRoot)->data;
@@ -251,24 +273,13 @@ namespace Graph {
   }
   
   template <class TreeNodeType, class DataType, class KeyType>
-  TreeNodeType *Tree<TreeNodeType,DataType,KeyType>::rLeftSuccesor(TreeNodeType *tNode, KeyType key) {
-    
-    if ((tNode->getLeaf(LEFT)->getLeaf(0) != NULL) &&
-        (tNode->getLeaf(LEFT)->key >= key)) {
-      return rLeftSuccesor(tNode->getLeaf(LEFT));
-    }
-    
-    return tNode;
-  }
-  
-  template <class TreeNodeType, class DataType, class KeyType>
   TreeNodeType *Tree<TreeNodeType,DataType,KeyType>::nextNode(TreeNodeType *tNode) {
     
     if (tNode->getLeaf(RIGHT)->getLeaf(0) != NULL) {
       return rLeftSuccesor(tNode->getLeaf(RIGHT));
     }
     
-    return rLeftSuccesor(treeRoot, tNode->key);
+    return getNodeMinGreaterThan(tNode->key, treeRoot);
   }
   
   template <class TreeNodeType, class DataType, class KeyType>
