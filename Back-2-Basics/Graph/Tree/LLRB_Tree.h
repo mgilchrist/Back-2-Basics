@@ -27,11 +27,7 @@
 #define LEFT    0
 #define RIGHT   1
 
-#define BLACK   0
-#define RED     1
-
 namespace Graph {
-  
   
   template <class DataType, class KeyType>
   class LLRB_TreeNode : public TreeNode<LLRB_TreeNode<DataType,KeyType>,DataType,KeyType>
@@ -50,6 +46,8 @@ namespace Graph {
   {
     
   private:
+    static const bool RED = true;
+    static const bool BLACK = false;
     
     bool isLeft(LLRB_TreeNode<EntryType,KeyType> *);
     bool isRight(LLRB_TreeNode<EntryType,KeyType> *);
@@ -288,7 +286,6 @@ namespace Graph {
     
   }
   
-  
   template <class EntryType, class KeyType>
   LLRB_TreeNode<EntryType,KeyType> *LLRB_Tree<EntryType,KeyType>::remove(LLRB_TreeNode<EntryType,KeyType> *node, KeyType key) {
     
@@ -302,8 +299,9 @@ namespace Graph {
       node->setLeaf(LEFT, remove(node->getLeaf(LEFT), key));
     } else {
       if (node->getLeaf(LEFT)->color == RED) {
-        // lean_right?
-      }
+        node = rotateRight(node);
+        node->color = node->right->color;
+        node->right->color = RED;      }
       
       if ((cmp == 0) && (node->getLeaf(RIGHT)->getLeaf(LEFT)->color != RED)) {
         return NULL;

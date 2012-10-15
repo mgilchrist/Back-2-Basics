@@ -75,8 +75,12 @@ namespace Collection {
   private:
     std::vector<ElementType> collection;
     std::vector<Key<KeyType> *> keyMap;
+    std::vector<std::vector<uint64_t> *> keyMapSecure;
     std::vector<uint64_t> fullHashMap;
+    const uint64_t seed;
+    const bool secure;
     
+    uint64_t *murmurHash64A (Key<KeyType> *key);
     std::vector<uint64_t> *SHA_2_Prep(std::vector<uint8_t> &data);
     uint64_t *SHA_2(Key<KeyType> *);
     uint64_t search(KeyType&);
@@ -85,6 +89,8 @@ namespace Collection {
   public:
     HashTable();
     HashTable(uint64_t);
+    HashTable(uint64_t,bool);
+    
     
     ElementType remove(KeyType &key);
     void insert(ElementType, KeyType&);
@@ -118,17 +124,16 @@ namespace Collection {
   
   
   template <class ElementType, class KeyType>
-  HashTable<ElementType,KeyType>::HashTable() {
+  HashTable<ElementType,KeyType>::HashTable() : seed(random()), secure(false) {
     
     collection.resize(1024, 0);
     keyMap.resize(1024, 0);
     fullHashMap.resize(1024, 0);
     
-    
   }
   
   template <class ElementType, class KeyType>
-  HashTable<ElementType,KeyType>::HashTable(uint64_t size) {
+  HashTable<ElementType,KeyType>::HashTable(uint64_t size) : seed(random()), secure(false) {
     
     uint64_t actualSize;
     
@@ -137,7 +142,23 @@ namespace Collection {
     collection.resize(actualSize, 0);
     keyMap.resize(actualSize, 0);
     fullHashMap.resize(actualSize, 0);
+  }
+  
+  template <class ElementType, class KeyType>
+  HashTable<ElementType,KeyType>::HashTable(uint64_t size, bool secure) : seed(random()), secure(secure) {
     
+    uint64_t actualSize;
+    
+    actualSize = exp2(log2(size)+1);
+    
+    collection.resize(actualSize, 0);
+    if (secure) {
+      keyMapSecure.resize(actualSize, 0);
+    } else {
+      keyMap.resize(actualSize, 0);
+    }
+    
+    fullHashMap.resize(actualSize, 0);
     
   }
   
@@ -148,7 +169,12 @@ namespace Collection {
     uint64_t oldSize = fullHashMap.size();
     
     collection.resize(collection.size()*2, 0);
-    keyMap.resize(keyMap.size()*2, 0);
+    if (secure) {
+      keyMapSecure.resize(keyMapSecure.size()*2, 0);
+    } else {
+      keyMap.resize(keyMap.size()*2, 0);
+    }
+    
     fullHashMap.resize(fullHashMap.size()*2, 0);
     
     for (uint64_t ix = 1; ix < oldSize; ix++) {
@@ -160,10 +186,15 @@ namespace Collection {
       
       if (ix != newIndex) {
         collection[newIndex] = collection[ix];
-        keyMap[newIndex] = keyMap[ix];
+        if (secure) {
+          keyMapSecure[newIndex] = keyMapSecure[ix];
+          keyMapSecure[ix] = NULL;
+        } else {
+          keyMap[newIndex] = keyMap[ix];
+          keyMap[ix] = (Key<KeyType> *)NULL;
+        }
         fullHashMap[newIndex] = fullHashMap[ix];
         collection[ix] = (ElementType)NULL;
-        keyMap[ix] = (Key<KeyType> *)NULL;
         fullHashMap[ix] = 0;
       }
     }
@@ -177,21 +208,37 @@ namespace Collection {
     uint8_t useHash;
     uint64_t index;
     Key<KeyType> *kKey = new Key<KeyType>(key);
-    uint64_t *hash = SHA_2(kKey);
-    useHash = 8;
+    uint64_t *hash;
+    
+    if (secure) {
+      hash = SHA_2(kKey);
+      useHash = 8;
+    } else {
+      hash = murmurHash64A(kKey);
+      useHash = 4;
+    }
     
     while (useHash) {
       useHash--;
-      index = hash[useHash] % keyMap.size();
+      index = hash[useHash] % collection.size();
       if (index) {
-        if ((keyMap[index] != NULL) && (*(keyMap[index]) == key)) {
-          delete hash;
-          return index;
+        if (secure) {
+          if ((keyMapSecure[index] != NULL) && (!memcmp(&(keyMapSecure[index]->at(0)), hash, 8))) {
+            delete hash;
+            return index;
+          }
+        } else {
+          if ((keyMap[index] != NULL) && (*(keyMap[index]) == key)) {
+            delete hash;
+            return index;
+          }
         }
       }
     }
     
+    delete kKey;
     delete hash;
+    
     return 0;
     
   }
@@ -201,14 +248,26 @@ namespace Collection {
     uint64_t index = search(key);
     ElementType data = NULL;
     
-    if ((index) && (keyMap[index] != NULL)) {
-      data = collection[index];
-      
-      delete keyMap[index];
-      
-      keyMap[index] = NULL;
-      fullHashMap[index] = 0;
-      collection[index] = NULL;
+    if (secure) {
+      if ((index) && (keyMapSecure[index] != NULL)) {
+        data = collection[index];
+        
+        delete keyMapSecure[index];
+        
+        keyMapSecure[index] = NULL;
+        fullHashMap[index] = 0;
+        collection[index] = NULL;
+      }
+    } else {
+      if ((index) && (keyMap[index] != NULL)) {
+        data = collection[index];
+        
+        delete keyMap[index];
+        
+        keyMap[index] = NULL;
+        fullHashMap[index] = 0;
+        collection[index] = NULL;
+      }
     }
     
     return data;
@@ -217,51 +276,138 @@ namespace Collection {
   template <class ElementType, class KeyType>
   void HashTable<ElementType,KeyType>::insert(ElementType data, KeyType &key) {
     
-    uint8_t useHash = 8;
+    uint8_t useHash;
     uint64_t index;
     Key<KeyType> *kKey = new Key<KeyType>(key);
-    uint64_t *hash = SHA_2(kKey);
+    uint64_t *hash;
+    
+    if (secure) {
+      hash = SHA_2(kKey);
+      useHash = 8;
+    } else {
+      hash = murmurHash64A(kKey);
+      useHash = 4;
+    }
     
     do {
       while (useHash) {
         useHash--;
-        index = hash[useHash] % keyMap.size();
+        index = hash[useHash] % collection.size();
         if (index) {
-          if (keyMap[index] == NULL) {
-            keyMap[index] = kKey;
-            fullHashMap[index] = hash[useHash];
-            collection[index] = data;
-            
-            delete hash;
-            return;
-          } else if (*keyMap[index] == *kKey) {
-            delete hash;
-            delete kKey;
-            return;
+          if (secure) {
+            if (keyMapSecure[index] == NULL) {
+              keyMapSecure[index] = new std::vector<uint64_t>(8);
+              keyMapSecure[index]->assign(hash, hash+8);
+              fullHashMap[index] = hash[useHash];
+              collection[index] = data;
+              
+              delete kKey;
+              delete hash;
+              return;
+            } else if (!memcmp(&(keyMapSecure[index]->at(0)), hash, 8)) {
+              delete kKey;
+              delete hash;
+              return;
+            }
+          } else {
+            if (keyMap[index] == NULL) {
+              keyMap[index] = kKey;
+              fullHashMap[index] = hash[useHash];
+              collection[index] = data;
+              
+              delete hash;
+              return;
+            } else if (*keyMap[index] == *kKey) {
+              delete hash;
+              delete kKey;
+              return;
+            }
           }
         }
       }
       
       this->grow();
-      useHash = 8;
+      
+      if (secure) {
+        useHash = 8;
+      } else {
+        useHash = 4;
+      }
       
     } while ((1));
     
+  }
+  
+  //-----------------------------------------------------------------------------
+  // MurmurHash2, 64-bit versions, by Austin Appleby
+  // https://sites.google.com/site/murmurhash/
+  // The same caveats as 32-bit MurmurHash2 apply here - beware of alignment
+  // and endian-ness issues if used across multiple platforms.
+  
+  // 64-bit hash for 64-bit platforms
+  
+  template <class ElementType, class KeyType>
+  uint64_t *HashTable<ElementType,KeyType>::murmurHash64A(Key<KeyType> *key)
+  {
+    const uint64_t m = 0xc6a4a7935bd1e995;
+    const int r = 47;
+    const uint64_t len = key->name.size();
+    uint64_t *h = new uint64_t(8);
+    const uint64_t * data = (const uint64_t *)(&key->name.at(0));
+    const uint64_t * end = data + (len/8);
     
-    delete hash;
+    for (int ix = 0; ix < 4; ix++) {
+      if (ix) {
+        h[ix] = h[ix-1] ^ (len * m);
+      } else {
+        h[0] = seed ^ (len * m);
+      }
+      
+      while(data != end)
+      {
+        uint64_t k = *data++;
+        
+        k *= m;
+        k ^= k >> r;
+        k *= m;
+        
+        h[ix] ^= k;
+        h[ix] *= m;
+      }
+      
+      const unsigned char * data2 = (const unsigned char*)data;
+      
+      switch(len & 7)
+      {
+        case 7: h[ix] ^= uint64_t(data2[6]) << 48;
+        case 6: h[ix] ^= uint64_t(data2[5]) << 40;
+        case 5: h[ix] ^= uint64_t(data2[4]) << 32;
+        case 4: h[ix] ^= uint64_t(data2[3]) << 24;
+        case 3: h[ix] ^= uint64_t(data2[2]) << 16;
+        case 2: h[ix] ^= uint64_t(data2[1]) << 8;
+        case 1: h[ix] ^= uint64_t(data2[0]);
+          h[ix] *= m;
+      };
+      
+      h[ix] ^= h[ix] >> r;
+      h[ix] *= m;
+      h[ix] ^= h[ix] >> r;
+    }
     
+    return h;
   }
   
   template <class ElementType, class KeyType>
   std::vector<uint64_t> *HashTable<ElementType,KeyType>::SHA_2_Prep(std::vector<uint8_t> &data) {
-    uint64_t dataSize = data.size();
+    uint64_t dataSize = data.size()+8;
     uint64_t arraySize = (128 - (dataSize % 128) % 111) + dataSize;
     std::vector<uint8_t> *ret = new std::vector<uint8_t>(data.begin(), data.end());
     
     ret->resize(arraySize, 0);
+    *((uint64_t *)(&(*ret)[dataSize-8])) = seed;
     (*ret)[dataSize] = 0x01;
     
-    *((uint64_t *)(&(*ret)[arraySize-8])) = dataSize;
+    *((uint64_t *)(&(*ret)[arraySize-8])) = dataSize+8;
     
     return (std::vector<uint64_t> *)ret;
   }
