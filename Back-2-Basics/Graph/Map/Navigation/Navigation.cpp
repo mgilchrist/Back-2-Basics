@@ -30,13 +30,15 @@ namespace Graph {
   
   void HeuristicMap::aStar() {
     Collection::Heap<Coordinate *,double> *open;
-    Collection::HashTable<uint8_t,Coordinate *> *openTable;
+    Collection::HashTable<bool,Coordinate *> *openTable;
     Collection::HashTable<double,Coordinate *> *closed;
     Coordinate *u;
     Collection::Stack<Path *> *ret;
+    bool tmpBool;
+    double tmpDouble;
     
     open = new Collection::Heap<Coordinate *,double>();
-    openTable = new Collection::HashTable<uint8_t,Coordinate *>();
+    openTable = new Collection::HashTable<bool,Coordinate *>();
     closed = new Collection::HashTable<double,Coordinate *>();
     
     // set initial distances to infinity
@@ -53,7 +55,7 @@ namespace Graph {
     while (open->getSize()) {
       u = open->pop();
       
-      if (openTable->get(u) <= 0) {
+      if (!openTable->get(u, &tmpBool) || (!tmpBool)) {
         break;
       }
       
@@ -68,18 +70,19 @@ namespace Graph {
         double cost = u->distanceFromStart + u->getAdjacentEdge(ix)->length;
         
         if (cost < v->distanceFromStart) {
-          if (openTable->get(v) > 0) {
-            openTable->update(-1, v);
+          if (!openTable->get(u, &tmpBool) && (tmpBool)) {
+            openTable->update(-1, v, &tmpBool);
           }
           
-          closed->remove(v);
+          closed->remove(v, &tmpDouble);
         }
         
-        if ((openTable->get(v) <= 0) && (closed->get(v) != 0.0)) {
+        if ((openTable->get(u, &tmpBool) || (!tmpBool)) &&
+            ((!closed->get(v, &tmpDouble)) && (tmpDouble != 0.0))) {
           
           v->distanceFromStart = cost;
           
-          if (openTable->update(true, v) > 0) {
+          if (!openTable->update(true, v, &tmpBool) && (!tmpBool)) {
             open->removeHeapEntry(*(v->auxIndex));
           }
           

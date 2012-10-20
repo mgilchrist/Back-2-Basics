@@ -35,7 +35,7 @@ public:
   }
   
   Key(KeyType *key)  {
-    name = new std::vector<uint8_t>((uint8_t *)key,(uint8_t *)key + sizeof(key));
+    name.assign((uint8_t *)key,(uint8_t *)key + sizeof(key));
   }
   
   bool operator== (Key &param) {

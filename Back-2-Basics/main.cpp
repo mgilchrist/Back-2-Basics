@@ -25,6 +25,7 @@ using namespace std;
 #include "Array.h"
 #include "Heap.h"
 #include "HashTable.h"
+#include "SecureHashTable.h"
 #include "Graph.h"
 #include "RedBlackTree.h"
 #include "LLRB_Tree.h"
@@ -42,26 +43,31 @@ using namespace std;
 
 int testHashTable() {
   Collection::HashTable<uint64_t,uint64_t> *hashTable;
-  vector<uint64_t> *verify = new vector<uint64_t>(TEST_SIZE);
+  uint64_t *verify = new uint64_t(TEST_SIZE);
   hashTable = new Collection::HashTable<uint64_t,uint64_t>(TEST_SIZE);
+  uint64_t *tmpInt = new uint64_t;
+  uint64_t value;
   
   cout << "\nTesting HashTable.\n";
   
   for (int ix = 0; ix < TEST_SIZE; ix++) {
-    uint64_t value;
     
-    //do {
-    //  value = random();
-    //} while (hashTable->get(value) != 0);
-    value = ix;
-    
-    hashTable->insert(value, value);
-    verify->at(ix) = value;
+    do {
+      value = random();
+    } while (!hashTable->get(value, tmpInt));
+      
+    if (ix > 1871) {
+      hashTable->insert(value, value);
+    } else {
+      hashTable->insert(value, value);
+    }
+    verify[ix] = value;
   }
   
   for (int ix = 0; ix < TEST_SIZE; ix++) {
     
-    if (verify->at(ix) != hashTable->get(verify->at(ix))) {
+    if (hashTable->get(verify[ix],tmpInt) || (*tmpInt != verify[ix])) {
+      hashTable->get(verify[ix], tmpInt);
       cout << "Index ";
       cout << ix;
       cout << " does not match!\n";
@@ -74,7 +80,7 @@ int testHashTable() {
   
   for (int ix = 0; ix < TEST_SIZE; ix++) {
     
-    if (verify->at(ix) != hashTable->remove(verify->at(ix))) {
+    if (hashTable->remove(verify[ix],tmpInt) || (*tmpInt != verify[ix])) {
       cout << "Index ";
       cout << ix;
       cout << " does not match!\n";
@@ -93,6 +99,63 @@ int testHashTable() {
   return 0;
 }
 
+int testSecureHashTable() {
+  Collection::SecureHashTable<uint64_t,uint64_t> *hashTable;
+  uint64_t *verify = new uint64_t[TEST_SIZE];
+  hashTable = new Collection::SecureHashTable<uint64_t,uint64_t>(TEST_SIZE);
+  uint64_t *tmpInt = new uint64_t;
+  uint64_t value;
+  
+  cout << "\nTesting SecureHashTable.\n";
+  
+  for (uint64_t ix = 0; ix < TEST_SIZE; ix++) {
+    
+    //do {
+      value = random();
+    //} while (!hashTable->get(value, tmpInt));
+    
+    if (ix > 1871) {
+      hashTable->insert(value, value);
+    } else {
+      hashTable->insert(value, value);
+    }
+    verify[ix] = value;
+  }
+  
+  for (uint64_t ix = 0; ix < TEST_SIZE; ix++) {
+    
+    if (hashTable->get(verify[ix],tmpInt) || (*tmpInt != verify[ix])) {
+      hashTable->get(verify[ix], tmpInt);
+      cout << "Index ";
+      cout << ix;
+      cout << " does not match!\n";
+    }
+    
+    //if ((ix % 4) == 3) {
+    //  hashTable->remove(index);
+    //}
+  }
+  
+  for (uint64_t ix = 0; ix < TEST_SIZE; ix++) {
+    
+    if (hashTable->remove(verify[ix],tmpInt) || (*tmpInt != verify[ix])) {
+      cout << "Index ";
+      cout << ix;
+      cout << " does not match!\n";
+    }
+    
+    //if ((index % 4) != 3) {
+    //  hashTable->remove(index);
+    //}
+  }
+  
+  delete hashTable;
+  delete verify;
+  
+  cout << "SecureHashTable:Done\n";
+  
+  return 0;
+}
 
 int testHeap() {
   Collection::Heap<uint64_t,uint64_t> *heap;
@@ -153,7 +216,7 @@ int testRBTree() {
   arrayList = new Collection::ArrayList<uint64_t,uint64_t>(TEST_SIZE);
   
   for (uint64_t ix = 0; ix < TEST_SIZE; ix++) {
-    uint64_t value = ix;
+    uint64_t value = random();
     rbTree->insert(value, value);
   }
   
@@ -194,7 +257,7 @@ int testLLRBTree() {
   arrayList = new Collection::ArrayList<uint64_t,uint64_t>(TEST_SIZE);
   
   for (uint64_t ix = 0; ix < TEST_SIZE; ix++) {
-    uint64_t value = ix;
+    uint64_t value = random();
     rbTree->insert(value, value);
   }
   
@@ -475,10 +538,11 @@ int main(int argc, const char * argv[])
   cout << "This is free software, and you are welcome to redistribute it\n";
   cout << "under certain conditions; type `show c' for details.\n";
   
-  ret |= testHashTable();
+  //ret |= testHashTable();
+  ret |= testSecureHashTable();
   ret |= testArrayList();
   ret |= testHeap();
-  ret |= testRBTree();
+  //ret |= testRBTree();
   ret |= testLLRBTree();
   ret |= testStack();
   ret |= testNeuralNetwork();
