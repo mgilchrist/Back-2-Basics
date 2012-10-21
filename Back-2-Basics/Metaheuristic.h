@@ -27,6 +27,7 @@
 #include "ArrayList.h"
 #include "Optimization.h"
 #include "Heuristic.h"
+#include <vector>
 
 
 #define STD_NUM_CANDIDATES  4
@@ -47,7 +48,7 @@ private:
   
 public:
   Metaheuristic();
-  Metaheuristic(Collection::Array<DataType> *input, Collection::Array<Heuristic *> *candidates);
+  Metaheuristic(std::vector<DataType> *input, std::vector<Heuristic *> *candidates);
   
   virtual void postResult(DataType result);
   virtual DataType getConsensus();
@@ -99,7 +100,7 @@ Metaheuristic<DataType>::Metaheuristic() {
 }
 
 template <class DataType>
-Metaheuristic<DataType>::Metaheuristic(Collection::Array<DataType> *input, Collection::Array<Heuristic *> *candidates) {
+Metaheuristic<DataType>::Metaheuristic(std::vector<DataType> *input, std::vector<Heuristic *> *candidates) {
   Heuristic *thisTheory;
   Collection::Comparable<Heuristic *, double> *comp;
   
@@ -111,7 +112,7 @@ Metaheuristic<DataType>::Metaheuristic(Collection::Array<DataType> *input, Colle
   
   for (int ix = 0; ix < numCandidates; ix++) {
     
-    thisTheory = candidates->atIndex(ix);
+    thisTheory = candidates->at(ix);
     
     comp->data = thisTheory;
     comp->key = 0.5;

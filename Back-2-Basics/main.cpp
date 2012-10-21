@@ -38,7 +38,7 @@ using namespace std;
 #define INPUT_SIZE    32
 #define OUTPUT_SIZE   32
 #define ITERATIONS    (1024)
-#define TEST_SIZE     0x100000
+#define TEST_SIZE     0x10000
 
 
 int testHashTable() {
@@ -380,34 +380,33 @@ int testArrayList() {
   return 0;
 }
 
-#if 1
 int testNeuralNetwork() {
-  Collection::Array<double> *input = new Collection::Array<double>(INPUT_SIZE);
+  std::vector<double> *input = new std::vector<double>(INPUT_SIZE);
   NeuralNetwork::NeuralNetwork *NNetwork;
   double *reality = new double[OUTPUT_SIZE];
   double expectation;
   uint64_t iterations = 0;
   uint64_t tmpSize;
-  Collection::Stack<double *> *thisInput;
+  std::vector<double *> *thisInput;
   double errorRate = 0.0;
   uint64_t endPraticeTests = (100 * ITERATIONS / 90);
   uint64_t nonPracticeTests = ITERATIONS - endPraticeTests;
   
   cout << "\nTesting NeuralNetwork\n";
   
-  tmpSize = (random() % input->getSize()) + 1;
-  thisInput = new Collection::Stack<double *>(tmpSize);
+  tmpSize = (random() % input->size()) + 1;
+  thisInput = new std::vector<double *>(tmpSize);
   
   for (int jx = 0; jx < tmpSize; jx++) {
-    thisInput->push(input->ptrToIndex(jx));
+    thisInput->at(jx) = &input->at(jx);
   }
   
   NNetwork = new NeuralNetwork::NeuralNetwork(thisInput);
     
   do {
     for (int ix = 0; ix < 1 /*OUTPUT_SIZE*/; ix++) {
-      for (int jx = 0; jx < thisInput->getSize(); jx++) {
-        *(thisInput->atIndex(jx)) = 0.1 * (random()%10);
+      for (int jx = 0; jx < thisInput->size(); jx++) {
+        *(thisInput->at(jx)) = 0.1 * (random()%10);
       }
       
       NNetwork->calculateExpectation();
@@ -439,6 +438,8 @@ int testNeuralNetwork() {
     cout << "PPM\n";
   }
   
+  //NNetwork->getMaximumFlow();
+  
   delete thisInput;
   
   cout << "NeuralNetwork:Done\n";
@@ -446,23 +447,90 @@ int testNeuralNetwork() {
   return 0;
 }
 
+double calcDistance(double X, double Y, double Z, double tX, double tY, double tZ) {
+  return sqrt(pow(X-tX,2)+pow(Y-tY,2)+pow(Z-tZ,2));
+}
+
 int testNavigation() {
   Graph::Navigation *navigation;
+  vector<Graph::Coordinate *> locs;
+  Graph::Coordinate *v, *u;
+  Graph::Path *tmpPath;
+  uint64_t width = 100;
+  uint64_t length = 100;
+  double distance;
+  uint64_t neighborHops = 1;
+  
+  cout << "\nTesting Navigation\n";
   
   navigation = new Graph::Navigation();
+  locs.resize(width*length);
+  
+  for (uint64_t ix = 0; ix < width; ix++) {
+    for (uint64_t jx = 0; jx < length; jx++) {
+      Graph::Coordinate *thisCoordinate = new Graph::Coordinate(ix,jx,0);
+      navigation->add(thisCoordinate);
+      
+      locs[ix+(jx*length)] = thisCoordinate;
+    }
+  }
+  
+  for (uint64_t ix = neighborHops; ix < width-neighborHops; ix++) {
+    for (uint64_t jx = neighborHops; jx < length-neighborHops; jx++) {
+      u = locs[ix+(jx*width)];
+      for (uint64_t kx = -neighborHops; kx <= neighborHops; kx ++) {
+        for (uint64_t lx = -neighborHops; lx <= neighborHops; lx++) {
+          if ((!kx) && (!lx)) {
+            v = locs[(ix+kx)+((jx+lx)*width)];
+            
+            distance = calcDistance(v->X, v->Y, v->Z, u->X, u->Y, u->Z);
+            tmpPath = new Graph::Path(v, u, distance);
+            navigation->addEdgeObj(tmpPath);
+          }
+        }
+      }
+    }
+  }
+  
+  for (int ix = 0; ix < neighborHops; ix++) {
+    for (int jx = 0; jx < neighborHops; jx++) {
+      u = locs[ix+(jx*width)];
+      for (int kx = -ix; kx < width-ix; kx ++) {
+        for (int lx = -jx; lx < length-jx; lx++) {
+          if ((!kx) && (!lx)) {
+            v = locs[(ix+kx)+((jx+lx)*width)];
+            
+            distance = calcDistance(v->X, v->Y, v->Z, u->X, u->Y, u->Z);
+            tmpPath = new Graph::Path(v, u, distance);
+            navigation->addEdgeObj(tmpPath);
+          }
+        }
+      }
+    }
+  }
+  
+  
+  navigation->setStart(locs[0]);
+  navigation->setTerminal(locs[length*width-1]);
+  
+  navigation->getShortestPath();
+  
+  cout << "\nNavigation:Done\n";
   
   return 0;
 }
 
 int testMetaheuristic() {
   
-  Collection::Array<double> *input = new Collection::Array<double>(INPUT_SIZE);
-  Collection::Array<Heuristic *> *candidates = new Collection::Array<Heuristic *>();
+  std::vector<double> *input = new std::vector<double>();
+  std::vector<Heuristic *> *candidates = new std::vector<Heuristic *>();
   double *reality = new double[OUTPUT_SIZE];
   double expectation;
   uint64_t iterations = 0;
   uint64_t tmpSize;
-  Collection::Stack<double *> *thisInput;
+  std::vector<double *> *thisInput = new std::vector<double *>();;
+  
+  input->resize(INPUT_SIZE);
   
   double errorRate = 0.0;
   uint64_t endPraticeTests = (100 * ITERATIONS / 90);
@@ -470,24 +538,26 @@ int testMetaheuristic() {
   
   cout << "\nTesting MetaHeuristic\n";
   
+  candidates->resize(16);
+  
   for (int ix = 0; ix < 16; ix ++) {
-    tmpSize = (random() % input->getSize()) + 1;
-    thisInput = new Collection::Stack<double *>(tmpSize);
+    tmpSize = (random() % input->size()) + 1;
+    thisInput->resize(tmpSize);
     for (int jx = 0; jx < tmpSize; jx++) {
-      thisInput->push(input->ptrToIndex(jx));
+      thisInput->at(jx) = &input->at(jx);
     }
     
-    candidates->setIndex(ix, new NeuralNetwork::NeuralNetwork(thisInput));
-    
-    delete thisInput;
+    candidates->at(ix) = new NeuralNetwork::NeuralNetwork(thisInput);
   }
+  
+  delete thisInput;
   
   Metaheuristic<double> *masterMind = new Metaheuristic<double>(input, candidates);
   
   do {
     for (int ix = 0; ix < 1 /*OUTPUT_SIZE*/; ix++) {
-      for (int jx = 0; jx < input->getSize(); jx++) {
-        input->setIndex(jx, 0.1 * (random()%10));
+      for (int jx = 0; jx < input->size(); jx++) {
+        input->at(jx) = 0.1 * (random()%10);
       }
       expectation = masterMind->getConsensus();
       reality[ix] = 1.0;
@@ -524,7 +594,7 @@ int testMetaheuristic() {
   
   return 0;
 }
-#endif
+
 
 int main(int argc, const char * argv[])
 {

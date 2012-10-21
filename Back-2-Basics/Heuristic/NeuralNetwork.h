@@ -25,6 +25,7 @@
 #include "Heuristic.h"
 #include "Network.h"
 #include "Stack.h"
+#include <vector>
 
 
 namespace NeuralNetwork
@@ -107,7 +108,7 @@ namespace NeuralNetwork
     
   public:
     NeuralNetwork();
-    NeuralNetwork(Collection::Array<double *> *);
+    NeuralNetwork(std::vector<double *> *);
     NeuralNetwork *clone(double);
     
     void calculateExpectation(void);

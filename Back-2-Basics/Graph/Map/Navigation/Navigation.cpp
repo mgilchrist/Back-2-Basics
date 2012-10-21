@@ -27,6 +27,17 @@
 
 namespace Graph {
   
+  Coordinate::Coordinate() {
+    this->X = 0.0;
+    this->Y = 0.0;
+    this->Z = 0.0;
+  }
+  
+  Coordinate::Coordinate(double X, double Y, double Z) {
+    this->X = X;
+    this->Y = Y;
+    this->Z = Z;
+  }
   
   void HeuristicMap::aStar() {
     Collection::Heap<Coordinate *,double> *open;
@@ -71,7 +82,7 @@ namespace Graph {
         
         if (cost < v->distanceFromStart) {
           if (!openTable->get(u, &tmpBool) && (tmpBool)) {
-            openTable->update(-1, v, &tmpBool);
+            openTable->update(false, v, &tmpBool);
           }
           
           closed->remove(v, &tmpDouble);

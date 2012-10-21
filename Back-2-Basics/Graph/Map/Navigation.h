@@ -43,7 +43,7 @@ namespace Graph {
     double Z;
     
     Coordinate();
-    
+    Coordinate(double X, double Y, double Z);
   };
   
   class Vector : public Location<Coordinate,Path>

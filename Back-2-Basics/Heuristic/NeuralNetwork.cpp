@@ -166,7 +166,7 @@ namespace NeuralNetwork
   }
   
   
-  NeuralNetwork::NeuralNetwork(Collection::Array<double *> *input) {
+  NeuralNetwork::NeuralNetwork(std::vector<double *> *input) {
     uint64_t layers;
     uint64_t *inLayer;
     Collection::Stack<Neuron *> *currentStack, *previousStack;
@@ -177,7 +177,7 @@ namespace NeuralNetwork
     inLayer = new uint64_t[layers];
     
     for (int jx = 0; jx < layers; jx++) {
-      inLayer[jx] = (rand() % (input->getSize())) + 1;
+      inLayer[jx] = (rand() % (input->size())) + 1;
     }
     
     
@@ -194,7 +194,7 @@ namespace NeuralNetwork
     
     for (int jx = 0; jx < inLayer[0]; jx++) {
       //cout << "Creating Input Neuron\n";
-      currentNeuron = new Neuron(this, input->atIndex(jx));
+      currentNeuron = new Neuron(this, input->at(jx));
       inputs.push(currentNeuron);
       this->add(currentNeuron);
       currentStack->push(currentNeuron);

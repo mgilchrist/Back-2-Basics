@@ -318,6 +318,10 @@ namespace Graph {
     if (this->start != start) {
       this->start=start;
       
+      if (shortestPathToTerminal == NULL) {
+        return;
+      }
+      
       do {
         if (shortestPathToTerminal->peek() == NULL) {
           destroyPath();
