@@ -43,24 +43,23 @@ using namespace std;
 
 int testHashTable() {
   Collection::HashTable<uint64_t,uint64_t> *hashTable;
-  uint64_t *verify = new uint64_t(TEST_SIZE);
+  std::vector<uint64_t> verify;
   hashTable = new Collection::HashTable<uint64_t,uint64_t>(TEST_SIZE);
   uint64_t *tmpInt = new uint64_t;
   uint64_t value;
   
   cout << "\nTesting HashTable.\n";
   
+  verify.resize(TEST_SIZE);
+  
   for (int ix = 0; ix < TEST_SIZE; ix++) {
     
     do {
       value = random();
     } while (!hashTable->get(value, tmpInt));
-      
-    if (ix > 1871) {
-      hashTable->insert(value, value);
-    } else {
-      hashTable->insert(value, value);
-    }
+    
+    hashTable->insert(value, value);
+    
     verify[ix] = value;
   }
   
@@ -71,6 +70,7 @@ int testHashTable() {
       cout << "Index ";
       cout << ix;
       cout << " does not match!\n";
+      //return -1;
     }
     
     //if ((ix % 4) == 3) {
@@ -84,6 +84,7 @@ int testHashTable() {
       cout << "Index ";
       cout << ix;
       cout << " does not match!\n";
+      return -1;
     }
     
     //if ((index % 4) != 3) {
@@ -91,8 +92,8 @@ int testHashTable() {
     //}
   }
   
+  delete tmpInt;
   delete hashTable;
-  delete verify;
   
   cout << "HashTable:Done\n";
   
@@ -101,24 +102,24 @@ int testHashTable() {
 
 int testSecureHashTable() {
   Collection::SecureHashTable<uint64_t,uint64_t> *hashTable;
-  uint64_t *verify = new uint64_t[TEST_SIZE];
+  std::vector<uint64_t> verify;
   hashTable = new Collection::SecureHashTable<uint64_t,uint64_t>(TEST_SIZE);
   uint64_t *tmpInt = new uint64_t;
   uint64_t value;
+  
+  verify.resize(TEST_SIZE);
   
   cout << "\nTesting SecureHashTable.\n";
   
   for (uint64_t ix = 0; ix < TEST_SIZE; ix++) {
     
-    //do {
+    do {
       value = random();
-    //} while (!hashTable->get(value, tmpInt));
+    } while (!hashTable->get(value, tmpInt));
     
-    if (ix > 1871) {
-      hashTable->insert(value, value);
-    } else {
-      hashTable->insert(value, value);
-    }
+    hashTable->insert(value, value);
+    hashTable->get(value, tmpInt);
+      
     verify[ix] = value;
   }
   
@@ -149,8 +150,8 @@ int testSecureHashTable() {
     //}
   }
   
+  delete tmpInt;
   delete hashTable;
-  delete verify;
   
   cout << "SecureHashTable:Done\n";
   
@@ -212,7 +213,7 @@ int testRBTree() {
   
   cout << "\nTesting RedBlackTree\n";
 
-  rbTree = new Graph::RedBlackTree<u_int64_t, uint64_t>();
+  rbTree = new Graph::RedBlackTree<uint64_t, uint64_t>();
   arrayList = new Collection::ArrayList<uint64_t,uint64_t>(TEST_SIZE);
   
   for (uint64_t ix = 0; ix < TEST_SIZE; ix++) {
@@ -239,13 +240,11 @@ int testRBTree() {
   
   cout << "RedBlackTree:Done\n";
   
-  
-  
   return 0;
 }
 
 int testLLRBTree() {
-  Graph::LLRB_Tree<u_int64_t,uint64_t> *rbTree;
+  Graph::LLRB_Tree<uint64_t,uint64_t> *rbTree;
   Collection::ArrayList<uint64_t,uint64_t> *arrayList;
   Graph::LLRB_TreeNode<uint64_t,uint64_t> *current;
   uint64_t tmp;
@@ -538,7 +537,7 @@ int main(int argc, const char * argv[])
   cout << "This is free software, and you are welcome to redistribute it\n";
   cout << "under certain conditions; type `show c' for details.\n";
   
-  //ret |= testHashTable();
+  ret |= testHashTable();
   ret |= testSecureHashTable();
   ret |= testArrayList();
   ret |= testHeap();

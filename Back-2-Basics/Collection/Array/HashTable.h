@@ -40,13 +40,13 @@ namespace Collection {
     //uint64_t testZone[256];
     const uint64_t seed = 0;
     
-    ElementType *elements;
-    Key<KeyType> **keyMap;
-    uint64_t *fullHashMap;
+    std::vector<ElementType> elements;
+    std::vector<Key<KeyType> *> keyMap;
+    std::vector<uint64_t> fullHashMap;
     
-    uint64_t size;
+    uint8_t size;
     
-    uint64_t *murmurHash64A (uint8_t *key, uint64_t size);
+    uint64_t murmurHash64A (uint8_t *key, uint64_t size, uint64_t seed);
     uint64_t search(KeyType);
     void grow();
     
@@ -70,6 +70,7 @@ namespace Collection {
     uint64_t index = search(key);
     
     if (!index) {
+      *data = 0;
       return -1;
     }
     
@@ -94,28 +95,26 @@ namespace Collection {
   
   
   template <class ElementType, class KeyType>
-  HashTable<ElementType,KeyType>::HashTable() {// : seed(random()) {
+  HashTable<ElementType,KeyType>::HashTable() : seed(random()) {
     
     HashTable(1024);
     
   }
   
   template <class ElementType, class KeyType>
-  HashTable<ElementType,KeyType>::HashTable(uint64_t size) { //: seed(random()) {
+  HashTable<ElementType,KeyType>::HashTable(uint64_t size) : seed(random()) {
     
-    uint64_t actualSize;
+    uint8_t actualSize;
     
-    actualSize = exp2(log2(size)+1);
-    
-    elements = new ElementType[actualSize];
-    keyMap = new Key<KeyType>*[actualSize];
-    fullHashMap = new uint64_t[actualSize];
-    
-    for (int ix = 0; ix < actualSize; ix++) {
-      elements[ix] = (ElementType)NULL;
-      keyMap[ix] = (Key<KeyType> *)NULL;
-      fullHashMap[ix] = 0;
+    if (size > 16) {
+      actualSize = exp2(log2(size)+1);
+    } else {
+      actualSize = 4;
     }
+    
+    elements.resize(1 << actualSize, 0);
+    keyMap.resize(1 << actualSize, (Key<KeyType> *)NULL);
+    fullHashMap.resize(1 << actualSize, 0);
     
     this->size = actualSize;
   }
@@ -123,43 +122,36 @@ namespace Collection {
   
   template <class ElementType, class KeyType>
   void HashTable<ElementType,KeyType>::grow() {
-    ElementType *elementsNew;
-    Key<KeyType> **keyMapNew;
-    uint64_t *fullHashMapNew;
     uint64_t newIndex;
+    uint64_t capacity = 1 << this->size;
+    uint64_t newCapacity = 2 << this->size;
     
-    elementsNew = new ElementType[this->size*2];
-    keyMapNew = new Key<KeyType>*[this->size*2];
-    fullHashMapNew = new uint64_t[this->size*2];
-    
-    for (int ix = 1; ix < this->size*2; ix++) {
-      elementsNew[ix] = (ElementType)NULL;
-      keyMapNew[ix] = (Key<KeyType> *)NULL;
-      fullHashMapNew[ix] = 0;
-    }
+    elements.resize(newCapacity, 0);
+    keyMap.resize(newCapacity, 0);
+    fullHashMap.resize(newCapacity, 0);
     
     
-    for (uint64_t ix = 1; ix < this->size; ix++) {
+    for (uint64_t ix = 1; ix < capacity; ix++) {
       if (!fullHashMap[ix]) {
         continue;
       }
       
-      newIndex = fullHashMap[ix] % (this->size*2);
+      newIndex = fullHashMap[ix] & (newCapacity-1);
       
-      elementsNew[newIndex] = elements[ix];
-      keyMapNew[newIndex] = keyMap[ix];
-      fullHashMapNew[newIndex] = fullHashMap[ix];
+      if (newIndex == ix) {
+        continue;
+      }
+      
+      elements[newIndex] = elements[ix];
+      keyMap[newIndex] = keyMap[ix];
+      fullHashMap[newIndex] = fullHashMap[ix];
+      
+      elements[ix] = 0;
+      keyMap[ix] = 0;
+      fullHashMap[ix] = 0;
     }
     
-    delete elements;
-    delete keyMap;
-    delete fullHashMap;
-    
-    elements = elementsNew;
-    keyMap = keyMapNew;
-    fullHashMap = fullHashMapNew;
-    
-    this->size *= 2;
+    this->size++;
     
   }
   
@@ -168,27 +160,25 @@ namespace Collection {
     
     uint8_t useHash;
     uint64_t index;
-    uint64_t *hash;
+    uint64_t hash;
+    uint64_t seed = this->seed;
+    uint64_t indexMask = (1 << this->size) - 1;
     
-    
-    hash = murmurHash64A((uint8_t *)&key, sizeof(key));
-    useHash = 4;
+    useHash = 8;
     
     while (useHash) {
       useHash--;
-      index = hash[useHash] % this->size;
+      hash = murmurHash64A((uint8_t *)&key, sizeof(key), seed);
+      seed = hash;
+      index = hash & indexMask;
       if (index) {
         if ((keyMap[index] != NULL) &&
-            (keyMap[index]->name.size() == sizeof(key)) &&
-            (!memcmp(&(keyMap[index]->name), &key, sizeof(key)))) {
-          delete hash;
+            (*(keyMap[index]) == key)) {
           return index;
         }
         
       }
     }
-    
-    delete hash;
     
     return 0;
     
@@ -203,9 +193,9 @@ namespace Collection {
       
       delete keyMap[index];
       
-      keyMap[index] = NULL;
+      keyMap[index] = 0;
       fullHashMap[index] = 0;
-      elements[index] = NULL;
+      elements[index] = 0;
       
       return 0;
     }
@@ -219,33 +209,36 @@ namespace Collection {
     
     uint8_t useHash;
     uint64_t index;
-    uint64_t *hash;
+    uint64_t hash;
+    uint64_t seed = this->seed;
+    uint64_t indexMask = (1 << this->size) - 1;
     
-    hash = murmurHash64A((uint8_t *)&key, sizeof(key));
-    useHash = 4;
+    useHash = 8;
     
     while (useHash) {
       useHash--;
-      index = hash[useHash] % this->size;
+      hash = murmurHash64A((uint8_t *)&key, sizeof(key), seed);
+      seed = hash;
+      index = hash & indexMask;
+      
       if (index) {
         if (keyMap[index] == NULL) {
           keyMap[index] = new Key<KeyType>(key);
-          fullHashMap[index] = hash[useHash];
+          fullHashMap[index] = hash;
           elements[index] = data;
           
-          delete hash;
           break;
         }
-        if ((keyMap[index]->name.size() == sizeof(key)) &&
-            (!memcmp(&(keyMap[index]->name.at(0)), &key, keyMap[index]->name.size()))) {
-          delete hash;
+        if (*(keyMap[index]) == key) {
           return -1;
         }
       }
       
       if (!useHash) {
         this->grow();
-        useHash = 4;
+        useHash = 8;
+        seed = this->seed;
+        indexMask = (1 << this->size) - 1;
       }
       
     }
@@ -263,11 +256,11 @@ namespace Collection {
   // 64-bit hash for 64-bit platforms
   
   template <class ElementType, class KeyType>
-  uint64_t *HashTable<ElementType,KeyType>::murmurHash64A(uint8_t *key, uint64_t size)
+  uint64_t HashTable<ElementType,KeyType>::murmurHash64A(uint8_t *key, uint64_t size, uint64_t seed)
   {
     const uint64_t m = 0xc6a4a7935bd1e995;
     const int r = 47;
-    uint64_t *h = new uint64_t[4];
+    uint64_t h;
     
     const uint64_t len = (64 - (size % 64)) + size;
     uint8_t *cond = new uint8_t[len];
@@ -278,44 +271,38 @@ namespace Collection {
       memset(cond+size, 0, len-size);
     }
     
-    for (int ix = 0; ix < 4; ix++) {
-      if (ix) {
-        h[ix] = h[ix-1] ^ (len * m);
-      } else {
-        h[0] = seed ^ (len * m);
-      }
+    h = seed ^ (len * m);
+    
+    const uint64_t *data = (uint64_t *)cond;
+    const uint64_t *end = data + (len/8);
+    
+    while(data != end)
+    {
+      uint64_t k = *data++;
       
-      const uint64_t *data = (uint64_t *)cond;
-      const uint64_t *end = data + (len/8);
+      k *= m;
+      k ^= k >> r;
+      k *= m;
       
-      while(data != end)
-      {
-        uint64_t k = *data++;
-        
-        k *= m;
-        k ^= k >> r;
-        k *= m;
-        
-        h[ix] ^= k;
-        h[ix] *= m;
-      }
-      
-      switch(len & 7)
-      {
-        case 7: h[ix] ^= data[6] << 48;
-        case 6: h[ix] ^= data[5] << 40;
-        case 5: h[ix] ^= data[4] << 32;
-        case 4: h[ix] ^= data[3] << 24;
-        case 3: h[ix] ^= data[2] << 16;
-        case 2: h[ix] ^= data[1] << 8;
-        case 1: h[ix] ^= data[0];
-          h[ix] *= m;
-      };
-      
-      h[ix] ^= h[ix] >> r;
-      h[ix] *= m;
-      h[ix] ^= h[ix] >> r;
+      h ^= k;
+      h *= m;
     }
+    
+    switch(len & 7)
+    {
+      case 7: h ^= data[6] << 48;
+      case 6: h ^= data[5] << 40;
+      case 5: h ^= data[4] << 32;
+      case 4: h ^= data[3] << 24;
+      case 3: h ^= data[2] << 16;
+      case 2: h ^= data[1] << 8;
+      case 1: h ^= data[0];
+        h *= m;
+    };
+    
+    h ^= h >> r;
+    h *= m;
+    h ^= h >> r;
     
     delete cond;
     

@@ -54,27 +54,27 @@ namespace Collection {
   class SecureHashTable
   {
   private:
-    //uint64_t testZone[256];
-    //const uint64_t seed = 0;
     
-    ElementType *elements;
-    uint64_t **keyMap;
-    uint64_t *fullHashMap;
+    const uint64_t seed;
+    
+    std::vector<ElementType> elements;
+    std::vector<uint64_t *> keyMap;
+    std::vector<uint64_t> fullHashMap;
     
     uint64_t size;
     
     uint64_t *SHA_2(uint8_t *key, uint64_t size);
-    uint64_t search(KeyType);
+    uint64_t search(KeyType&);
     void grow();
     
   public:
     SecureHashTable();
     SecureHashTable(uint64_t);
     
-    int remove(KeyType, ElementType *);
-    int insert(ElementType, KeyType);
-    int get(KeyType, ElementType *);
-    int update(ElementType,KeyType,ElementType *);
+    int remove(KeyType&, ElementType *);
+    int insert(ElementType, KeyType&);
+    int get(KeyType&, ElementType *);
+    int update(ElementType,KeyType&,ElementType *);
     //ElementType *clone();
   };
   
@@ -82,7 +82,7 @@ namespace Collection {
   /* Class: SecureHashTable */
   
   template <class ElementType, class KeyType>
-  int SecureHashTable<ElementType,KeyType>::get(KeyType key, ElementType *data) {
+  int SecureHashTable<ElementType,KeyType>::get(KeyType &key, ElementType *data) {
     uint64_t index = search(key);
     
     if (!index) {
@@ -95,7 +95,7 @@ namespace Collection {
   }
   
   template <class ElementType, class KeyType>
-  int SecureHashTable<ElementType,KeyType>::update(ElementType data, KeyType key, ElementType *ret) {
+  int SecureHashTable<ElementType,KeyType>::update(ElementType data, KeyType &key, ElementType *ret) {
     uint64_t index = search(key);
     
     if (index) {
@@ -110,88 +110,85 @@ namespace Collection {
   
   
   template <class ElementType, class KeyType>
-  SecureHashTable<ElementType,KeyType>::SecureHashTable() {// : seed(random()), secure(false) {
+  SecureHashTable<ElementType,KeyType>::SecureHashTable() : seed(random()) {
     
     SecureHashTable(1024);
   }
   
   template <class ElementType, class KeyType>
-  SecureHashTable<ElementType,KeyType>::SecureHashTable(uint64_t size) { // : seed(random()), secure(secure) {
+  SecureHashTable<ElementType,KeyType>::SecureHashTable(uint64_t size) : seed(random()) {
     
     uint64_t actualSize;
     
-    actualSize = exp2(log2(size)+1);
-    
-    elements = new ElementType[actualSize];
-    keyMap = new uint64_t*[actualSize];
-    fullHashMap = new uint64_t[actualSize];
-    
-    for (int ix = 0; ix < actualSize; ix++) {
-      elements[ix] = (ElementType)NULL;
-      keyMap[ix] = (uint64_t *)NULL;
-      fullHashMap[ix] = 0;
+    if (size > 16) {
+      actualSize = log2(size)+1;
+    } else {
+      actualSize = 4;
     }
+    
+    elements.resize(1 << actualSize, 0);
+    keyMap.resize(1 << actualSize, 0);
+    fullHashMap.resize(1 << actualSize, 0);
+    
     this->size = actualSize;
     
   }
   
   template <class ElementType, class KeyType>
   void SecureHashTable<ElementType,KeyType>::grow() {
-    ElementType *elementsNew;
-    uint64_t **keyMapNew;
-    uint64_t *fullHashMapNew;
     uint64_t newIndex;
+    uint64_t capacity = 1 << this->size;
+    uint64_t newCapacity = 2 << this->size;
     
-    elementsNew = new ElementType[this->size*2];
-    keyMapNew = new uint64_t*[this->size*2];
-    fullHashMapNew = new uint64_t[this->size*2];
+    elements.resize(newCapacity, 0);
+    keyMap.resize(newCapacity, (uint64_t *)0);
+    fullHashMap.resize(newCapacity, 0);
     
-    for (int ix = 0; ix < this->size*2; ix++) {
-      elementsNew[ix] = (ElementType)NULL;
-      keyMapNew[ix] = (uint64_t *)NULL;
-      fullHashMapNew[ix] = 0;
-    }
-    
-    for (uint64_t ix = 1; ix < this->size; ix++) {
+    for (uint64_t ix = 1; ix < capacity; ix++) {
       if (!fullHashMap[ix]) {
         continue;
       }
       
-      newIndex = fullHashMap[ix] % (this->size*2);
+      newIndex = fullHashMap[ix] & (newCapacity-1);
       
-      elementsNew[newIndex] = elements[ix];
-      keyMapNew[newIndex] = keyMap[ix];
-      fullHashMapNew[newIndex] = fullHashMap[ix];
+      if (newIndex == ix) {
+        continue;
+      }
+      
+      elements[newIndex] = elements[ix];
+      keyMap[newIndex] = keyMap[ix];
+      fullHashMap[newIndex] = fullHashMap[ix];
+      
+      elements[ix] = 0;
+      keyMap[ix] = 0;
+      fullHashMap[ix] = 0;
     }
     
-    delete elements;
-    delete keyMap;
-    delete fullHashMap;
-    
-    elements = elementsNew;
-    keyMap = keyMapNew;
-    fullHashMap = fullHashMapNew;
-    
-    this->size *= 2;
+    this->size++;
     
   }
   
   template <class ElementType, class KeyType>
-  uint64_t SecureHashTable<ElementType,KeyType>::search(KeyType key) {
+  uint64_t SecureHashTable<ElementType,KeyType>::search(KeyType &key) {
     
     uint8_t useHash;
     uint64_t index;
     uint64_t *hash;
     uint64_t ret = 0;
+    uint64_t indexMask = (1 << this->size) - 1;
     
     hash = SHA_2((uint8_t *)&key, sizeof(key));
+    
+    std::vector<uint64_t> test;
+    test.assign(hash, &hash[8]);
+    
     useHash = 8;
     
     while (useHash) {
       useHash--;
-      index = hash[useHash] % this->size;
+      index = hash[useHash] & indexMask;
       if (index) {
-        if ((keyMap[index] != NULL) && (!memcmp(keyMap[index], hash, 8))) {
+        if ((keyMap[index] != NULL) && (!memcmp(keyMap[index], hash, 64))) {
           ret = index;
           break;
         }
@@ -205,7 +202,7 @@ namespace Collection {
   }
   
   template <class ElementType, class KeyType>
-  int SecureHashTable<ElementType,KeyType>::remove(KeyType key, ElementType *victim) {
+  int SecureHashTable<ElementType,KeyType>::remove(KeyType &key, ElementType *victim) {
     uint64_t index = search(key);
     int ret = -1;
     
@@ -228,12 +225,13 @@ namespace Collection {
   }
   
   template <class ElementType, class KeyType>
-  int SecureHashTable<ElementType,KeyType>::insert(ElementType data, KeyType key) {
+  int SecureHashTable<ElementType,KeyType>::insert(ElementType data, KeyType &key) {
     
     uint8_t useHash;
     uint64_t index;
     uint64_t *hash;
     int ret = -1;
+    uint64_t indexMask = (1 << this->size) - 1;
     
     if ((hash = SHA_2((uint8_t *)&key, sizeof(key))) == NULL) {
       return ret;
@@ -243,24 +241,17 @@ namespace Collection {
     
     while (useHash) {
       useHash--;
-      index = hash[useHash] % this->size;
+      index = hash[useHash] & indexMask;
       if (index) {
         if (keyMap[index] == NULL) {
-          keyMap[index] = new uint64_t[8];
-          memcpy(keyMap[index], hash, 64);
+          keyMap[index] = hash;
           fullHashMap[index] = hash[useHash];
           elements[index] = data;
           
           break;
         }
-        if (keyMap[index][0] == 0) {
-          memcpy(keyMap[index], hash, 64);
-          fullHashMap[index] = hash[useHash];
-          elements[index] = data;
-          
-          break;
-        }
-        if (!memcmp(keyMap[index], hash, 8)) {
+        if (!memcmp(keyMap[index], hash, 64)) {
+          delete hash;
           break;
         }
       }
@@ -268,10 +259,9 @@ namespace Collection {
       if (!useHash) {
         this->grow();
         useHash = 8;
+        indexMask = (1 << this->size) - 1;
       }
     }
-    
-    delete hash;
     
     return 0;
     
@@ -280,7 +270,7 @@ namespace Collection {
   
   template <class ElementType, class KeyType>
   uint64_t *SecureHashTable<ElementType,KeyType>::SHA_2(uint8_t *key, uint64_t size) {
-    uint64_t *conditionedMsg;
+    vector<uint64_t> conditionedMsg;
     uint64_t subArray[80];
     uint64_t tmpHash[8];
     uint64_t *hash;
@@ -293,26 +283,23 @@ namespace Collection {
     
     hash = new uint64_t[8];
     
-    
     uint64_t dataSize = size+8;
-    condSize = (128 - (dataSize % 128) % 111) + dataSize;
+    condSize = (512 - (dataSize % 512) % 487) + dataSize;
     
-    conditionedMsg = new uint64_t[condSize/8];
+    conditionedMsg.resize(condSize/8, 0);
     
-    conditionedMsg[0] = 0;//seed;
-    memcpy(conditionedMsg+1, key, dataSize-8);
+    conditionedMsg[0] = this->seed;
+    memcpy(&conditionedMsg[1], key, dataSize-8);
     
-    ((uint8_t *)conditionedMsg)[dataSize] = 0x01;
-    memset(&((uint8_t *)conditionedMsg)[dataSize+1], 0, condSize-(dataSize+1+8));
+    ((uint8_t *)&conditionedMsg[0])[dataSize] = 0x01;
     
     conditionedMsg[(condSize/8)-1] = dataSize;
-    
     
     for (int jx = 0; jx < 8; jx++) {
       hash[jx] = 0;
     }
     
-    for (int ix = 0; ix < condSize; ix += 16) {
+    for (int ix = 0; ix < condSize/8; ix += 16) {
       for (int jx = 0; jx < 16; jx++) {
         subArray[jx] = conditionedMsg[ix+jx];
       }
@@ -365,8 +352,6 @@ namespace Collection {
         hash[jx] += tmpHash[jx];
       }
     }
-    
-    delete conditionedMsg;
     
     return hash;
   }
