@@ -39,6 +39,8 @@ namespace Collection {
     std::vector<Comparable<ElementType, KeyType> *> *collection;
     uint64_t size;
     void swap(uint64_t i,uint64_t j);
+    void heapifyUp(uint64_t i);
+    void heapifyDown(uint64_t i);
     
   public:
     
@@ -46,8 +48,7 @@ namespace Collection {
     
     Comparable<ElementType,KeyType> *removeHeapEntry(uint64_t index);
     ElementType peekAtHeapEntry(uint64_t index);
-    void heapifyUp(uint64_t i);
-    void heapifyDown(uint64_t i);
+    void update(uint64_t i, KeyType);
     uint64_t *push(ElementType,KeyType);
     ElementType pop();
     ElementType peek(uint64_t);
@@ -123,6 +124,19 @@ namespace Collection {
     return entry;
   }
   
+  template <class ElementType, class KeyType>
+  void Heap<ElementType,KeyType>::update(uint64_t i, KeyType key) {
+    
+    if (collection->at(i)->key > key) {
+      collection->at(i)->key = key;
+      heapifyUp(i);
+    }
+    
+    if (collection->at(i)->key < key) {
+      collection->at(i)->key = key;
+      heapifyDown(i);
+    }
+  }
   
   template <class ElementType, class KeyType>
   void Heap<ElementType,KeyType>::heapifyUp(uint64_t i) {

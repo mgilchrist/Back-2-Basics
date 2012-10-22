@@ -109,7 +109,7 @@ namespace Graph {
     Map();
     ~Map();
     
-    virtual EdgeType *addEdge(NodeType *a, NodeType *b, double location);
+    EdgeType *addEdge(NodeType *a, NodeType *b, double location);
     void setStart(NodeType *start);
     void setTerminal(NodeType *terminal);
     virtual Collection::Stack<EdgeType *> *getShortestPath();
@@ -212,6 +212,8 @@ namespace Graph {
       if (u->previousEdge->getBackward() != NULL) {
         ret->push(u->previousEdge);
       }
+      
+      u = u->previousEdge->getBackward();
     }
     
     shortestPathToTerminal = ret;
@@ -222,19 +224,19 @@ namespace Graph {
   template <class NodeType, class EdgeType>
   void Map<NodeType,EdgeType>::dijkstras() {
     Collection::Heap<NodeType *,double> *queue = new Collection::Heap<NodeType *,double>();
-    NodeType *u;
+    NodeType *u, *v;
     double tmp;
     Collection::Stack<EdgeType *> *ret;
     
     // set initial distances to infinity
-    for (int ix = 0; ix < this->getNumNodes(); ix++) {
+    for (uint64_t ix = 0; ix < this->getNumNodes(); ix++) {
       this->nodeAtIndex(ix)->distanceFromStart = 1.0/0.0;
       this->nodeAtIndex(ix)->previousEdge = NULL;
     }
     
     this->start->distanceFromStart = 0.0;
     
-    for (int ix = 0; ix < this->getNumNodes(); ix++) {
+    for (uint64_t ix = 0; ix < this->getNumNodes(); ix++) {
       this->nodeAtIndex(ix)->auxIndex = queue->push(this->nodeAtIndex(ix),this->nodeAtIndex(ix)->distanceFromStart);
     }
     
@@ -246,16 +248,17 @@ namespace Graph {
       
       u = queue->pop();
       
-      for (int ix = 0; ix < u->getNumEdges(); ix++) {
+      for (uint64_t ix = 0; ix < u->getNumEdges(); ix++) {
         if (u->getAdjacentEdge(ix)->blocked) {
           continue;
         }
         tmp = u->distanceFromStart + u->getAdjacentEdge(ix)->length;
+        v = u->getAdjacentNode(ix);
         
-        if (tmp < u->getAdjacentNode(ix)->distanceFromStart) {
-          u->getAdjacentNode(ix)->distanceFromStart = tmp;
-          u->getAdjacentNode(ix)->previousEdge = u->getAdjacentEdge(ix);
-          queue->heapifyUp(*(u->getAdjacentNode(ix)->auxIndex));
+        if (tmp < v->distanceFromStart) {
+          v->distanceFromStart = tmp;
+          v->previousEdge = u->getAdjacentEdge(ix);
+          queue->update(*(v->auxIndex), tmp);
         }
       }
     }
@@ -271,10 +274,12 @@ namespace Graph {
     
     u = this->terminal;
     
-    while (u->previousEdge != NULL) {
+    while ((u->previousEdge != NULL) && (u != this->start)) {
       if (u->previousEdge->getBackward() != NULL) {
         ret->push(u->previousEdge);
       }
+      
+      u = u->previousEdge->getBackward();
     }
     
     shortestPathToTerminal = ret;
@@ -300,13 +305,15 @@ namespace Graph {
   }
   
   template <class NodeType, class EdgeType>
-  EdgeType *Map<NodeType,EdgeType>::addEdge(NodeType *a, NodeType *b,
+  EdgeType *Map<NodeType,EdgeType>::addEdge(NodeType *v, NodeType *u,
                                             double location) {
-    EdgeType *tmpEdge = new EdgeType(a,b,location);
+    EdgeType *tmpEdge = new EdgeType(v,u,location);
     
     if (location < 0.0) {
       numNegativeEdges++;
     }
+    
+    u->addAdjacentEdge(tmpEdge);
     
     this->addEdgeObj(tmpEdge);
     

@@ -118,6 +118,8 @@ namespace Graph {
       if (u->previousEdge->getBackward() != NULL) {
         ret->push(u->previousEdge);
       }
+      
+       u = u->previousEdge->getBackward();
     }
     
     shortestPathToTerminal = ret;

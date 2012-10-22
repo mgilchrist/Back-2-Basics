@@ -456,10 +456,11 @@ int testNavigation() {
   vector<Graph::Coordinate *> locs;
   Graph::Coordinate *v, *u;
   Graph::Path *tmpPath;
-  uint64_t width = 100;
-  uint64_t length = 100;
+  Collection::Stack<Graph::Path *> *shortPath;
+  uint64_t width = 10;
+  uint64_t length = 10;
   double distance;
-  uint64_t neighborHops = 1;
+  int neighborHops = 1;
   
   cout << "\nTesting Navigation\n";
   
@@ -475,34 +476,84 @@ int testNavigation() {
     }
   }
   
-  for (uint64_t ix = neighborHops; ix < width-neighborHops; ix++) {
-    for (uint64_t jx = neighborHops; jx < length-neighborHops; jx++) {
+  for (uint64_t ix = neighborHops; ix < (width-neighborHops); ix++) {
+    for (uint64_t jx = neighborHops; jx < (length-neighborHops); jx++) {
       u = locs[ix+(jx*width)];
-      for (uint64_t kx = -neighborHops; kx <= neighborHops; kx ++) {
-        for (uint64_t lx = -neighborHops; lx <= neighborHops; lx++) {
-          if ((!kx) && (!lx)) {
+      for (int kx = (-neighborHops); kx <= neighborHops; kx ++) {
+        for (int lx = (-neighborHops); lx <= neighborHops; lx++) {
+          if ((kx) || (lx)) {
             v = locs[(ix+kx)+((jx+lx)*width)];
             
             distance = calcDistance(v->X, v->Y, v->Z, u->X, u->Y, u->Z);
-            tmpPath = new Graph::Path(v, u, distance);
-            navigation->addEdgeObj(tmpPath);
+            navigation->addEdge(v, u, distance);
           }
         }
       }
     }
   }
   
-  for (int ix = 0; ix < neighborHops; ix++) {
-    for (int jx = 0; jx < neighborHops; jx++) {
+  /* Width sides */
+  
+  for (uint64_t ix = 0; ix < neighborHops; ix++) {
+    for (uint64_t jx = neighborHops; jx < (length-neighborHops); jx++) {
       u = locs[ix+(jx*width)];
-      for (int kx = -ix; kx < width-ix; kx ++) {
-        for (int lx = -jx; lx < length-jx; lx++) {
-          if ((!kx) && (!lx)) {
-            v = locs[(ix+kx)+((jx+lx)*width)];
+      for (uint64_t kx = 0; kx < (ix+neighborHops); kx ++) {
+        for (int lx = (-neighborHops); lx < neighborHops; lx++) {
+          if ((kx != ix) || (lx)) {
+            v = locs[(kx)+((jx+lx)*width)];
             
             distance = calcDistance(v->X, v->Y, v->Z, u->X, u->Y, u->Z);
-            tmpPath = new Graph::Path(v, u, distance);
-            navigation->addEdgeObj(tmpPath);
+            navigation->addEdge(v, u, distance);
+          }
+        }
+      }
+    }
+  }
+  
+  for (uint64_t ix = (width-neighborHops); ix < width; ix++) {
+    for (uint64_t jx = neighborHops; jx < (length-neighborHops); jx++) {
+      u = locs[ix+(jx*width)];
+      for (uint64_t kx = (ix-neighborHops); kx < width; kx ++) {
+        for (int lx = (-neighborHops); lx < neighborHops; lx++) {
+          if ((kx != ix) || (lx)) {
+            v = locs[(kx)+((jx+lx)*width)];
+            
+            distance = calcDistance(v->X, v->Y, v->Z, u->X, u->Y, u->Z);
+            navigation->addEdge(v, u, distance);
+          }
+        }
+      }
+    }
+  }
+  
+  /* length sides */
+  
+  for (uint64_t ix = neighborHops; ix < (width-neighborHops); ix++) {
+    for (uint64_t jx = 0; jx < neighborHops; jx++) {
+      u = locs[ix+(jx*width)];
+      for (int kx = (-neighborHops); kx < neighborHops; kx++) {
+        for (uint64_t lx = 0; lx < (jx+neighborHops); lx++) {
+          if ((kx) || (lx != jx)) {
+            v = locs[(ix+kx)+((lx)*width)];
+            
+            distance = calcDistance(v->X, v->Y, v->Z, u->X, u->Y, u->Z);
+            navigation->addEdge(v, u, distance);
+          }
+        }
+      }
+    }
+  }
+  
+  for (uint64_t ix = neighborHops; ix < (width-neighborHops); ix++) {
+    for (uint64_t jx = (length-neighborHops); jx < length; jx++) {
+      u = locs[ix+(jx*width)];
+      for (int kx = (-neighborHops); kx < neighborHops; kx ++) {
+        for (uint64_t lx = (jx-neighborHops); lx < length; lx++) {
+          if ((kx) || (lx != jx)) {
+            v = locs[(ix+kx)+((lx)*width)];
+            
+            distance = calcDistance(v->X, v->Y, v->Z, u->X, u->Y, u->Z);
+            navigation->addEdge(v, u, distance);
           }
         }
       }
@@ -510,12 +561,26 @@ int testNavigation() {
   }
   
   
-  navigation->setStart(locs[0]);
+  navigation->setStart(locs[(neighborHops+1)+((neighborHops+1) * width)]);
   navigation->setTerminal(locs[length*width-1]);
   
-  navigation->getShortestPath();
+  if ((shortPath = navigation->getShortestPath()) != NULL) {
+    while (shortPath->peek() != NULL) {
+      tmpPath = shortPath->pop();
+      u = tmpPath->getBackward();
+      v = tmpPath->getForward();
+      
+      cout << "{";
+      cout << u->X;
+      cout << ":";
+      cout << u->Y;
+      cout << ":";
+      cout << u->Z;
+      cout << "},";
+    }
+  }
   
-  cout << "\nNavigation:Done\n";
+  cout << "Navigation:Done\n";
   
   return 0;
 }
@@ -607,15 +672,15 @@ int main(int argc, const char * argv[])
   cout << "This is free software, and you are welcome to redistribute it\n";
   cout << "under certain conditions; type `show c' for details.\n";
   
-  ret |= testHashTable();
-  ret |= testSecureHashTable();
-  ret |= testArrayList();
-  ret |= testHeap();
+  //ret |= testHashTable();
+  //ret |= testSecureHashTable();
+  //ret |= testArrayList();
+  //ret |= testHeap();
   //ret |= testRBTree();
-  ret |= testLLRBTree();
-  ret |= testStack();
-  ret |= testNeuralNetwork();
-  ret |= testMetaheuristic();
+  //ret |= testLLRBTree();
+  //ret |= testStack();
+  //ret |= testNeuralNetwork();
+  //ret |= testMetaheuristic();
   ret |= testNavigation();
   
   cout << "Finished Testing:";

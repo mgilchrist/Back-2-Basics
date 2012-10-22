@@ -108,6 +108,10 @@ namespace Collection {
   
   template <class ElementType>
   ElementType Stack<ElementType>::peek() {
+    if (!this->size) {
+      return NULL;
+    }
+    
     return this->collection[this->size-1];
   }
   
