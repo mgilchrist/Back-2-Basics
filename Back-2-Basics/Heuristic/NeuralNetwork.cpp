@@ -34,24 +34,25 @@ namespace NeuralNetwork
 #define RANDOM_INFLUENCE ((random() > random()) ? 1.0 : -1.0)
 #define MAX_LAYERS    7   // 3 for space 7 for oct math and 10 for m-theory
   
-  double zeroInfluence = 0.0;
+  static const double zeroInfluence = 0.0;
   
   
   Synapse::Synapse(Neuron *neuron, Neuron *input, double influence) {
     this->u = neuron;
     this->v = input;
-    
-    this->capacity = capacity;
+    this->influence = influence;
+    this->capacity = (influence < 0) ? -influence : influence;
     lastCorrection = 0.0;
   }
   
   void Synapse::changeInfluence(double influence) {
-    this->capacity += influence;
+    this->influence += influence;
+    this->capacity = (this->influence < 0) ? -this->influence : this->influence;
     lastCorrection = influence;
   }
   
   double Synapse::getInfluence() {
-    return this->capacity;
+    return this->influence;
   }
   
   double Synapse::getMomentum() {
@@ -165,34 +166,24 @@ namespace NeuralNetwork
     }
   }
   
-  
-  NeuralNetwork::NeuralNetwork(std::vector<double *> *input) {
-    uint64_t layers;
-    uint64_t *inLayer;
+  NeuralNetwork::NeuralNetwork(std::vector<double *> *input, std::vector<uint64_t> *layers) {
+    
     Collection::Stack<Neuron *> *currentStack, *previousStack;
     Neuron *currentNeuron;
     
     
-    layers = (rand() % MAX_LAYERS) + 1;
-    inLayer = new uint64_t[layers];
-    
-    for (int jx = 0; jx < layers; jx++) {
-      inLayer[jx] = (rand() % (input->size())) + 1;
-    }
+    this->layers = new Collection::Stack<Collection::Stack<Neuron *> *>(layers->size());
     
     
-    this->layers = new Collection::Stack<Collection::Stack<Neuron *> *>(layers);
+    currentStack = new Collection::Stack<Neuron *>(input->size());
     
-    
-    currentStack = new Collection::Stack<Neuron *>(inLayer[0]);
-  
 #ifdef NEURALNETWORK_DEBUG
     cout << "Creating New Input Layer:";
     cout << inLayer[0];
     cout << "\n";
 #endif
     
-    for (int jx = 0; jx < inLayer[0]; jx++) {
+    for (int jx = 0; jx < input->size(); jx++) {
       //cout << "Creating Input Neuron\n";
       currentNeuron = new Neuron(this, input->at(jx));
       inputs.push(currentNeuron);
@@ -205,16 +196,16 @@ namespace NeuralNetwork
     
     this->layers->push(currentStack);
     
-    for (int ix = 1; ix < layers; ix++) {
+    for (int ix = 0; ix < layers->size()-1; ix++) {
 #ifdef NEURALNETWORK_DEBUG
       cout << "Creating New Hidden Layer:";
       cout << inLayer[ix];
       cout << "\n";
 #endif
       previousStack = currentStack;
-      currentStack = new Collection::Stack<Neuron *>(inLayer[ix]);
+      currentStack = new Collection::Stack<Neuron *>(layers->at(ix));
       
-      for (int jx = 0; jx < inLayer[ix]; jx++) {
+      for (int jx = 0; jx < layers->at(ix); jx++) {
         //cout << "Creating Hidden Neuron\n";
         currentNeuron = new Neuron(this, previousStack);
         this->add(currentNeuron);
@@ -225,16 +216,18 @@ namespace NeuralNetwork
       }
       this->layers->push(currentStack);
     }
-#ifdef NEURALNETWORK_DEBUG    
+#ifdef NEURALNETWORK_DEBUG
     cout << "Creating Output Neuron\n";
 #endif
     previousStack = currentStack;
-    currentStack = new Collection::Stack<Neuron *>(1);
+    currentStack = new Collection::Stack<Neuron *>(layers->at(layers->size()-1));
     
-    currentNeuron = new Neuron(this, previousStack);
-    start = currentNeuron;  // Output Neuron
-    this->add(currentNeuron);
-    currentStack->push(currentNeuron);
+    for (int jx = 0; jx < layers->at(layers->size()-1); jx++) {
+      currentNeuron = new Neuron(this, previousStack);
+      start = currentNeuron;  // Output Neuron
+      this->add(currentNeuron);
+      currentStack->push(currentNeuron);
+    }
     
 #ifdef NEURALNETWORK_DEBUG
     cout << "  Inputs: ";
@@ -243,6 +236,8 @@ namespace NeuralNetwork
 #endif
     
     this->layers->push(currentStack);
+    expectation = new std::vector<double>();
+    expectation->resize(layers->at(layers->size()-1));
     
     currentIteration = 0;
   }
@@ -251,18 +246,22 @@ namespace NeuralNetwork
     
     currentIteration++;
     
-    /* Get response */
-    expectation = start->probeActivation(currentIteration);
+    Collection::Stack<Neuron *> *outputLayer = this->layers->atIndex(this->layers->getSize()-1);
     
+    /* Get response */
+    for (uint64_t ix = 0; ix < expectation->size(); ix++) {
+      expectation->at(ix) = outputLayer->atIndex(ix)->probeActivation(currentIteration);
+      
+    }
   }
   
-  double NeuralNetwork::getExpectation() {
+  std::vector<double> *NeuralNetwork::getExpectation() {
     return expectation;
   }
   
-  void NeuralNetwork::doCorrection(double reality, double sensation) {
+  void NeuralNetwork::doCorrection(double *reality, double sensation) {
     
-    Collection::Array<Neuron *> *currentLayer;
+    Collection::Stack<Neuron *> *currentLayer;
     Neuron *pCurrentNeuron;
     double nCurrentOutput;
     
@@ -274,18 +273,19 @@ namespace NeuralNetwork
     
     currentLayer = this->layers->atIndex(this->layers->getSize()-1);
     
-    pCurrentNeuron = currentLayer->atIndex(0);
-    pCurrentNeuron->delta = (expectation *
-                             (1.0 - expectation) *
-                             (reality - expectation));
-    pCurrentNeuron->biasDelta = -(((expectation - 0.5) * 2.0) *
-                                  (sensation * pCurrentNeuron->getNumEdges()));
-    
-    for (int ix = 0; ix < pCurrentNeuron->getNumEdges(); ix++) {
-      pCurrentNeuron->getAdjacentNode(ix)->delta += (pCurrentNeuron->getInputInfluence(ix) *
-                                                     pCurrentNeuron->delta);
-      pCurrentNeuron->getAdjacentNode(ix)->biasDelta += (pCurrentNeuron->getInputInfluence(ix) *
-                                                         pCurrentNeuron->biasDelta);
+    for (int jx = 0; jx < currentLayer->getSize(); jx++) {
+      pCurrentNeuron = currentLayer->atIndex(jx);
+      pCurrentNeuron->delta = (expectation->at(jx) *
+                               (1.0 - expectation->at(jx)) *
+                               (reality[jx] - expectation->at(jx)));
+      pCurrentNeuron->biasDelta = 0; //(pCurrentNeuron->delta * (sensation * pCurrentNeuron->getNumEdges()));
+      
+      for (int ix = 0; ix < pCurrentNeuron->getNumEdges(); ix++) {
+        pCurrentNeuron->getAdjacentNode(ix)->delta += (pCurrentNeuron->getInputInfluence(ix) *
+                                                       pCurrentNeuron->delta);
+        pCurrentNeuron->getAdjacentNode(ix)->biasDelta += (pCurrentNeuron->getInputInfluence(ix) *
+                                                           pCurrentNeuron->biasDelta);
+      }
     }
     
     for (uint64_t ix = 2; ix < this->layers->getSize(); ix++) {
@@ -310,6 +310,41 @@ namespace NeuralNetwork
     }
   }
   
+  void NeuralNetwork::prune() {
+    Collection::Array<Neuron *> *currentLayer;
+    Neuron *pCurrentNeuron;
+    terminal = new Neuron(this, (double *)NULL);
+    std::vector<double> *flow;
+    
+    for (int ix = 0; ix < this->inputs.getSize(); ix++) {
+      this->inputs.atIndex(ix)->addInputNeuron(this, terminal);
+    }
+    
+    flow = this->getMaximumFlow();
+    
+    for (uint64_t ix = 1; ix < this->layers->getSize(); ix++) {
+      currentLayer = this->layers->atIndex(this->layers->getSize()-ix);
+      for (int jx = 0; jx < currentLayer->getSize(); jx++) {
+        pCurrentNeuron = currentLayer->atIndex(jx);
+        for (int kx = 0; kx < pCurrentNeuron->getNumEdges(); kx++) {
+          if (flow->at(pCurrentNeuron->getAdjacentEdge(kx)->getIndex()) == 0) {
+            pCurrentNeuron->getAdjacentEdge(kx)->blocked = true;
+          } else {
+            pCurrentNeuron->getAdjacentEdge(kx)->blocked = false;
+          }
+        }
+        
+        pCurrentNeuron->cleanUp();
+      }
+    }
+    
+    
+  }
+  
+  void NeuralNetwork::merge(NeuralNetwork *network) {
+    
+    
+  }
   
   NeuralNetwork *clone(double errorRate) {
     return NULL;

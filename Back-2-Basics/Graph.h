@@ -84,6 +84,7 @@ namespace Graph {
     uint64_t getNumEdges();
     virtual void addAdjacentEdge(EdgeType *adjacent);
     virtual EdgeType *removeNewestEdge();
+    virtual void cleanUp();
     virtual EdgeType *getAdjacentEdge(uint64_t index);
     virtual NodeType *getAdjacentNode(uint64_t index);
   };
@@ -202,6 +203,22 @@ namespace Graph {
   template <class NodeType, class EdgeType>
   void Node<NodeType,EdgeType>::setIndex(uint64_t index) {
     this->index = index;
+  }
+  
+  template <class NodeType, class EdgeType>
+  void Node<NodeType,EdgeType>::cleanUp() {
+    Collection::Stack<EdgeType *> *tmp = new Collection::Stack<EdgeType *>();
+    
+    for (int ix = 0; ix < forwardEdges->getSize(); ix++) {
+      EdgeType *tmpEdge = forwardEdges->atIndex(ix);
+      if (!tmpEdge->blocked) {
+        tmp->push(tmpEdge);
+      }
+    }
+    
+    delete forwardEdges;
+    
+    forwardEdges = tmp;
   }
   
   template <class NodeType, class EdgeType>
@@ -333,6 +350,11 @@ namespace Graph {
     }
     delete baseL;
     
+    if (terminal == NULL) {
+      this->pathToTerminal = NULL;
+      return NULL;
+    }
+    
     ret = new Collection::Stack<EdgeType *>();
     
     v = terminal;
@@ -341,6 +363,7 @@ namespace Graph {
       if (v->previousEdge->getBackward() != NULL) {
         ret->push(v->previousEdge);
       }
+      v = v->previousEdge->getBackward();
     }
     
     this->pathToTerminal = ret;

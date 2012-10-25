@@ -22,6 +22,7 @@
 #ifndef OpenSource_Network_h
 #define OpenSource_Network_h
 
+#include <vector>
 #include "Graph.h"
 
 namespace Graph {
@@ -87,7 +88,7 @@ namespace Graph {
   template <class NodeType, class EdgeType>
   class Network : public Graph<NodeType, EdgeType>
   {
-    Collection::Array<double> *flow;
+    std::vector<double> *flow;
     
   protected:
     Network *createAuxNetwork();
@@ -100,7 +101,7 @@ namespace Graph {
     Network();
     ~Network();
     
-    virtual Collection::Array<double> *getMaximumFlow();
+    virtual std::vector<double> *getMaximumFlow();
   };
   
   template <class NodeType, class EdgeType>
@@ -194,12 +195,14 @@ namespace Graph {
   void Network<NodeType,EdgeType>::maxFlow(NodeType *s, NodeType *t) {
     
     Collection::Stack<EdgeType *> *path;
-    Collection::Array<double> *flow;
+    std::vector<double> *flow;
     double *subFlow, *subFlowPrime;
     
     Network<NodeType,EdgeType> *auxGraph = createAuxNetwork();
     
-    flow = new Collection::Array<double>(this->getNumEdges());
+    flow = new std::vector<double>();
+    
+    flow->resize(this->getNumEdges());
     
     if (this->pathToTerminal != NULL) {
       delete this->pathToTerminal;
@@ -207,29 +210,29 @@ namespace Graph {
     }
     
     for (int ix = 0; ix < this->getNumEdges(); ix++) {
-      flow[ix] = 0.0;
+      flow->at(ix) = 0.0;
     }
     
     while ((path = auxGraph->breadthFirstSearch(s, t)) != NULL) {
       subFlow = new double[path->getSize()];
       
       for (int ix = 0; ix < path->getSize(); ix++) {
-        subFlow[ix] = flow->atIndex((path->atIndex(ix)->getIndex())/2);
+        subFlow[ix] = flow->at((path->atIndex(ix)->getIndex())/2);
       }
       
       subFlowPrime = this->augment(subFlow, path);
       
       for (int ix = 0; ix < path->getSize(); ix++) {
-        flow[(path->atIndex(ix)->getIndex())/2] = subFlowPrime[ix];
+        flow->at((path->atIndex(ix)->getIndex())/2) = subFlowPrime[ix];
       }
       
-      for (int ix = 0; ix < flow->getSize(); ix++) {
-        if (flow->atIndex(ix) == auxGraph->edgeAtIndex(ix*2)->capacity) {
+      for (int ix = 0; ix < flow->size(); ix++) {
+        if (flow->at(ix) == auxGraph->edgeAtIndex(ix*2)->capacity) {
           auxGraph->edgeAtIndex(ix*2)->blocked = true;
         } else {
           auxGraph->edgeAtIndex(ix*2)->blocked = false;
         }
-        if (flow->atIndex(ix) == 0.0) {
+        if (flow->at(ix) == 0.0) {
           auxGraph->edgeAtIndex((ix*2)+1)->blocked = true;
         } else {
           auxGraph->edgeAtIndex((ix*2)+1)->blocked = false;
@@ -248,7 +251,7 @@ namespace Graph {
   }
   
   template<class NodeType, class EdgeType>
-  Collection::Array<double> *Network<NodeType,EdgeType>::getMaximumFlow() {
+  std::vector<double> *Network<NodeType,EdgeType>::getMaximumFlow() {
     
     if (this->flow == NULL) {
       maxFlow(this->getStart(), this->getTerminal());

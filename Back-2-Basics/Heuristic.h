@@ -24,6 +24,7 @@
 
 #include "Collection.h"
 #include "Stack.h"
+#include <vector>
 
 class Heuristic {
   
@@ -39,8 +40,8 @@ public:
   }
   
   virtual void calculateExpectation(void) =0;
-  virtual double getExpectation(void) =0;
-  virtual void doCorrection(double,double) =0;
+  virtual std::vector<double> *getExpectation(void) =0;
+  virtual void doCorrection(double *,double) =0;
   
 };
 

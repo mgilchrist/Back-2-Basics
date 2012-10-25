@@ -51,7 +51,7 @@ namespace NeuralNetwork
   class Synapse : public Graph::Pipe<Neuron> {
     
   private:
-    
+    double influence;
     double lastCorrection;
     
   public:
@@ -104,17 +104,18 @@ namespace NeuralNetwork
     bool layersDetermined = false;
     double glbBias = 0.5;
     double learningRule = LEARNING_RULE_DEFAULT;
-    double expectation;
+    vector<double> *expectation;
     
   public:
     NeuralNetwork();
-    NeuralNetwork(std::vector<double *> *);
+    NeuralNetwork(std::vector<double *> *,std::vector<uint64_t> *);
     NeuralNetwork *clone(double);
     
     void calculateExpectation(void);
-    double getExpectation(void);
-    void doCorrection(double,double);
-    
+    vector<double> *getExpectation(void);
+    void doCorrection(double *,double);
+    void prune();
+    void merge(NeuralNetwork *);
     
   };
   

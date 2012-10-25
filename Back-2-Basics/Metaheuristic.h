@@ -31,6 +31,7 @@
 
 
 #define STD_NUM_CANDIDATES  4
+#define OUTPUT_SIZE 64
 
 template <class DataType>
 class Metaheuristic {
@@ -51,7 +52,7 @@ public:
   Metaheuristic(std::vector<DataType> *input, std::vector<Heuristic *> *candidates);
   
   virtual void postResult(DataType result);
-  virtual DataType getConsensus();
+  virtual void getConsensus(std::vector<double> *);
 };
 
 //
@@ -136,7 +137,7 @@ void Metaheuristic<DataType>::postResult(DataType result) {
    */
   
   for (int ix = 0; ix < theory->getSize(); ix++) {
-    theory->atIndex(ix)->data->doCorrection(result,0.0);
+    theory->atIndex(ix)->data->doCorrection(&result,0.0);
   }
 }
 
@@ -170,25 +171,28 @@ DataType Metaheuristic<DataType>::rConsensus(uint64_t current) {
  */
 
 template <class DataType>
-DataType Metaheuristic<DataType>::getConsensus() {
+void Metaheuristic<DataType>::getConsensus(std::vector<double> *expectation) {
   //HeuristicType *tmp;
   //uint64_t current = theory->getTreeRoot();
-  double expectation = 0.0;
+  std::vector<double> *tmp;
   
   for (int ix = 0; ix < theory->getSize(); ix++) {
     if (theory->atIndex(ix)->data == NULL) {
       continue;
     }
     theory->atIndex(ix)->data->calculateExpectation();
-    expectation += theory->atIndex(ix)->data->getExpectation();
+    tmp = theory->atIndex(ix)->data->getExpectation();
+    
+    for (uint64_t jx = 0; jx < OUTPUT_SIZE; jx++) {
+      expectation->at(jx) += tmp->at(jx);
+    }
     
   }
   
-  expectation /= theory->getSize();
+  for (uint64_t jx = 0; jx < OUTPUT_SIZE; jx++) {
+    expectation->at(jx) /= theory->getSize();
+  }
 
-  
-  return expectation;
-  
 }
 
 

@@ -35,8 +35,8 @@ using namespace std;
 #include "Genetic.h"
 #include "Metaheuristic.h"
 
-#define INPUT_SIZE    32
-#define OUTPUT_SIZE   32
+#define INPUT_SIZE    64
+#define OUTPUT_SIZE   64
 #define ITERATIONS    (1024)
 #define TEST_SIZE     0x10000
 
@@ -119,7 +119,7 @@ int testSecureHashTable() {
     
     hashTable->insert(value, value);
     hashTable->get(value, tmpInt);
-      
+    
     verify[ix] = value;
   }
   
@@ -212,7 +212,7 @@ int testRBTree() {
   uint64_t index = 0;
   
   cout << "\nTesting RedBlackTree\n";
-
+  
   rbTree = new Graph::RedBlackTree<uint64_t, uint64_t>();
   arrayList = new Collection::ArrayList<uint64_t,uint64_t>(TEST_SIZE);
   
@@ -225,7 +225,7 @@ int testRBTree() {
   tmp = current->key;
   
   while (current != NULL) {
-
+    
     if (current->key < tmp) {
       cout << "Index ";
       cout << index;
@@ -384,61 +384,78 @@ int testNeuralNetwork() {
   std::vector<double> *input = new std::vector<double>(INPUT_SIZE);
   NeuralNetwork::NeuralNetwork *NNetwork;
   double *reality = new double[OUTPUT_SIZE];
-  double expectation;
+  std::vector<double> *expectation;
   uint64_t iterations = 0;
-  uint64_t tmpSize;
   std::vector<double *> *thisInput;
   double errorRate = 0.0;
   uint64_t endPraticeTests = (100 * ITERATIONS / 90);
   uint64_t nonPracticeTests = ITERATIONS - endPraticeTests;
+  std::vector<uint64_t> *layers = new std::vector<uint64_t>();
+  uint64_t precision = (1 << 8);
+  
+  layers->resize(3);
+  
+  layers->at(0) = OUTPUT_SIZE/8;
+  layers->at(1) = OUTPUT_SIZE/8;
+  layers->at(2) = OUTPUT_SIZE;
   
   cout << "\nTesting NeuralNetwork\n";
   
-  tmpSize = (random() % input->size()) + 1;
-  thisInput = new std::vector<double *>(tmpSize);
+  thisInput = new std::vector<double *>(INPUT_SIZE);
   
-  for (int jx = 0; jx < tmpSize; jx++) {
+  for (int jx = 0; jx < INPUT_SIZE; jx++) {
     thisInput->at(jx) = &input->at(jx);
   }
   
-  NNetwork = new NeuralNetwork::NeuralNetwork(thisInput);
-    
+  NNetwork = new NeuralNetwork::NeuralNetwork(thisInput, layers);
+  
+  for (uint64_t jx = 0; jx < thisInput->size(); jx++) {
+    *(thisInput->at(jx)) = (rand() % precision) / (precision * 1.0);
+  }
+  
   do {
-    for (int ix = 0; ix < 1 /*OUTPUT_SIZE*/; ix++) {
-      for (int jx = 0; jx < thisInput->size(); jx++) {
-        *(thisInput->at(jx)) = 0.1 * (random()%10);
-      }
-      
-      NNetwork->calculateExpectation();
-      expectation = NNetwork->getExpectation();
-      reality[ix] = 1.0;
-      /*if ((input->atIndex(ix%INPUT_SIZE)) +
-       (input->atIndex((ix+1)%INPUT_SIZE)) +
-       (input->atIndex((ix+2)%INPUT_SIZE)) > 2.5) {
-       reality[ix] = 1.0;
-       } else if ((input->atIndex(ix%INPUT_SIZE)) +
-       (input->atIndex((ix+1)%INPUT_SIZE)) +
-       (input->atIndex((ix+2)%INPUT_SIZE)) < 0.5) {
-       reality[ix] = 0.0;
-       }*/
-      NNetwork->doCorrection(reality[ix], 0.0);
-      
-      if (iterations > endPraticeTests) {
-        errorRate += ((reality[ix] - expectation) * (reality[ix] - expectation)) * 1000000.0;
+    /*for (uint64_t jx = 0; jx < thisInput->size(); jx++) {
+      *(thisInput->at(jx)) = (rand() % 256) / 256.0;
+    }*/
+    
+    
+    NNetwork->calculateExpectation();
+    expectation = NNetwork->getExpectation();
+    
+    for (int ix = 0; ix < OUTPUT_SIZE; ix++) {
+      reality[ix] = *(thisInput->at(ix));
+    }
+    
+    NNetwork->doCorrection(reality, 0.01);
+    
+    if (iterations > endPraticeTests) {
+      for (int ix = 0; ix < OUTPUT_SIZE; ix++) {
+        errorRate += ((reality[ix] - expectation->at(ix)) * (reality[ix] - expectation->at(ix))) * 1000000.0;
       }
     }
     iterations++;
   } while (iterations < ITERATIONS);
   
+  for (int ix = 0; ix < OUTPUT_SIZE; ix++) {
+    cout << "{";
+    cout << (uint64_t)(reality[ix] * precision);
+    cout << ":";
+    cout << (uint64_t)(expectation->at(ix) * precision);
+    cout << "},";
+  }
+  
+  
   if (nonPracticeTests) {
-    errorRate /= (double)nonPracticeTests;
+    errorRate /= (double)(nonPracticeTests * OUTPUT_SIZE);
     errorRate = sqrt(errorRate);
     cout << "Error Rate is ";
     cout << errorRate;
     cout << "PPM\n";
   }
   
-  //NNetwork->getMaximumFlow();
+  
+  //NNetwork->g
+  NNetwork->getMaximumFlow();
   
   delete thisInput;
   
@@ -457,8 +474,8 @@ int testNavigation() {
   Graph::Coordinate *v, *u;
   Graph::Path *tmpPath;
   Collection::Stack<Graph::Path *> *shortPath;
-  uint64_t width = 10;
-  uint64_t length = 10;
+  uint64_t width = 100;
+  uint64_t length = 100;
   double distance;
   int neighborHops = 1;
   
@@ -481,6 +498,10 @@ int testNavigation() {
       u = locs[ix+(jx*width)];
       for (int kx = (-neighborHops); kx <= neighborHops; kx ++) {
         for (int lx = (-neighborHops); lx <= neighborHops; lx++) {
+          if ((jx == (length/2)) && (ix < (width*0.8)) && (ix > (width*0.2))) {
+            continue;
+          }
+          
           if ((kx) || (lx)) {
             v = locs[(ix+kx)+((jx+lx)*width)];
             
@@ -561,7 +582,7 @@ int testNavigation() {
   }
   
   
-  navigation->setStart(locs[(neighborHops+1)+((neighborHops+1) * width)]);
+  navigation->setStart(locs[(neighborHops)+((neighborHops) * width)]);
   navigation->setTerminal(locs[length*width-1]);
   
   if ((shortPath = navigation->getShortestPath()) != NULL) {
@@ -578,6 +599,14 @@ int testNavigation() {
       cout << u->Z;
       cout << "},";
     }
+    
+    cout << "{";
+    cout << v->X;
+    cout << ":";
+    cout << v->Y;
+    cout << ":";
+    cout << v->Z;
+    cout << "},";
   }
   
   cout << "Navigation:Done\n";
@@ -590,7 +619,7 @@ int testMetaheuristic() {
   std::vector<double> *input = new std::vector<double>();
   std::vector<Heuristic *> *candidates = new std::vector<Heuristic *>();
   double *reality = new double[OUTPUT_SIZE];
-  double expectation;
+  std::vector<double> *expectation = new std::vector<double>();
   uint64_t iterations = 0;
   uint64_t tmpSize;
   std::vector<double *> *thisInput = new std::vector<double *>();;
@@ -600,10 +629,17 @@ int testMetaheuristic() {
   double errorRate = 0.0;
   uint64_t endPraticeTests = (100 * ITERATIONS / 90);
   uint64_t nonPracticeTests = ITERATIONS - endPraticeTests;
+  std::vector<uint64_t> *layers = new std::vector<uint64_t>();
+  
+  layers->resize(2);
+  
+  layers->at(0) = OUTPUT_SIZE;
+  layers->at(1) = OUTPUT_SIZE;
   
   cout << "\nTesting MetaHeuristic\n";
   
   candidates->resize(16);
+  expectation->resize(OUTPUT_SIZE);
   
   for (int ix = 0; ix < 16; ix ++) {
     tmpSize = (random() % input->size()) + 1;
@@ -612,7 +648,7 @@ int testMetaheuristic() {
       thisInput->at(jx) = &input->at(jx);
     }
     
-    candidates->at(ix) = new NeuralNetwork::NeuralNetwork(thisInput);
+    candidates->at(ix) = new NeuralNetwork::NeuralNetwork(thisInput, layers);
   }
   
   delete thisInput;
@@ -624,7 +660,7 @@ int testMetaheuristic() {
       for (int jx = 0; jx < input->size(); jx++) {
         input->at(jx) = 0.1 * (random()%10);
       }
-      expectation = masterMind->getConsensus();
+      masterMind->getConsensus(expectation);
       reality[ix] = 1.0;
       /*if ((input->atIndex(ix%INPUT_SIZE)) +
        (input->atIndex((ix+1)%INPUT_SIZE)) +
@@ -638,7 +674,7 @@ int testMetaheuristic() {
       masterMind->postResult(reality[ix]);
       
       if (iterations > endPraticeTests) {
-        errorRate += ((reality[ix] - expectation) * (reality[ix] - expectation)) * 1000000.0;
+        errorRate += ((reality[ix] - expectation->at(ix)) * (reality[ix] - expectation->at(ix))) * 1000000.0;
       }
     }
     iterations++;
@@ -679,7 +715,7 @@ int main(int argc, const char * argv[])
   //ret |= testRBTree();
   //ret |= testLLRBTree();
   //ret |= testStack();
-  //ret |= testNeuralNetwork();
+  ret |= testNeuralNetwork();
   //ret |= testMetaheuristic();
   ret |= testNavigation();
   
