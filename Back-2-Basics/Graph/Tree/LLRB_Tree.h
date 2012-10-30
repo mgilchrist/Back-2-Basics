@@ -73,6 +73,8 @@ namespace Graph {
     void remove(KeyType key);
     void removeMax();
     void removeMin();
+    void updateKey(KeyType oldKey, KeyType newKey, uint64_t instance);
+    void update(EntryType n, KeyType newKey, uint64_t instance);
     
   };
   
@@ -92,6 +94,16 @@ namespace Graph {
   bool LLRB_Tree<EntryType,KeyType>::isLeft(LLRB_TreeNode<EntryType,KeyType> *node) {
     
     return (node->parent->getLeaf(LEFT) == node) ? true : false;
+  }
+  
+  template <class EntryType, class KeyType>
+  void LLRB_Tree<EntryType,KeyType>::updateKey(KeyType oldKey, KeyType newKey, uint64_t instance) {
+    // TODO
+  }
+  
+  template <class EntryType, class KeyType>
+  void LLRB_Tree<EntryType,KeyType>::update(EntryType n, KeyType newKey, uint64_t instance) {
+    // TODO
   }
   
   

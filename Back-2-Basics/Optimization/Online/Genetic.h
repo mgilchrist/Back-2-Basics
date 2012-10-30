@@ -24,7 +24,8 @@
 
 #include "Stochastic.h"
 
-class Genetic : public Stoichastic<Genetic> {
+template <class DataType>
+class Genetic : public Stoichastic<DataType> {
   
 private:
   
@@ -32,9 +33,12 @@ private:
   uint64_t reproductionAgeMin;
   uint64_t reproductionAgeMax;
   
+  void add();
+  void rCalcFitness(Graph::LLRB_TreeNode<Heuristic *,DataType> *current, uint64_t instance);
+  void calcFitness();
   void determineSurvival();
   void reproduce();
-  void getNextGeneration();
+  void get();
   
 public:
   Genetic();
@@ -43,19 +47,50 @@ public:
 };
 
 
-void Genetic::determineSurvival() {
+template <class DataType>
+void Genetic<DataType>::rCalcFitness(Graph::LLRB_TreeNode<Heuristic *,DataType> *current, uint64_t instance) {
+  DataType *thisExpectation = current->data->getExpectation();
+  DataType fitness = 0;
+  
+  for (uint64_t ix = 0; ix < this->spaceSize; ix++) {
+    fitness += pow((this->space[ix] - thisExpectation[ix]) / (double)this->space);
+  }
+  
+  fitness /= this->spaceSize;
+  
+  this->candidates->updateKey(current->key, sqrt(fitness), instance);
+  
+  if (current->getLeaf(LEFT) != NULL) {
+    rCalcFitness(current->getLeaf(LEFT), ((current->key == current->getLeaf(LEFT)) ? ++instance : 0));
+  }
+  
+  if (current->getLeaf(RIGHT) != NULL) {
+    rCalcFitness(current->getLeaf(RIGHT), ((current->key == current->getLeaf(RIGHT)) ? ++instance : 0));
+  }
+}
+
+template <class DataType>
+void Genetic<DataType>::calcFitness() {
+  rCalcFitness(this->candidates->treeNode,0);
+}
+
+template <class DataType>
+void Genetic<DataType>::determineSurvival() {
   
 }
 
-void Genetic::reproduce() {
+template <class DataType>
+void Genetic<DataType>::reproduce() {
   
 }
 
-void Genetic::getNextGeneration() {
+template <class DataType>
+void Genetic<DataType>::get() {
   
 }
 
-Genetic::Genetic() {
+template <class DataType>
+Genetic<DataType>::Genetic() {
   
 }
 

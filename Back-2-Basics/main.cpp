@@ -35,24 +35,24 @@ using namespace std;
 #include "Genetic.h"
 #include "Metaheuristic.h"
 
-#define INPUT_SIZE    64
-#define OUTPUT_SIZE   64
-#define ITERATIONS    (1024)
-#define TEST_SIZE     0x10000
+const uint64_t glbInputSize = 0x100;
+const uint64_t glbOutputSize = 0x100;
+const uint64_t glbIterations = 0x1000;
+const uint64_t glbTestSize = 0x80000;
 
 
 int testHashTable() {
   Collection::HashTable<uint64_t,uint64_t> *hashTable;
   std::vector<uint64_t> verify;
-  hashTable = new Collection::HashTable<uint64_t,uint64_t>(TEST_SIZE);
+  hashTable = new Collection::HashTable<uint64_t,uint64_t>(glbTestSize);
   uint64_t *tmpInt = new uint64_t;
   uint64_t value;
   
   cout << "\nTesting HashTable.\n";
   
-  verify.resize(TEST_SIZE);
+  verify.resize(glbTestSize);
   
-  for (int ix = 0; ix < TEST_SIZE; ix++) {
+  for (int ix = 0; ix < glbTestSize; ix++) {
     
     do {
       value = random();
@@ -63,7 +63,7 @@ int testHashTable() {
     verify[ix] = value;
   }
   
-  for (int ix = 0; ix < TEST_SIZE; ix++) {
+  for (int ix = 0; ix < glbTestSize; ix++) {
     
     if (hashTable->get(verify[ix],tmpInt) || (*tmpInt != verify[ix])) {
       hashTable->get(verify[ix], tmpInt);
@@ -78,7 +78,7 @@ int testHashTable() {
     //}
   }
   
-  for (int ix = 0; ix < TEST_SIZE; ix++) {
+  for (int ix = 0; ix < glbTestSize; ix++) {
     
     if (hashTable->remove(verify[ix],tmpInt) || (*tmpInt != verify[ix])) {
       cout << "Index ";
@@ -103,15 +103,15 @@ int testHashTable() {
 int testSecureHashTable() {
   Collection::SecureHashTable<uint64_t,uint64_t> *hashTable;
   std::vector<uint64_t> verify;
-  hashTable = new Collection::SecureHashTable<uint64_t,uint64_t>(TEST_SIZE);
+  hashTable = new Collection::SecureHashTable<uint64_t,uint64_t>(glbTestSize);
   uint64_t *tmpInt = new uint64_t;
   uint64_t value;
   
-  verify.resize(TEST_SIZE);
+  verify.resize(glbTestSize);
   
   cout << "\nTesting SecureHashTable.\n";
   
-  for (uint64_t ix = 0; ix < TEST_SIZE; ix++) {
+  for (uint64_t ix = 0; ix < glbTestSize; ix++) {
     
     do {
       value = random();
@@ -123,7 +123,7 @@ int testSecureHashTable() {
     verify[ix] = value;
   }
   
-  for (uint64_t ix = 0; ix < TEST_SIZE; ix++) {
+  for (uint64_t ix = 0; ix < glbTestSize; ix++) {
     
     if (hashTable->get(verify[ix],tmpInt) || (*tmpInt != verify[ix])) {
       hashTable->get(verify[ix], tmpInt);
@@ -137,7 +137,7 @@ int testSecureHashTable() {
     //}
   }
   
-  for (uint64_t ix = 0; ix < TEST_SIZE; ix++) {
+  for (uint64_t ix = 0; ix < glbTestSize; ix++) {
     
     if (hashTable->remove(verify[ix],tmpInt) || (*tmpInt != verify[ix])) {
       cout << "Index ";
@@ -166,7 +166,7 @@ int testHeap() {
   
   cout << "\nTesting Heap.\n";
   
-  for (int ix = 0; ix < TEST_SIZE; ix++) {
+  for (int ix = 0; ix < glbTestSize; ix++) {
     uint64_t value = random();
     heap->push(value, value);
   }
@@ -175,7 +175,7 @@ int testHeap() {
     cout << "Heap Error!\n";
   }
   
-  for (int ix = 1; ix < TEST_SIZE; ix++) {
+  for (int ix = 1; ix < glbTestSize; ix++) {
     if (heap->peek(0) != (tmp1 = heap->pop())) {
       cout << "Index ";
       cout << ix;
@@ -214,9 +214,9 @@ int testRBTree() {
   cout << "\nTesting RedBlackTree\n";
   
   rbTree = new Graph::RedBlackTree<uint64_t, uint64_t>();
-  arrayList = new Collection::ArrayList<uint64_t,uint64_t>(TEST_SIZE);
+  arrayList = new Collection::ArrayList<uint64_t,uint64_t>(glbTestSize);
   
-  for (uint64_t ix = 0; ix < TEST_SIZE; ix++) {
+  for (uint64_t ix = 0; ix < glbTestSize; ix++) {
     uint64_t value = random();
     rbTree->insert(value, value);
   }
@@ -253,9 +253,9 @@ int testLLRBTree() {
   cout << "\nTesting LLRB_Tree\n";
   
   rbTree = new Graph::LLRB_Tree<u_int64_t, uint64_t>();
-  arrayList = new Collection::ArrayList<uint64_t,uint64_t>(TEST_SIZE);
+  arrayList = new Collection::ArrayList<uint64_t,uint64_t>(glbTestSize);
   
-  for (uint64_t ix = 0; ix < TEST_SIZE; ix++) {
+  for (uint64_t ix = 0; ix < glbTestSize; ix++) {
     uint64_t value = random();
     rbTree->insert(value, value);
   }
@@ -316,7 +316,7 @@ int testArrayList() {
   delete arrayList;
   delete verify;
   
-  arrayList = new Collection::ArrayList<uint64_t,uint64_t>(TEST_SIZE);
+  arrayList = new Collection::ArrayList<uint64_t,uint64_t>(glbTestSize);
   verify = new uint64_t[arrayList->getSize()];
   
   for (int ix = 0; ix < arrayList->getSize(); ix++) {
@@ -336,7 +336,7 @@ int testArrayList() {
   delete arrayList;
   delete verify;
   
-  arrayList = new Collection::ArrayList<uint64_t,uint64_t>(TEST_SIZE);
+  arrayList = new Collection::ArrayList<uint64_t,uint64_t>(glbTestSize);
   
   for (int ix = 0; ix < arrayList->getSize(); ix++) {
     uint64_t value = random();
@@ -381,29 +381,29 @@ int testArrayList() {
 }
 
 int testNeuralNetwork() {
-  std::vector<double> *input = new std::vector<double>(INPUT_SIZE);
+  std::vector<double> *input = new std::vector<double>(glbInputSize);
   NeuralNetwork::NeuralNetwork *NNetwork;
-  double *reality = new double[OUTPUT_SIZE];
+  double *reality = new double[glbOutputSize];
   std::vector<double> *expectation;
   uint64_t iterations = 0;
   std::vector<double *> *thisInput;
   double errorRate = 0.0;
-  uint64_t endPraticeTests = (100 * ITERATIONS / 90);
-  uint64_t nonPracticeTests = ITERATIONS - endPraticeTests;
+  uint64_t endPraticeTests = (100 * glbIterations / 90);
+  uint64_t nonPracticeTests = glbIterations - endPraticeTests;
   std::vector<uint64_t> *layers = new std::vector<uint64_t>();
-  uint64_t precision = (1 << 8);
+  uint64_t precision = (1 << 16);
   
   layers->resize(3);
   
-  layers->at(0) = OUTPUT_SIZE/8;
-  layers->at(1) = OUTPUT_SIZE/8;
-  layers->at(2) = OUTPUT_SIZE;
+  layers->at(0) = glbOutputSize/16;
+  layers->at(1) = glbOutputSize/16;
+  layers->at(2) = glbOutputSize;
   
   cout << "\nTesting NeuralNetwork\n";
   
-  thisInput = new std::vector<double *>(INPUT_SIZE);
+  thisInput = new std::vector<double *>(glbInputSize);
   
-  for (int jx = 0; jx < INPUT_SIZE; jx++) {
+  for (int jx = 0; jx < glbInputSize; jx++) {
     thisInput->at(jx) = &input->at(jx);
   }
   
@@ -422,21 +422,21 @@ int testNeuralNetwork() {
     NNetwork->calculateExpectation();
     expectation = NNetwork->getExpectation();
     
-    for (int ix = 0; ix < OUTPUT_SIZE; ix++) {
+    for (int ix = 0; ix < glbOutputSize; ix++) {
       reality[ix] = *(thisInput->at(ix));
     }
     
     NNetwork->doCorrection(reality, 0.01);
     
     if (iterations > endPraticeTests) {
-      for (int ix = 0; ix < OUTPUT_SIZE; ix++) {
+      for (int ix = 0; ix < glbOutputSize; ix++) {
         errorRate += ((reality[ix] - expectation->at(ix)) * (reality[ix] - expectation->at(ix))) * 1000000.0;
       }
     }
     iterations++;
-  } while (iterations < ITERATIONS);
+  } while (iterations < glbIterations);
   
-  for (int ix = 0; ix < OUTPUT_SIZE; ix++) {
+  for (int ix = 0; ix < glbOutputSize; ix++) {
     cout << "{";
     cout << (uint64_t)(reality[ix] * precision);
     cout << ":";
@@ -446,7 +446,7 @@ int testNeuralNetwork() {
   
   
   if (nonPracticeTests) {
-    errorRate /= (double)(nonPracticeTests * OUTPUT_SIZE);
+    errorRate /= (double)(nonPracticeTests * glbOutputSize);
     errorRate = sqrt(errorRate);
     cout << "Error Rate is ";
     cout << errorRate;
@@ -618,28 +618,29 @@ int testMetaheuristic() {
   
   std::vector<double> *input = new std::vector<double>();
   std::vector<Heuristic *> *candidates = new std::vector<Heuristic *>();
-  double *reality = new double[OUTPUT_SIZE];
+  double *reality = new double[glbOutputSize];
   std::vector<double> *expectation = new std::vector<double>();
   uint64_t iterations = 0;
   uint64_t tmpSize;
   std::vector<double *> *thisInput = new std::vector<double *>();;
   
-  input->resize(INPUT_SIZE);
+  input->resize(glbInputSize);
   
   double errorRate = 0.0;
-  uint64_t endPraticeTests = (100 * ITERATIONS / 90);
-  uint64_t nonPracticeTests = ITERATIONS - endPraticeTests;
+  uint64_t endPraticeTests = (100 * glbIterations / 90);
+  uint64_t nonPracticeTests = glbIterations - endPraticeTests;
   std::vector<uint64_t> *layers = new std::vector<uint64_t>();
   
-  layers->resize(2);
+  layers->resize(3);
   
-  layers->at(0) = OUTPUT_SIZE;
-  layers->at(1) = OUTPUT_SIZE;
+  layers->at(0) = glbOutputSize/8;
+  layers->at(1) = glbOutputSize/8;
+  layers->at(2) = glbOutputSize;
   
   cout << "\nTesting MetaHeuristic\n";
   
   candidates->resize(16);
-  expectation->resize(OUTPUT_SIZE);
+  expectation->resize(glbOutputSize);
   
   for (int ix = 0; ix < 16; ix ++) {
     tmpSize = (random() % input->size()) + 1;
@@ -656,19 +657,19 @@ int testMetaheuristic() {
   Metaheuristic<double> *masterMind = new Metaheuristic<double>(input, candidates);
   
   do {
-    for (int ix = 0; ix < 1 /*OUTPUT_SIZE*/; ix++) {
+    for (int ix = 0; ix < 1 /*glbOutputSize*/; ix++) {
       for (int jx = 0; jx < input->size(); jx++) {
         input->at(jx) = 0.1 * (random()%10);
       }
       masterMind->getConsensus(expectation);
       reality[ix] = 1.0;
-      /*if ((input->atIndex(ix%INPUT_SIZE)) +
-       (input->atIndex((ix+1)%INPUT_SIZE)) +
-       (input->atIndex((ix+2)%INPUT_SIZE)) > 2.5) {
+      /*if ((input->atIndex(ix%glbInputSize)) +
+       (input->atIndex((ix+1)%glbInputSize)) +
+       (input->atIndex((ix+2)%glbInputSize)) > 2.5) {
        reality[ix] = 1.0;
-       } else if ((input->atIndex(ix%INPUT_SIZE)) +
-       (input->atIndex((ix+1)%INPUT_SIZE)) +
-       (input->atIndex((ix+2)%INPUT_SIZE)) < 0.5) {
+       } else if ((input->atIndex(ix%glbInputSize)) +
+       (input->atIndex((ix+1)%glbInputSize)) +
+       (input->atIndex((ix+2)%glbInputSize)) < 0.5) {
        reality[ix] = 0.0;
        }*/
       masterMind->postResult(reality[ix]);
@@ -678,7 +679,7 @@ int testMetaheuristic() {
       }
     }
     iterations++;
-  } while (iterations < ITERATIONS);
+  } while (iterations < glbIterations);
   
   if (nonPracticeTests) {
     errorRate /= (double)nonPracticeTests;
@@ -708,13 +709,13 @@ int main(int argc, const char * argv[])
   cout << "This is free software, and you are welcome to redistribute it\n";
   cout << "under certain conditions; type `show c' for details.\n";
   
-  //ret |= testHashTable();
-  //ret |= testSecureHashTable();
-  //ret |= testArrayList();
-  //ret |= testHeap();
+  ret |= testHashTable();
+  ret |= testSecureHashTable();
+  ret |= testArrayList();
+  ret |= testHeap();
   //ret |= testRBTree();
-  //ret |= testLLRBTree();
-  //ret |= testStack();
+  ret |= testLLRBTree();
+  ret |= testStack();
   ret |= testNeuralNetwork();
   //ret |= testMetaheuristic();
   ret |= testNavigation();

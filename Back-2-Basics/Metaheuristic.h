@@ -37,7 +37,7 @@ template <class DataType>
 class Metaheuristic {
   
 private:
-  Optimization *optFunction;
+  Genetic<double> *optFunction;
   Collection::ArrayList<Heuristic *, double> *theory;
   double *theoryRating;
   double *theoryExpectation;
@@ -125,50 +125,11 @@ Metaheuristic<DataType>::Metaheuristic(std::vector<DataType> *input, std::vector
 
 template <class DataType>
 void Metaheuristic<DataType>::postResult(DataType result) {
-  /*
-  HeuristicType *tmp;
-  
-  uint64_t current = theory->getTreeRoot();
-  
-  if ((tmp = theory->nodeAtIndex(current)) != NULL) {
-    tmp->doCorrection(result, 0.0);
-    rPostResult(current, result);
-  }
-   */
   
   for (int ix = 0; ix < theory->getSize(); ix++) {
     theory->atIndex(ix)->data->doCorrection(&result,0.0);
   }
 }
-
-/*
-template <class DataType>
-DataType Metaheuristic<DataType>::rConsensus(uint64_t current) {
-  
-  Heuristic *tmp;
-  double expectation = 0.0;
-  
-  if ((tmp = theory->nodeAtIndex(theory->getLeft(current))) != NULL) {
-    expectation += (tmp->getExpectation()) +
-    rConsensus(theory->getLeft(current));
-    cout << "current left expectation:";
-    cout << expectation;
-    cout << " \n";
-  }
-  
-  if ((tmp = theory->nodeAtIndex(theory->getRight(current))) != NULL) {
-    expectation += (tmp->getExpectation()) +
-    rConsensus(theory->getRight(current));
-    cout << "current right expectation:";
-    cout << expectation;
-    cout << " \n";
-
-  }
-  
-  return expectation;
-  
-}
- */
 
 template <class DataType>
 void Metaheuristic<DataType>::getConsensus(std::vector<double> *expectation) {

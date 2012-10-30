@@ -22,17 +22,42 @@
 #ifndef OpenSource_Stochastic_h
 #define OpenSource_Stochastic_h
 
+#include "LLRB_Tree.h"
 #include "Optimization.h"
 
-template <class OptimizationType>
-class Stoichastic : public Optimization {
+
+template <class DataType>
+class Stoichastic : public Optimization<DataType> {
   
 private:
   
+  Graph::LLRB_Tree<Heuristic *, DataType> *candidates;
+  
+protected:
+  void rDoEpoch(Graph::LLRB_TreeNode<Heuristic *,DataType>);
+  void doEpoch();
+  
 public:
-  
-  Collection::Stack<uint64_t> *selections(Collection::Stack<double *>,uint64_t *,uint64_t);
-  
+  Stoichastic();
 };
+
+template <class DataType>
+void Stoichastic<DataType>::rDoEpoch(Graph::LLRB_TreeNode<Heuristic *,DataType> current) {
+  
+  current->data->calculateExpectation();
+  
+  if (current->getLeaf(LEFT) != NULL) {
+    rDoEpoch(current->getLeaf(LEFT));
+  }
+  
+  if (current->getLeaf(RIGHT) != NULL) {
+    rDoEpoch(current->getLeaf(RIGHT));
+  }
+}
+
+template <class DataType>
+void Stoichastic<DataType>::doEpoch() {
+  rDoEpoch(candidates->treeNode);
+}
 
 #endif

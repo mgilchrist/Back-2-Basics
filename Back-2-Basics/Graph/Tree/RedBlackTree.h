@@ -18,6 +18,7 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
+// Deprecated. Use LLRB_Tree (Left Leaning Red-Black Tree)
 
 #ifndef Back_2_Basics_RedBlackTree_h
 #define Back_2_Basics_RedBlackTree_h

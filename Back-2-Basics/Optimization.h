@@ -22,19 +22,36 @@
 #ifndef OpenSource_Optimization_h
 #define OpenSource_Optimization_h
 
+#include "LLRB_Tree.h"
+#include "Heuristic.h"
 
+
+template <class DataType>
 class Optimization {
   
 private:
   
+  DataType *space;
+  uint64_t spaceSize;
+  
 public:
   Optimization();
+  Optimization(DataType *, uint64_t);
+  
+  void add(Heuristic *) =0;
+  Heuristic *get() =0;
   
 };
 
+template <class DataType>
+Optimization<DataType>::Optimization() {
+  space = NULL;
+}
 
-Optimization::Optimization() {
-  
+template <class DataType>
+Optimization<DataType>::Optimization(DataType *space, uint64_t spaceSize) {
+  this->space = space;
+  this->spaceSize = spaceSize;
 }
 
 
