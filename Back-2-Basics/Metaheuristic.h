@@ -33,12 +33,12 @@
 #define STD_NUM_CANDIDATES  4
 #define OUTPUT_SIZE 64
 
-template <class DataType>
+template <class HeuristicType, class DataType>
 class Metaheuristic {
   
 private:
-  Genetic<double> *optFunction;
-  Collection::ArrayList<Heuristic *, double> *theory;
+  Genetic<HeuristicType,double> *optFunction;
+  Collection::ArrayList<HeuristicType *, double> *theory;
   double *theoryRating;
   double *theoryExpectation;
   uint64_t numCandidates = STD_NUM_CANDIDATES;
@@ -49,7 +49,7 @@ private:
   
 public:
   Metaheuristic();
-  Metaheuristic(std::vector<DataType> *input, std::vector<Heuristic *> *candidates);
+  Metaheuristic(std::vector<DataType> *input, std::vector<HeuristicType *> *candidates);
   
   virtual void postResult(DataType result);
   virtual void getConsensus(std::vector<double> *);
@@ -95,18 +95,18 @@ void Metaheuristic<DataType>::rPostResult(uint64_t current, DataType result) {
 }
  */
 
-template <class DataType>
-Metaheuristic<DataType>::Metaheuristic() {
+template <class HeuristicType, class DataType>
+Metaheuristic<HeuristicType,DataType>::Metaheuristic() {
   
 }
 
-template <class DataType>
-Metaheuristic<DataType>::Metaheuristic(std::vector<DataType> *input, std::vector<Heuristic *> *candidates) {
-  Heuristic *thisTheory;
-  Collection::Comparable<Heuristic *, double> *comp;
+template <class HeuristicType, class DataType>
+Metaheuristic<HeuristicType,DataType>::Metaheuristic(std::vector<DataType> *input, std::vector<HeuristicType *> *candidates) {
+  HeuristicType *thisTheory;
+  Collection::Comparable<HeuristicType *, double> *comp;
   
-  theory = new Collection::ArrayList<Heuristic *,double>(numCandidates);
-  comp = new Collection::Comparable<Heuristic *, double>();
+  theory = new Collection::ArrayList<HeuristicType *,double>(numCandidates);
+  comp = new Collection::Comparable<HeuristicType *, double>();
   
   epoch = 0;
   
@@ -123,16 +123,16 @@ Metaheuristic<DataType>::Metaheuristic(std::vector<DataType> *input, std::vector
   
 }
 
-template <class DataType>
-void Metaheuristic<DataType>::postResult(DataType result) {
+template <class HeuristicType, class DataType>
+void Metaheuristic<HeuristicType,DataType>::postResult(DataType result) {
   
   for (int ix = 0; ix < theory->getSize(); ix++) {
     theory->atIndex(ix)->data->doCorrection(&result,0.0);
   }
 }
 
-template <class DataType>
-void Metaheuristic<DataType>::getConsensus(std::vector<double> *expectation) {
+template <class HeuristicType, class DataType>
+void Metaheuristic<HeuristicType,DataType>::getConsensus(std::vector<double> *expectation) {
   //HeuristicType *tmp;
   //uint64_t current = theory->getTreeRoot();
   std::vector<double> *tmp;

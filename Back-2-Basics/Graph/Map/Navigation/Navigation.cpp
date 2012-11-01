@@ -98,7 +98,7 @@ namespace Graph {
           }
           
           this->nodeAtIndex(v->getIndex())->auxIndex =
-            open->push(v, cost + costHeuristic->atIndex(v->getIndex())->getExpectation()->at(0));
+            open->push(v, cost + costHeuristic->at(v->getIndex()));
           v->previousEdge = u->getAdjacentEdge(ix);
           
         }

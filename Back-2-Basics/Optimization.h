@@ -26,7 +26,7 @@
 #include "Heuristic.h"
 
 
-template <class DataType>
+template <class HeuristicType, class DataType>
 class Optimization {
   
 private:
@@ -38,18 +38,18 @@ public:
   Optimization();
   Optimization(DataType *, uint64_t);
   
-  void add(Heuristic *) =0;
-  Heuristic *get() =0;
+  void add(HeuristicType *) =0;
+  HeuristicType *get() =0;
   
 };
 
-template <class DataType>
-Optimization<DataType>::Optimization() {
+template <class HeuristicType, class DataType>
+Optimization<HeuristicType,DataType>::Optimization() {
   space = NULL;
 }
 
-template <class DataType>
-Optimization<DataType>::Optimization(DataType *space, uint64_t spaceSize) {
+template <class HeuristicType, class DataType>
+Optimization<HeuristicType,DataType>::Optimization(DataType *space, uint64_t spaceSize) {
   this->space = space;
   this->spaceSize = spaceSize;
 }

@@ -617,7 +617,7 @@ int testNavigation() {
 int testMetaheuristic() {
   
   std::vector<double> *input = new std::vector<double>();
-  std::vector<Heuristic *> *candidates = new std::vector<Heuristic *>();
+  std::vector<NeuralNetwork::NeuralNetwork *> *candidates = new std::vector<NeuralNetwork::NeuralNetwork *>();
   double *reality = new double[glbOutputSize];
   std::vector<double> *expectation = new std::vector<double>();
   uint64_t iterations = 0;
@@ -654,7 +654,7 @@ int testMetaheuristic() {
   
   delete thisInput;
   
-  Metaheuristic<double> *masterMind = new Metaheuristic<double>(input, candidates);
+  Metaheuristic<NeuralNetwork::NeuralNetwork,double> *masterMind = new Metaheuristic<NeuralNetwork::NeuralNetwork,double>(input, candidates);
   
   do {
     for (int ix = 0; ix < 1 /*glbOutputSize*/; ix++) {

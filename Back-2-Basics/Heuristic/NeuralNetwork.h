@@ -83,18 +83,22 @@ namespace NeuralNetwork
     
     double delta;
     double biasDelta;
+    uint64_t outputCount = 0;
     
     Neuron(NeuralNetwork *,Collection::Stack<Neuron *> *);
     Neuron(NeuralNetwork *,double *);
+    double getBias() {return bias;}
+    void changeBias(double bias) {this->bias += bias;}
     double probeActivation(uint64_t iteration);
     double getInputInfluence(uint64_t);
     double getInputMomentum(uint64_t);
     void addInputNeuron(NeuralNetwork *,Neuron *);
     void changeInputInfluence(uint64_t);
+    void colapseInputNeuron(uint64_t);
   };
   
   
-  class NeuralNetwork : public Graph::Network<Neuron,Synapse> , public Heuristic
+  class NeuralNetwork : public Graph::Network<Neuron,Synapse> , public Heuristic<NeuralNetwork>
   {
   private:
     
@@ -109,13 +113,14 @@ namespace NeuralNetwork
   public:
     NeuralNetwork();
     NeuralNetwork(std::vector<double *> *,std::vector<uint64_t> *);
-    NeuralNetwork *clone(double);
+    NeuralNetwork *clone();
     
     void calculateExpectation(void);
     vector<double> *getExpectation(void);
     void doCorrection(double *,double);
-    void prune();
-    void merge(NeuralNetwork *);
+    
+    virtual void simplify();
+    virtual void merge(NeuralNetwork *);
     
   };
   

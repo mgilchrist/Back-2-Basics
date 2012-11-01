@@ -26,23 +26,23 @@
 #include "Optimization.h"
 
 
-template <class DataType>
-class Stoichastic : public Optimization<DataType> {
+template <class HeuristicType, class DataType>
+class Stoichastic : public Optimization<HeuristicType,DataType> {
   
 private:
   
-  Graph::LLRB_Tree<Heuristic *, DataType> *candidates;
+  Graph::LLRB_Tree<HeuristicType *, DataType> *candidates;
   
 protected:
-  void rDoEpoch(Graph::LLRB_TreeNode<Heuristic *,DataType>);
+  void rDoEpoch(Graph::LLRB_TreeNode<HeuristicType *,DataType>);
   void doEpoch();
   
 public:
   Stoichastic();
 };
 
-template <class DataType>
-void Stoichastic<DataType>::rDoEpoch(Graph::LLRB_TreeNode<Heuristic *,DataType> current) {
+template <class HeuristicType, class DataType>
+void Stoichastic<HeuristicType,DataType>::rDoEpoch(Graph::LLRB_TreeNode<HeuristicType *,DataType> current) {
   
   current->data->calculateExpectation();
   
@@ -55,8 +55,8 @@ void Stoichastic<DataType>::rDoEpoch(Graph::LLRB_TreeNode<Heuristic *,DataType> 
   }
 }
 
-template <class DataType>
-void Stoichastic<DataType>::doEpoch() {
+template <class HeuristicType, class DataType>
+void Stoichastic<HeuristicType,DataType>::doEpoch() {
   rDoEpoch(candidates->treeNode);
 }
 

@@ -26,6 +26,7 @@
 #include "Stack.h"
 #include <vector>
 
+template <class HeuristicType>
 class Heuristic {
   
 private:
@@ -43,6 +44,8 @@ public:
   virtual std::vector<double> *getExpectation(void) =0;
   virtual void doCorrection(double *,double) =0;
   
+  virtual void simplify() =0;
+  virtual void merge(HeuristicType *) =0;
 };
 
 

@@ -24,8 +24,8 @@
 
 #include "Stochastic.h"
 
-template <class DataType>
-class Genetic : public Stoichastic<DataType> {
+template <class HeuristicType, class DataType>
+class Genetic : public Stoichastic<HeuristicType,DataType> {
   
 private:
   
@@ -34,9 +34,9 @@ private:
   uint64_t reproductionAgeMax;
   
   void add();
-  void rCalcFitness(Graph::LLRB_TreeNode<Heuristic *,DataType> *current, uint64_t instance);
+  void rCalcFitness(Graph::LLRB_TreeNode<HeuristicType *,DataType> *current, uint64_t instance);
   void calcFitness();
-  void determineSurvival();
+  void calcSurvival();
   void reproduce();
   void get();
   
@@ -47,8 +47,8 @@ public:
 };
 
 
-template <class DataType>
-void Genetic<DataType>::rCalcFitness(Graph::LLRB_TreeNode<Heuristic *,DataType> *current, uint64_t instance) {
+template <class HeuristicType, class DataType>
+void Genetic<HeuristicType,DataType>::rCalcFitness(Graph::LLRB_TreeNode<HeuristicType *,DataType> *current, uint64_t instance) {
   DataType *thisExpectation = current->data->getExpectation();
   DataType fitness = 0;
   
@@ -69,28 +69,28 @@ void Genetic<DataType>::rCalcFitness(Graph::LLRB_TreeNode<Heuristic *,DataType> 
   }
 }
 
-template <class DataType>
-void Genetic<DataType>::calcFitness() {
+template <class HeuristicType, class DataType>
+void Genetic<HeuristicType,DataType>::calcFitness() {
   rCalcFitness(this->candidates->treeNode,0);
 }
 
-template <class DataType>
-void Genetic<DataType>::determineSurvival() {
+template <class HeuristicType, class DataType>
+void Genetic<HeuristicType,DataType>::calcSurvival() {
   
 }
 
-template <class DataType>
-void Genetic<DataType>::reproduce() {
+template <class HeuristicType, class DataType>
+void Genetic<HeuristicType,DataType>::reproduce() {
   
 }
 
-template <class DataType>
-void Genetic<DataType>::get() {
+template <class HeuristicType, class DataType>
+void Genetic<HeuristicType,DataType>::get() {
   
 }
 
-template <class DataType>
-Genetic<DataType>::Genetic() {
+template <class HeuristicType, class DataType>
+Genetic<HeuristicType,DataType>::Genetic() {
   
 }
 

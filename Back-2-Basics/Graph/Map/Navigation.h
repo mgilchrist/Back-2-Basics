@@ -12,6 +12,7 @@
 #include <iostream>
 #include <math.h>
 #include <string>
+#include <vector>
 
 #include "Stack.h"
 #include "HashTable.h"
@@ -103,7 +104,7 @@ namespace Graph {
   protected:
     const char *name;
     Vector *origin;
-    Collection::Array<Heuristic *> *costHeuristic;
+    std::vector<double> *costHeuristic;
     
     void aStar();
     
