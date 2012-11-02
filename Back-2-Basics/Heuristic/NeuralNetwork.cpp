@@ -31,7 +31,7 @@ using namespace std;
 namespace NeuralNetwork
 {
   
-#define RANDOM_INFLUENCE ((random() > random()) ? 1.0 : -1.0)
+#define RANDOM_INFLUENCE ((rand() > rand()) ? 1.0 : -1.0)
 #define MAX_LAYERS    7   // 3 for space 7 for oct math and 10 for m-theory
   
   static const double zeroInfluence = 0.0;
@@ -41,14 +41,20 @@ namespace NeuralNetwork
     this->u = neuron;
     this->v = input;
     this->influence = influence;
-    this->capacity = (influence < 0) ? -influence : influence;
+    //this->capacity = (influence < 0) ? -influence : influence;
     lastCorrection = 0.0;
   }
   
   void Synapse::changeInfluence(double influence) {
     this->influence += influence;
-    this->capacity = (this->influence < 0) ? -this->influence : this->influence;
+    //this->capacity = (this->influence < 0) ? -this->influence : this->influence;
     lastCorrection = influence;
+  }
+  
+  void Synapse::multInfluence(double influence) {
+    this->influence *= influence;
+    //this->capacity = (this->influence < 0) ? -this->influence : this->influence;
+    lastCorrection *= influence;
   }
   
   double Synapse::getInfluence() {
@@ -65,8 +71,9 @@ namespace NeuralNetwork
     this->capacity = 0.0;
     
     Synapse *synapse;
-    this->inputData = NULL;
-    inputInfluence = 0.0;
+    this->inputBias = new double;
+    *(this->inputBias) = 1.0;
+    inputInfluence = RANDOM_INFLUENCE;
     
     for (int ix = 0; ix < input->getSize(); ix++) {
       synapse = new Synapse(this, input->atIndex(ix), RANDOM_INFLUENCE);
@@ -75,9 +82,9 @@ namespace NeuralNetwork
       
     }
     
-    this->bias = 0.0;
     iteration = 0;
     delta = 0.0;
+    inputInfluenceDelta = 0.0;
     
   }
   
@@ -86,12 +93,13 @@ namespace NeuralNetwork
     this->discovered = false;
     this->capacity = 0.0;
     
-    this->inputData = inputData;
+    this->inputBias = inputData;
     inputInfluence = RANDOM_INFLUENCE;
+    inputLastCorrection = 0.0;
     
-    this->bias = 0.0;
     iteration = 0;
     delta = 0.0;
+    inputInfluenceDelta = 0.0;
     
   }
   
@@ -101,11 +109,7 @@ namespace NeuralNetwork
       return memory;
     }
     
-    double tmp = this->bias;
-    
-    if (inputData != NULL) {
-      tmp += *inputData * inputInfluence;
-    }
+    double tmp = *inputBias * inputInfluence;
     
     // Get impulse from relavent connected neurons
     for (int ix = 0; ix < this->getNumEdges(); ix++) {
@@ -118,26 +122,26 @@ namespace NeuralNetwork
     this->iteration = iteration;
     
     this->delta = 0.0;
-    this->biasDelta = 0.0;
+    this->inputInfluenceDelta = 0.0;
     
     return memory;
   }
   
   double Neuron::getInputInfluence(uint64_t index) {
     
-    if (index > this->getNumEdges()) {
+    if (!index) {
       return inputInfluence;
     }
-    return this->getAdjacentEdge(index)->getInfluence();
+    return this->getAdjacentEdge(index-1)->getInfluence();
   }
   
   double Neuron::getInputMomentum(uint64_t index) {
     
-    if (index > this->getNumEdges()) {
-      return *inputData * inertia;
+    if (!index) {
+      return inputLastCorrection * inertia;
     }
     
-    return this->getAdjacentEdge(index)->getMomentum();
+    return this->getAdjacentEdge(index-1)->getMomentum();
   }
   
   void Neuron::addInputNeuron(NeuralNetwork *network, Neuron *input) {
@@ -153,29 +157,36 @@ namespace NeuralNetwork
   void Neuron::changeInputInfluence(uint64_t index) {
     double correction;
     
-    correction = LEARNING_RULE_DEFAULT * this->memory * this->delta;
-    correction += this->getAdjacentEdge(index)->getMomentum();
-    
-    bias += LEARNING_RULE_DEFAULT * this->memory * this->biasDelta;
-    
-    if (index > this->getNumEdges()) {
-      inputLastCorrection = correction;
-      inputInfluence += this->delta;
+    if (!index) {
+      correction = LEARNING_RULE_DEFAULT * this->inputInfluenceDelta;
+      correction += this->inputLastCorrection * this->inertia;
     } else {
-      this->getAdjacentEdge(index)->changeInfluence(correction);
+      correction = LEARNING_RULE_DEFAULT * this->delta;
+      correction += this->getAdjacentEdge(index-1)->getMomentum();
+    }
+    
+    if (!index) {
+      inputLastCorrection = correction;
+      inputInfluence += this->inputInfluenceDelta;
+    } else {
+      this->getAdjacentEdge(index-1)->changeInfluence(correction);
     }
   }
   
   void Neuron::colapseInputNeuron(uint64_t index) {
     
-    double tmp = this->getAdjacentEdge(index)->getInfluence();
-    Neuron *input = this->getAdjacentNode(index);
+    double tmp = this->getAdjacentEdge(index-1)->getInfluence();
+    Neuron *input = this->getAdjacentNode(index-1);
     Synapse *tmpSynapse;
     
     while ((tmpSynapse = input->removeNewestEdge()) != NULL) {
-      tmpSynapse->changeInfluence(tmp);
+      tmpSynapse->multInfluence(tmp);
       this->addAdjacentEdge(tmpSynapse);
-    }    
+    }
+    
+    this->inputLastCorrection += (input->inputLastCorrection * tmp);
+    
+    delete input;
   }
   
   NeuralNetwork::NeuralNetwork(std::vector<double *> *input, std::vector<uint64_t> *layers) {
@@ -290,33 +301,34 @@ namespace NeuralNetwork
       pCurrentNeuron->delta = (expectation->at(jx) *
                                (1.0 - expectation->at(jx)) *
                                (reality[jx] - expectation->at(jx)));
-      pCurrentNeuron->biasDelta = 0; //(pCurrentNeuron->delta * (sensation * pCurrentNeuron->getNumEdges()));
+      
+      pCurrentNeuron->inputInfluenceDelta += ((pCurrentNeuron->getInputInfluence(0) *
+                                              pCurrentNeuron->delta) *
+                                              (pCurrentNeuron->getMemory() *
+                                               (1.0 - pCurrentNeuron->getMemory())));
       
       for (uint64_t ix = 0; ix < pCurrentNeuron->getNumEdges(); ix++) {
-        pCurrentNeuron->getAdjacentNode(ix)->delta += (pCurrentNeuron->getInputInfluence(ix) *
+        pCurrentNeuron->getAdjacentNode(ix)->delta += (pCurrentNeuron->getInputInfluence(ix+1) *
                                                        pCurrentNeuron->delta);
-        pCurrentNeuron->getAdjacentNode(ix)->biasDelta += (pCurrentNeuron->getInputInfluence(ix) *
-                                                           pCurrentNeuron->biasDelta);
       }
     }
     
     for (uint64_t ix = 2; ix < this->layers->getSize(); ix++) {
       currentLayer = this->layers->atIndex(this->layers->getSize()-ix);
       for (uint64_t jx = 0; jx < currentLayer->getSize(); jx++) {
-        nCurrentOutput = pCurrentNeuron->probeActivation(currentIteration);
+        nCurrentOutput = pCurrentNeuron->getMemory();
         pCurrentNeuron = currentLayer->atIndex(jx);
+        
         pCurrentNeuron->delta = (nCurrentOutput *
                                  (1.0 - nCurrentOutput) *
                                  pCurrentNeuron->delta);
-        pCurrentNeuron->biasDelta = (((nCurrentOutput - 0.5) * 2.0) * pCurrentNeuron->biasDelta);
       }
     }
     
     for (uint64_t ix = 1; ix < this->layers->getSize(); ix++) {
       currentLayer = this->layers->atIndex(this->layers->getSize()-ix);
       for (uint64_t jx = 0; jx < currentLayer->getSize(); jx++) {
-        for (uint64_t kx = 0; kx < currentLayer->atIndex(jx)->getNumEdges(); kx++) {
-          
+        for (uint64_t kx = 0; kx <= currentLayer->atIndex(jx)->getNumEdges(); kx++) {
           currentLayer->atIndex(jx)->changeInputInfluence(kx);
         }
       }
@@ -330,39 +342,7 @@ namespace NeuralNetwork
     const double irrelevant = 10e-14;
     
     /* Eliminate synapses that never carry significant charge */
-    
-    for (uint64_t kx = 1; kx < this->layers->getSize(); kx++) {
-      currentLayer = this->layers->atIndex(this->layers->getSize()-kx);
-      
-      for (uint64_t jx = 0; jx < currentLayer->getSize(); jx++) {
-        pCurrentNeuron = currentLayer->atIndex(jx);
-        double cutoff = 10e-14 / pCurrentNeuron->getNumEdges();
-        double inputCharge = 0;
-        
-        /* Get rid of irrelevant synapses */
-        for (uint64_t ix = 0; ix < pCurrentNeuron->getNumEdges(); ix++) {
-          inputCharge += pCurrentNeuron->getAdjacentEdge(ix)->capacity;
-          if (pCurrentNeuron->getAdjacentEdge(ix)->capacity < cutoff) {
-            pCurrentNeuron->getAdjacentEdge(ix)->blocked = true;
-          } else {
-            pCurrentNeuron->getAdjacentEdge(ix)->blocked = false;
-          }
-        }
-        
-        /* Check to make sure the neuron's bias doesn't make all synapses irrelavant */
-        if (irrelevant > ((1.0 + exp(double((-1.0) * (pCurrentNeuron->getBias()+inputCharge)))) -
-                          (1.0 + exp(double((-1.0) * (pCurrentNeuron->getBias()-inputCharge)))))) {
-          for (uint64_t ix = 0; ix < currentLayer->atIndex(jx)->getNumEdges(); ix++) {
-            pCurrentNeuron->getAdjacentEdge(ix)->blocked = true;
-          }
-        }
-        
-        pCurrentNeuron->cleanUp();
-      }
-    }
-    
-    /* Push stub neuron bias forward 
-       Count output synapses */
+    /* Count output synapses */
     
     for (uint64_t kx = 0; kx < this->layers->getSize()-1; kx++) {
       currentLayer = this->layers->atIndex(kx);
@@ -383,14 +363,17 @@ namespace NeuralNetwork
       
       for (uint64_t jx = 0; jx < currentLayer->getSize(); jx++) {
         pCurrentNeuron = currentLayer->atIndex(jx);
+        double cutoff = irrelevant / pCurrentNeuron->getNumEdges();
+        double inputCharge = 0;
         
+        /* Get rid of irrelevant synapses */
         for (uint64_t ix = 0; ix < pCurrentNeuron->getNumEdges(); ix++) {
-          if (!pCurrentNeuron->getAdjacentNode(ix)->getNumEdges()) {
-            pCurrentNeuron->changeBias(pCurrentNeuron->getAdjacentNode(ix)->getBias() * pCurrentNeuron->getAdjacentEdge(ix)->getInfluence());
+          inputCharge += pCurrentNeuron->getAdjacentEdge(ix)->capacity;
+          if (pCurrentNeuron->getAdjacentEdge(ix)->capacity < cutoff) {
             pCurrentNeuron->getAdjacentEdge(ix)->blocked = true;
           } else {
-            pCurrentNeuron->getAdjacentNode(ix)->outputCount++;
             pCurrentNeuron->getAdjacentEdge(ix)->blocked = false;
+            pCurrentNeuron->getAdjacentNode(ix)->outputCount++;
           }
         }
         
@@ -398,31 +381,52 @@ namespace NeuralNetwork
       }
     }
     
-    /* Shorten paths */
+    /* Push stub neuron bias forward */
+    /*
+     for (uint64_t kx = 1; kx < this->layers->getSize(); kx++) {
+     currentLayer = this->layers->atIndex(this->layers->getSize()-kx);
+     
+     for (uint64_t jx = 0; jx < currentLayer->getSize(); jx++) {
+     pCurrentNeuron = currentLayer->atIndex(jx);
+     
+     for (uint64_t ix = 0; ix < pCurrentNeuron->getNumEdges(); ix++) {
+     if (!pCurrentNeuron->getAdjacentNode(ix)->getNumEdges()) {
+     pCurrentNeuron->changeBias(pCurrentNeuron->getAdjacentNode(ix)->getBias() * pCurrentNeuron->getAdjacentEdge(ix)->getInfluence());
+     pCurrentNeuron->getAdjacentEdge(ix)->blocked = true;
+     } else {
+     pCurrentNeuron->getAdjacentEdge(ix)->blocked = false;
+     }
+     }
+     
+     pCurrentNeuron->cleanUp();
+     }
+     }
+     */
+    
+    /* Rid stray Neurons */
     
     for (uint64_t kx = 1; kx < this->layers->getSize(); kx++) {
       currentLayer = this->layers->atIndex(kx);
       
       for (uint64_t jx = 0; jx < currentLayer->getSize(); jx++) {
-        pCurrentNeuron = currentLayer->atIndex(jx);
+        //pCurrentNeuron = currentLayer->atIndex(jx);
         
-        if (!pCurrentNeuron->outputCount) {
+        if (!currentLayer->atIndex(jx)->outputCount) {
           delete pCurrentNeuron;
           continue;
         }
         
-        for (uint64_t ix = 0; ix < pCurrentNeuron->getNumEdges(); ix++) {
-          if (pCurrentNeuron->getAdjacentNode(ix)->outputCount == 1) {
-            pCurrentNeuron->colapseInputNeuron(ix);
-          }
-        }
-        
-        pCurrentNeuron->cleanUp();
+        /*
+         for (uint64_t ix = 0; ix < pCurrentNeuron->getNumEdges(); ix++) {
+         if (pCurrentNeuron->getAdjacentNode(ix)->outputCount == 1) {
+         pCurrentNeuron->colapseInputNeuron(ix);
+         }
+         }
+         
+         pCurrentNeuron->cleanUp();
+         */
       }
     }
-    
-    
-    
     
   }
   

@@ -38,7 +38,7 @@ using namespace std;
 const uint64_t glbInputSize = 0x100;
 const uint64_t glbOutputSize = 0x100;
 const uint64_t glbIterations = 0x1000;
-const uint64_t glbTestSize = 0x80000;
+const uint64_t glbTestSize = 0x10000;
 
 
 int testHashTable() {

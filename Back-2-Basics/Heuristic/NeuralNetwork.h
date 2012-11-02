@@ -59,6 +59,7 @@ namespace NeuralNetwork
     Synapse(Neuron *neuron, Neuron *input, double influence);
     
     void changeInfluence(double influence);
+    void multInfluence(double influence);
     
     double getInfluence();
     double getMomentum();
@@ -68,12 +69,11 @@ namespace NeuralNetwork
     
   protected:
     
-    double *inputData;
+    double *inputBias;
     double inputInfluence = 0.0;
     double inputLastCorrection = 0.0;
     
     double memory = 0.0;
-    double bias;
     uint64_t iteration = 0;
     double inertia = INERTIA_DEFAULT;
     
@@ -82,13 +82,12 @@ namespace NeuralNetwork
   public:
     
     double delta;
-    double biasDelta;
+    double inputInfluenceDelta;
     uint64_t outputCount = 0;
     
     Neuron(NeuralNetwork *,Collection::Stack<Neuron *> *);
     Neuron(NeuralNetwork *,double *);
-    double getBias() {return bias;}
-    void changeBias(double bias) {this->bias += bias;}
+    double getMemory() {return memory;}
     double probeActivation(uint64_t iteration);
     double getInputInfluence(uint64_t);
     double getInputMomentum(uint64_t);
