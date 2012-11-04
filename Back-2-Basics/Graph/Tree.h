@@ -297,6 +297,11 @@ namespace Graph {
                                                        void *object,
                                                        TreeNodeType *current,
                                                        uint64_t instance) {
+    
+    if (current->data == NULL) {
+      return;
+    }
+    
     KeyType newKey;
     
     newKey = action(current, object);

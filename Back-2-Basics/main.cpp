@@ -382,35 +382,44 @@ int testArrayList() {
 }
 
 int testNeuralNetwork() {
-  std::vector<double> *input = new std::vector<double>(glbInputSize);
+  std::vector<double> *input = new std::vector<double>();
   NeuralNetwork::NeuralNetwork *NNetwork;
   double *reality = new double[glbOutputSize];
-  std::vector<double> *expectation;
+  std::vector<double> *expectation = new std::vector<double>();
   uint64_t iterations = 0;
-  std::vector<double *> *thisInput, *thisOutput;
+  std::vector<double *> *thisInput, *thisOutput, *thisExpect;
   double errorRate = 0.0;
   uint64_t endPraticeTests = (100 * glbIterations / 90);
   uint64_t nonPracticeTests = glbIterations - endPraticeTests;
   std::vector<uint64_t> *layers = new std::vector<uint64_t>();
   uint64_t precision = (1 << 16);
   
-  layers->resize(3);
+  layers->resize(2);
+  
+  input->resize(glbInputSize);
+  expectation->resize(glbOutputSize);
   
   layers->at(0) = glbOutputSize/16;
   layers->at(1) = glbOutputSize/16;
-  layers->at(2) = glbOutputSize;
   
   cout << "\nTesting NeuralNetwork\n";
   
   thisInput = new std::vector<double *>(glbInputSize);
   thisOutput = new std::vector<double *>(glbOutputSize);
+  thisExpect = new std::vector<double *>(glbOutputSize);
+
   
   for (int jx = 0; jx < glbInputSize; jx++) {
     thisInput->at(jx) = &input->at(jx);
     thisOutput->at(jx) = &input->at(jx);
+    
   }
   
-  NNetwork = new NeuralNetwork::NeuralNetwork(thisInput, thisOutput, layers);
+  for (uint64_t jx = 0; jx < glbOutputSize; jx++) {
+    thisExpect->at(jx) = &expectation->at(jx);
+  }
+  
+  NNetwork = new NeuralNetwork::NeuralNetwork(thisInput, thisOutput, thisExpect, layers);
   
   for (uint64_t jx = 0; jx < thisInput->size(); jx++) {
     *(thisInput->at(jx)) = (rand() % precision) / (precision * 1.0);
@@ -423,13 +432,12 @@ int testNeuralNetwork() {
     
     
     NNetwork->calcExpectation();
-    expectation = NNetwork->getExpectation();
     
     for (int ix = 0; ix < glbOutputSize; ix++) {
       reality[ix] = *(thisInput->at(ix));
     }
     
-    NNetwork->doCorrection(reality, 0.01);
+    NNetwork->doCorrection();
     
     if (iterations > endPraticeTests) {
       for (int ix = 0; ix < glbOutputSize; ix++) {
@@ -617,45 +625,54 @@ int testNavigation() {
   return 0;
 }
 
+#if 0
+
 int testMetaheuristic() {
   
   std::vector<double> *input = new std::vector<double>();
+  std::vector<double> expectation[16];
   std::vector<NeuralNetwork::NeuralNetwork *> *candidates = new std::vector<NeuralNetwork::NeuralNetwork *>();
   double *reality = new double[glbOutputSize];
-  std::vector<double> *expectation = new std::vector<double>();
   uint64_t iterations = 0;
   uint64_t tmpSize;
   std::vector<double *> *thisInput = new std::vector<double *>();
   std::vector<double *> *thisOutput = new std::vector<double *>();
+  std::vector<double *> thisExpect[16];
   
   input->resize(glbInputSize);
+  
+  for (uint64_t ix = 0; ix < 16; ix++) {
+    expectation[ix].resize(glbOutputSize);
+  }
   
   double errorRate = 0.0;
   uint64_t endPraticeTests = (100 * glbIterations / 90);
   uint64_t nonPracticeTests = glbIterations - endPraticeTests;
   std::vector<uint64_t> *layers = new std::vector<uint64_t>();
   
-  layers->resize(3);
+  layers->resize(2);
   
   layers->at(0) = glbOutputSize/8;
   layers->at(1) = glbOutputSize/8;
-  layers->at(2) = glbOutputSize;
   
   cout << "\nTesting MetaHeuristic\n";
   
   candidates->resize(16);
-  expectation->resize(glbOutputSize);
   
   for (int ix = 0; ix < 16; ix ++) {
     tmpSize = (random() % input->size()) + 1;
     thisInput->resize(tmpSize);
     thisOutput->resize(tmpSize);
-    for (int jx = 0; jx < tmpSize; jx++) {
+    for (uint64_t jx = 0; jx < tmpSize; jx++) {
       thisInput->at(jx) = &input->at(jx);
       thisOutput->at(jx) = &input->at(jx);
     }
     
-    candidates->at(ix) = new NeuralNetwork::NeuralNetwork(thisInput, thisOutput, layers);
+    for (uint64_t jx = 0; jx < tmpSize; jx++) {
+      thisExpect[ix].at(jx) = &(expectation[ix].at(jx));
+    }
+    
+    candidates->at(ix) = new NeuralNetwork::NeuralNetwork(thisInput, thisOutput, &thisExpect[ix], layers);
   }
   
   delete thisInput;
@@ -702,6 +719,8 @@ int testMetaheuristic() {
   
   return 0;
 }
+
+#endif
 
 
 int main(int argc, const char * argv[])

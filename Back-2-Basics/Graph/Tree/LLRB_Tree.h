@@ -31,8 +31,8 @@ namespace Graph {
   template <class DataType, class KeyType>
   class LLRB_TreeNode : public TreeNode<LLRB_TreeNode<DataType,KeyType>,DataType,KeyType>
   {
-    const bool BLACK = false;
-    const bool RED = true;
+    static const bool BLACK = false;
+    static const bool RED = true;
     
   public:
     

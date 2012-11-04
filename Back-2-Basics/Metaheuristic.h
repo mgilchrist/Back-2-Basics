@@ -18,6 +18,8 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
+//  Deprecated
+//
 
 #ifndef __HelloWorld__Metaheuristic__
 #define __HelloWorld__Metaheuristic__
@@ -32,6 +34,8 @@
 
 #define STD_NUM_CANDIDATES  4
 #define OUTPUT_SIZE 64
+
+#if 0
 
 template <class HeuristicType, class DataType>
 class Metaheuristic {
@@ -127,7 +131,7 @@ template <class HeuristicType, class DataType>
 void Metaheuristic<HeuristicType,DataType>::postResult(DataType result) {
   
   for (int ix = 0; ix < theory->getSize(); ix++) {
-    theory->atIndex(ix)->data->doCorrection(&result,0.0);
+    theory->atIndex(ix)->data->doCorrection();
   }
 }
 
@@ -142,7 +146,6 @@ void Metaheuristic<HeuristicType,DataType>::getConsensus(std::vector<double> *ex
       continue;
     }
     theory->atIndex(ix)->data->calcExpectation();
-    tmp = theory->atIndex(ix)->data->getExpectation();
     
     for (uint64_t jx = 0; jx < OUTPUT_SIZE; jx++) {
       expectation->at(jx) += tmp->at(jx);
@@ -156,5 +159,5 @@ void Metaheuristic<HeuristicType,DataType>::getConsensus(std::vector<double> *ex
 
 }
 
-
+#endif
 #endif /* defined(__HelloWorld__Metaheuristic__) */

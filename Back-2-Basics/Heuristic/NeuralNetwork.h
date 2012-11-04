@@ -1,4 +1,4 @@
-//  
+//
 //  NeuralNetwork.h
 //  Back-2-Basics
 //
@@ -75,7 +75,7 @@ namespace NeuralNetwork
     double inputInfluence = 0.0;
     double inputLastCorrection = 0.0;
     
-    double memory = 0.0;
+    double *memory;
     uint64_t iteration = 0;
     const double inertia = INERTIA_DEFAULT;
     
@@ -89,8 +89,9 @@ namespace NeuralNetwork
     double *inputBias;
     
     Neuron(NeuralNetwork *,Collection::Stack<Neuron *> *);
+    Neuron(NeuralNetwork *,Collection::Stack<Neuron *> *,double *);
     Neuron(NeuralNetwork *,double *);
-    double getMemory() {return memory;}
+    double getMemory() {return *memory;}
     double probeActivation(uint64_t iteration);
     double getInputInfluence(uint64_t);
     double getInputMomentum(uint64_t);
@@ -110,27 +111,52 @@ namespace NeuralNetwork
     bool layersDetermined = false;
     double glbBias = 0.5;
     double learningRule = LEARNING_RULE_DEFAULT;
-    vector<double> *expectation;
+    //vector<double *> *inputData, *expectationData, *outputData;
     
     LLRB_Tree<pair<Neuron *, double *> *, uint64_t> output;
     
-    static uint64_t calcEachExpectation(LLRB_TreeNode<std::pair<Neuron *, double *> *, uint64_t> *current, void *iteration) {
+    static uint64_t getExpectationEach(LLRB_TreeNode<std::pair<Neuron *, double *> *, uint64_t> *current, void *expectation) {
+      
+      return current->key;
+    }
+    
+    static uint64_t calcExpectationEach(LLRB_TreeNode<std::pair<Neuron *, double *> *, uint64_t> *current, void *iteration) {
       current->data->first->probeActivation((uint64_t)iteration);
       return current->key;
     }
     
-    // LLRB_Tree<std::pair<double *, double *>, uint64_t> *expectionVsActual;
+    static uint64_t doCorrectionEach(LLRB_TreeNode<pair<Neuron *, double *> *, uint64_t> *current, void *reserved) {
+      Neuron *pCurrentNeuron = current->data->first;
+      double reality = *(current->data->second);
+      double expectation = pCurrentNeuron->getMemory();
+      
+      pCurrentNeuron->delta = (expectation *
+                               (1.0 - expectation) *
+                               (reality - expectation));
+      
+      pCurrentNeuron->inputInfluenceDelta += ((pCurrentNeuron->getInputInfluence(0) *
+                                               pCurrentNeuron->delta) *
+                                              (pCurrentNeuron->getMemory() *
+                                               (1.0 - pCurrentNeuron->getMemory())));
+      
+      for (uint64_t ix = 0; ix < pCurrentNeuron->getNumEdges(); ix++) {
+        pCurrentNeuron->getAdjacentNode(ix)->delta += (pCurrentNeuron->getInputInfluence(ix+1) *
+                                                       pCurrentNeuron->delta);
+      }
+      
+      return current->key;
+    }
     
   public:
     NeuralNetwork();
     NeuralNetwork(std::vector<double *> *input,
-                                 std::vector<double *> *output,
-                                 std::vector<uint64_t> *layers);
+                  std::vector<double *> *output,
+                  std::vector<double *> *expectation,
+                  std::vector<uint64_t> *layers);
     NeuralNetwork *clone();
     
     void calcExpectation(void);
-    vector<double> *getExpectation(void);
-    void doCorrection(double *,double);
+    void doCorrection();
     
     static uint64_t addEach(LLRB_TreeNode<Neuron *, uint64_t> *current, void *network) {
       

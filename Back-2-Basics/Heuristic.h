@@ -36,13 +36,12 @@ public:
     
   }
   
-  Heuristic(Collection::Array<double> *) {
+  Heuristic(std::vector<double *> *, std::vector<double *> *) {
     
   }
   
   virtual void calcExpectation(void) =0;
-  virtual std::vector<double> *getExpectation(void) =0;
-  virtual void doCorrection(double *,double) =0;
+  virtual void doCorrection() =0;
   
   virtual void simplify() =0;
   virtual void merge(HeuristicType *) =0;
