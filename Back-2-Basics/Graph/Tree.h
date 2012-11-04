@@ -25,10 +25,10 @@
 #include "Graph.h"
 
 
-#define LEFT  0
-#define RIGHT 1
-
 namespace Graph {
+  
+  static const bool LEFT = false;
+  static const bool RIGHT = true;
   
   template <class TreeNodeType, class DataType, class KeyType>
   class TreeNode
@@ -86,6 +86,7 @@ namespace Graph {
     TreeNodeType *getNodeMinGreaterThan(KeyType key, TreeNodeType *current);
     
     TreeNodeType *rLeftSuccesor(TreeNodeType *tNode);
+    void rModifyAll(KeyType (*action)(TreeNodeType *, void *), void *, TreeNodeType *, uint64_t);
     
   public:
     Tree();
@@ -97,6 +98,9 @@ namespace Graph {
     virtual DataType search(KeyType key);
     TreeNodeType *nextNode(TreeNodeType *tNode);
     TreeNodeType *firstNode(TreeNodeType *tNode);
+    virtual void updateKey(KeyType, KeyType, uint64_t) =0;
+    
+    void modifyAll(KeyType (*action)(TreeNodeType *, void *), void *);
     
   };
   
@@ -286,6 +290,31 @@ namespace Graph {
   TreeNodeType *Tree<TreeNodeType,DataType,KeyType>::firstNode(TreeNodeType *tNode) {
     
     return rLeftSuccesor(tNode);
+  }
+  
+  template <class TreeNodeType, class DataType, class KeyType>
+  void Tree<TreeNodeType,DataType,KeyType>::rModifyAll(KeyType (*action)(TreeNodeType *, void *),
+                                                       void *object,
+                                                       TreeNodeType *current,
+                                                       uint64_t instance) {
+    KeyType newKey;
+    
+    newKey = action(current, object);
+    
+    this->updateKey(current->key, newKey, instance);
+    
+    if (current->getLeaf(LEFT) != NULL) {
+      rModifyAll(action, object, current->getLeaf(LEFT), ((current->key == current->getLeaf(LEFT)->key) ? ++instance : 0));
+    }
+    
+    if (current->getLeaf(RIGHT) != NULL) {
+      rModifyAll(action, object, current->getLeaf(RIGHT), ((current->key == current->getLeaf(RIGHT)->key) ? ++instance : 0));
+    }
+  }
+  
+  template <class TreeNodeType, class DataType, class KeyType>
+  void Tree<TreeNodeType,DataType,KeyType>::modifyAll(KeyType (*action)(TreeNodeType *, void *), void *object) {
+    rModifyAll(action,object,treeRoot,0);
   }
   
   

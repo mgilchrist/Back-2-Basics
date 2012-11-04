@@ -141,7 +141,7 @@ void Metaheuristic<HeuristicType,DataType>::getConsensus(std::vector<double> *ex
     if (theory->atIndex(ix)->data == NULL) {
       continue;
     }
-    theory->atIndex(ix)->data->calculateExpectation();
+    theory->atIndex(ix)->data->calcExpectation();
     tmp = theory->atIndex(ix)->data->getExpectation();
     
     for (uint64_t jx = 0; jx < OUTPUT_SIZE; jx++) {

@@ -23,6 +23,7 @@
 #define OpenSource_Stochastic_h
 
 #include "LLRB_Tree.h"
+using namespace Graph;
 #include "Optimization.h"
 
 
@@ -31,10 +32,10 @@ class Stoichastic : public Optimization<HeuristicType,DataType> {
   
 private:
   
-  Graph::LLRB_Tree<HeuristicType *, DataType> *candidates;
+  LLRB_Tree<HeuristicType *, DataType> *candidates;
   
 protected:
-  void rDoEpoch(Graph::LLRB_TreeNode<HeuristicType *,DataType>);
+  void doEpochEach(LLRB_TreeNode<HeuristicType *,DataType>, void *);
   void doEpoch();
   
 public:
@@ -42,22 +43,14 @@ public:
 };
 
 template <class HeuristicType, class DataType>
-void Stoichastic<HeuristicType,DataType>::rDoEpoch(Graph::LLRB_TreeNode<HeuristicType *,DataType> current) {
+void Stoichastic<HeuristicType,DataType>::doEpochEach(LLRB_TreeNode<HeuristicType *,DataType> current, void *reserved) {
   
   current->data->calculateExpectation();
-  
-  if (current->getLeaf(LEFT) != NULL) {
-    rDoEpoch(current->getLeaf(LEFT));
-  }
-  
-  if (current->getLeaf(RIGHT) != NULL) {
-    rDoEpoch(current->getLeaf(RIGHT));
-  }
 }
 
 template <class HeuristicType, class DataType>
 void Stoichastic<HeuristicType,DataType>::doEpoch() {
-  rDoEpoch(candidates->treeNode);
+  candidates->modifyAll(doEpochEach);
 }
 
 #endif

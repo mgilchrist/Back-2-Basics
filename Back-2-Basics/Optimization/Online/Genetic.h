@@ -34,8 +34,8 @@ private:
   uint64_t reproductionAgeMax;
   
   void add();
-  void rCalcFitness(Graph::LLRB_TreeNode<HeuristicType *,DataType> *current, uint64_t instance);
   void calcFitness();
+  double calcFitnessEach(LLRB_TreeNode<HeuristicType *,DataType> *current, void *);
   void calcSurvival();
   void reproduce();
   void get();
@@ -46,11 +46,10 @@ public:
   
 };
 
-
 template <class HeuristicType, class DataType>
-void Genetic<HeuristicType,DataType>::rCalcFitness(Graph::LLRB_TreeNode<HeuristicType *,DataType> *current, uint64_t instance) {
-  DataType *thisExpectation = current->data->getExpectation();
-  DataType fitness = 0;
+double Genetic<HeuristicType,DataType>::calcFitnessEach(LLRB_TreeNode<HeuristicType *,DataType> *current, void *reserved) {
+  double *thisExpectation = current->data->getExpectation();
+  double fitness = 0;
   
   for (uint64_t ix = 0; ix < this->spaceSize; ix++) {
     fitness += pow((this->space[ix] - thisExpectation[ix]) / (double)this->space);
@@ -58,20 +57,12 @@ void Genetic<HeuristicType,DataType>::rCalcFitness(Graph::LLRB_TreeNode<Heuristi
   
   fitness /= this->spaceSize;
   
-  this->candidates->updateKey(current->key, sqrt(fitness), instance);
-  
-  if (current->getLeaf(LEFT) != NULL) {
-    rCalcFitness(current->getLeaf(LEFT), ((current->key == current->getLeaf(LEFT)) ? ++instance : 0));
-  }
-  
-  if (current->getLeaf(RIGHT) != NULL) {
-    rCalcFitness(current->getLeaf(RIGHT), ((current->key == current->getLeaf(RIGHT)) ? ++instance : 0));
-  }
+  return sqrt(fitness);
 }
 
 template <class HeuristicType, class DataType>
 void Genetic<HeuristicType,DataType>::calcFitness() {
-  rCalcFitness(this->candidates->treeNode,0);
+  this->candidates->modifyAll(calcFitnessEach, 0);
 }
 
 template <class HeuristicType, class DataType>

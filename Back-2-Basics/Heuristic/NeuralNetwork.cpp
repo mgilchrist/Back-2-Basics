@@ -23,8 +23,9 @@
 #include <iostream>
 using namespace std;
 
-
 #include "NeuralNetwork.h"
+#include "LLRB_Tree.h"
+using namespace Graph;
 
 //#define NEURALNETWORK_DEBUG
 
@@ -35,7 +36,6 @@ namespace NeuralNetwork
 #define MAX_LAYERS    7   // 3 for space 7 for oct math and 10 for m-theory
   
   static const double zeroInfluence = 0.0;
-  
   
   Synapse::Synapse(Neuron *neuron, Neuron *input, double influence) {
     this->u = neuron;
@@ -189,7 +189,9 @@ namespace NeuralNetwork
     delete input;
   }
   
-  NeuralNetwork::NeuralNetwork(std::vector<double *> *input, std::vector<uint64_t> *layers) {
+  NeuralNetwork::NeuralNetwork(std::vector<double *> *input,
+                               std::vector<double *> *output,
+                               std::vector<uint64_t> *layers) {
     
     Collection::Stack<Neuron *> *currentStack, *previousStack;
     Neuron *currentNeuron;
@@ -209,7 +211,7 @@ namespace NeuralNetwork
     for (int jx = 0; jx < input->size(); jx++) {
       //cout << "Creating Input Neuron\n";
       currentNeuron = new Neuron(this, input->at(jx));
-      inputs.push(currentNeuron);
+      inputs.insert(currentNeuron, (uint64_t)input->at(jx));
       this->add(currentNeuron);
       currentStack->push(currentNeuron);
       //cout << "  Inputs: ";
@@ -259,23 +261,21 @@ namespace NeuralNetwork
 #endif
     
     this->layers->push(currentStack);
-    expectation = new std::vector<double>();
-    expectation->resize(layers->at(layers->size()-1));
+    
+    for (int ix = 0; ix < output->size(); ix++) {
+      currentNeuron = new Neuron(this, previousStack);
+      std::pair<Neuron *, double *> *tmp = new std::pair<Neuron *, double *>(currentNeuron, output->at(ix));
+      this->output.insert(tmp, (uint64_t)output->at(ix));
+    }
     
     currentIteration = 0;
   }
   
-  void NeuralNetwork::calculateExpectation() {
+  void NeuralNetwork::calcExpectation() {
     
     currentIteration++;
     
-    Collection::Stack<Neuron *> *outputLayer = this->layers->atIndex(this->layers->getSize()-1);
-    
-    /* Get response */
-    for (uint64_t ix = 0; ix < expectation->size(); ix++) {
-      expectation->at(ix) = outputLayer->atIndex(ix)->probeActivation(currentIteration);
-      
-    }
+    this->output.modifyAll(calcEachExpectation, (void *)currentIteration);
   }
   
   std::vector<double> *NeuralNetwork::getExpectation() {
@@ -303,7 +303,7 @@ namespace NeuralNetwork
                                (reality[jx] - expectation->at(jx)));
       
       pCurrentNeuron->inputInfluenceDelta += ((pCurrentNeuron->getInputInfluence(0) *
-                                              pCurrentNeuron->delta) *
+                                               pCurrentNeuron->delta) *
                                               (pCurrentNeuron->getMemory() *
                                                (1.0 - pCurrentNeuron->getMemory())));
       
@@ -430,8 +430,54 @@ namespace NeuralNetwork
     
   }
   
+  
   void NeuralNetwork::merge(NeuralNetwork *network) {
     
+    Collection::Stack<Neuron *> *currentStack, *previousStack, *mergeeLayer;
+    LLRB_Tree<Neuron *, uint64_t> *outputTree = new LLRB_Tree<Neuron *, uint64_t>();
+    
+    Neuron *tmpInput;
+    uint64_t outputSize;
+    
+    network->inputs.modifyAll(addEach, this);
+    
+    currentStack = this->layers->atIndex(network->layers->getSize()-1);
+    
+    while ((tmpInput = currentStack->pop()) != NULL) {
+      outputTree->insert(tmpInput, (uint64_t)tmpInput->inputBias);
+    }
+    
+    currentStack = network->layers->atIndex(network->layers->getSize()-1);
+    
+    while ((tmpInput = currentStack->pop()) != NULL) {
+      outputTree->insert(tmpInput, (uint64_t)tmpInput->inputBias);
+    }
+    
+    previousStack = this->layers->atIndex(this->layers->getSize()-1);
+    outputSize = previousStack->getSize();
+    
+    /* add new network outputs to this one */
+    
+    mergeeLayer = network->layers->pop();
+    
+    while ((tmpInput = mergeeLayer->pop()) != NULL) {
+      previousStack->push(tmpInput);
+    }
+    
+    /*currentStack = new Collection::Stack<Neuron *>(this->layers->at(this->layers->size()-1));
+     
+     for (uint64_t jx = 0; jx < layers->at(layers->size()-1); jx++) {
+     currentNeuron = new Neuron(this, previousStack);
+     start = currentNeuron;  // Output Neuron
+     this->add(currentNeuron);
+     currentStack->push(currentNeuron);
+     }*/
+    
+    /*
+     this->layers->push(currentStack);
+     expectation = new std::vector<double>();
+     expectation->resize(layers->at(layers->size()-1));
+     */
     
   }
   

@@ -203,17 +203,17 @@ int testStack() {
   return 0;
 }
 
-
+#if 0
 int testRBTree() {
-  Graph::RedBlackTree<u_int64_t,uint64_t> *rbTree;
+  RedBlackTree<u_int64_t,uint64_t> *rbTree;
   Collection::ArrayList<uint64_t,uint64_t> *arrayList;
-  Graph::RedBlackTreeNode<uint64_t,uint64_t> *current;
+  RedBlackTreeNode<uint64_t,uint64_t> *current;
   uint64_t tmp;
   uint64_t index = 0;
   
   cout << "\nTesting RedBlackTree\n";
   
-  rbTree = new Graph::RedBlackTree<uint64_t, uint64_t>();
+  rbTree = new RedBlackTree<uint64_t, uint64_t>();
   arrayList = new Collection::ArrayList<uint64_t,uint64_t>(glbTestSize);
   
   for (uint64_t ix = 0; ix < glbTestSize; ix++) {
@@ -242,17 +242,18 @@ int testRBTree() {
   
   return 0;
 }
+#endif
 
 int testLLRBTree() {
-  Graph::LLRB_Tree<uint64_t,uint64_t> *rbTree;
+  LLRB_Tree<uint64_t,uint64_t> *rbTree;
   Collection::ArrayList<uint64_t,uint64_t> *arrayList;
-  Graph::LLRB_TreeNode<uint64_t,uint64_t> *current;
+  LLRB_TreeNode<uint64_t,uint64_t> *current;
   uint64_t tmp;
   uint64_t index = 0;
   
   cout << "\nTesting LLRB_Tree\n";
   
-  rbTree = new Graph::LLRB_Tree<u_int64_t, uint64_t>();
+  rbTree = new LLRB_Tree<u_int64_t, uint64_t>();
   arrayList = new Collection::ArrayList<uint64_t,uint64_t>(glbTestSize);
   
   for (uint64_t ix = 0; ix < glbTestSize; ix++) {
@@ -386,7 +387,7 @@ int testNeuralNetwork() {
   double *reality = new double[glbOutputSize];
   std::vector<double> *expectation;
   uint64_t iterations = 0;
-  std::vector<double *> *thisInput;
+  std::vector<double *> *thisInput, *thisOutput;
   double errorRate = 0.0;
   uint64_t endPraticeTests = (100 * glbIterations / 90);
   uint64_t nonPracticeTests = glbIterations - endPraticeTests;
@@ -402,12 +403,14 @@ int testNeuralNetwork() {
   cout << "\nTesting NeuralNetwork\n";
   
   thisInput = new std::vector<double *>(glbInputSize);
+  thisOutput = new std::vector<double *>(glbOutputSize);
   
   for (int jx = 0; jx < glbInputSize; jx++) {
     thisInput->at(jx) = &input->at(jx);
+    thisOutput->at(jx) = &input->at(jx);
   }
   
-  NNetwork = new NeuralNetwork::NeuralNetwork(thisInput, layers);
+  NNetwork = new NeuralNetwork::NeuralNetwork(thisInput, thisOutput, layers);
   
   for (uint64_t jx = 0; jx < thisInput->size(); jx++) {
     *(thisInput->at(jx)) = (rand() % precision) / (precision * 1.0);
@@ -419,7 +422,7 @@ int testNeuralNetwork() {
     }*/
     
     
-    NNetwork->calculateExpectation();
+    NNetwork->calcExpectation();
     expectation = NNetwork->getExpectation();
     
     for (int ix = 0; ix < glbOutputSize; ix++) {
@@ -469,11 +472,11 @@ double calcDistance(double X, double Y, double Z, double tX, double tY, double t
 }
 
 int testNavigation() {
-  Graph::Navigation *navigation;
-  vector<Graph::Coordinate *> locs;
-  Graph::Coordinate *v, *u;
-  Graph::Path *tmpPath;
-  Collection::Stack<Graph::Path *> *shortPath;
+  Navigation *navigation;
+  vector<Coordinate *> locs;
+  Coordinate *v, *u;
+  Path *tmpPath;
+  Collection::Stack<Path *> *shortPath;
   uint64_t width = 100;
   uint64_t length = 100;
   double distance;
@@ -481,12 +484,12 @@ int testNavigation() {
   
   cout << "\nTesting Navigation\n";
   
-  navigation = new Graph::Navigation();
+  navigation = new Navigation();
   locs.resize(width*length);
   
   for (uint64_t ix = 0; ix < width; ix++) {
     for (uint64_t jx = 0; jx < length; jx++) {
-      Graph::Coordinate *thisCoordinate = new Graph::Coordinate(ix,jx,0);
+      Coordinate *thisCoordinate = new Coordinate(ix,jx,0);
       navigation->add(thisCoordinate);
       
       locs[ix+(jx*length)] = thisCoordinate;
@@ -622,7 +625,8 @@ int testMetaheuristic() {
   std::vector<double> *expectation = new std::vector<double>();
   uint64_t iterations = 0;
   uint64_t tmpSize;
-  std::vector<double *> *thisInput = new std::vector<double *>();;
+  std::vector<double *> *thisInput = new std::vector<double *>();
+  std::vector<double *> *thisOutput = new std::vector<double *>();
   
   input->resize(glbInputSize);
   
@@ -645,11 +649,13 @@ int testMetaheuristic() {
   for (int ix = 0; ix < 16; ix ++) {
     tmpSize = (random() % input->size()) + 1;
     thisInput->resize(tmpSize);
+    thisOutput->resize(tmpSize);
     for (int jx = 0; jx < tmpSize; jx++) {
       thisInput->at(jx) = &input->at(jx);
+      thisOutput->at(jx) = &input->at(jx);
     }
     
-    candidates->at(ix) = new NeuralNetwork::NeuralNetwork(thisInput, layers);
+    candidates->at(ix) = new NeuralNetwork::NeuralNetwork(thisInput, thisOutput, layers);
   }
   
   delete thisInput;

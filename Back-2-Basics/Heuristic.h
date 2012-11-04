@@ -40,7 +40,7 @@ public:
     
   }
   
-  virtual void calculateExpectation(void) =0;
+  virtual void calcExpectation(void) =0;
   virtual std::vector<double> *getExpectation(void) =0;
   virtual void doCorrection(double *,double) =0;
   
