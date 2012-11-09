@@ -27,47 +27,18 @@
 
 namespace Graph {
   
-  static const bool LEFT = false;
-  static const bool RIGHT = true;
-  
   template <class TreeNodeType, class DataType, class KeyType>
   class TreeNode
   {
-  private:
-    TreeNodeType **leafs;
+  public:
+    TreeNodeType *left = NULL;
+    TreeNodeType *right = NULL;
     
   public:
-    DataType data;
+    DataType data = NULL;
     KeyType key;
     
     TreeNode() {
-      leafs = new TreeNodeType*[2];
-      data = NULL;
-      
-      for (int ix = 0; ix < 2; ix++) {
-        leafs[ix] = NULL;
-      }
-    }
-    
-    TreeNode(uint8_t numLeafs) {
-      leafs = new TreeNodeType*[numLeafs];
-      data = NULL;
-      
-      for (int ix = 0; ix < numLeafs; ix++) {
-        leafs[ix] = NULL;
-      }
-    }
-    
-    ~TreeNode() {
-      delete leafs;
-    }
-    
-    TreeNodeType *getLeaf(uint8_t index) {
-      return leafs[index];
-    }
-    
-    void setLeaf(uint8_t index, TreeNodeType *tNode) {
-      leafs[index] = tNode;
     }
   };
   
@@ -79,28 +50,26 @@ namespace Graph {
     
   protected:
     TreeNodeType *treeRoot;
+    uint64_t numNodes = 0;
     
-    virtual TreeNodeType *findOpening(KeyType key, TreeNodeType *current);
-    TreeNodeType *insert_r(DataType data, KeyType key);
-    //TreeNodeType *remove_r(KeyType key);
-    TreeNodeType *getNodeMinGreaterThan(KeyType key, TreeNodeType *current);
+    TreeNodeType *findOpening(KeyType, TreeNodeType *);
+    TreeNodeType *getNodeMinGreaterThan(KeyType, TreeNodeType *);
     
-    TreeNodeType *rLeftSuccesor(TreeNodeType *tNode);
-    void rModifyAll(KeyType (*action)(TreeNodeType *, void *), void *, TreeNodeType *, uint64_t);
+    static void rModifyAll(KeyType (*action)(TreeNodeType *, void *), void *, TreeNodeType *, uint64_t);
     
   public:
     Tree();
     
+    TreeNodeType nullNode;
+    
     TreeNodeType *getNode(KeyType key, TreeNodeType *current);
     TreeNodeType *getTreeRoot();
-    virtual void insert(DataType data, KeyType key);
-    //virtual void remove(KeyType key);
-    virtual DataType search(KeyType key);
-    TreeNodeType *nextNode(TreeNodeType *tNode);
-    TreeNodeType *firstNode(TreeNodeType *tNode);
-    virtual void updateKey(KeyType, KeyType, uint64_t) =0;
+    DataType search(TreeNodeType *root, KeyType key);
+    TreeNodeType *next(TreeNodeType *tNode);
+    TreeNodeType *min(TreeNodeType *);
     
     void modifyAll(KeyType (*action)(TreeNodeType *, void *), void *);
+    uint64_t size() {return numNodes;}
     
   };
   
@@ -109,15 +78,37 @@ namespace Graph {
   
   template <class TreeNodeType, class DataType, class KeyType>
   Tree<TreeNodeType,DataType,KeyType>::Tree() {
-    treeRoot = new TreeNodeType();
+    treeRoot = &nullNode;
+    nullNode.left = &nullNode;
+    nullNode.right = &nullNode;
   }
   
   template <class TreeNodeType, class DataType, class KeyType>
-  TreeNodeType *Tree<TreeNodeType,DataType,KeyType>::findOpening(KeyType key, TreeNodeType *current) {
+  TreeNodeType *Tree<TreeNodeType,DataType,KeyType>::getTreeRoot() {
     
-    uint8_t tmp;
+    return this->treeRoot;
     
-    if (current->getLeaf(0) == NULL) {
+  }
+  
+  template <class TreeNodeType, class DataType, class KeyType>
+  TreeNodeType *Tree<TreeNodeType,DataType,KeyType>::getNode(KeyType key, TreeNodeType *current) {
+    
+    if (current->key == key) {
+      return current;
+    }
+    
+    if (key < current->key) {
+      return getNode(key, current->left);
+    } else {
+      return getNode(key, current->right);
+    }
+  }
+  
+  template <class TreeNodeType, class DataType, class KeyType>
+  TreeNodeType *Tree<TreeNodeType,DataType,KeyType>::getNodeMinGreaterThan(KeyType key, TreeNodeType *current) {
+    TreeNodeType *tNode;
+    
+    if (current == &nullNode) {
       return current;
     }
     
@@ -126,170 +117,75 @@ namespace Graph {
     }
     
     if (key < current->key) {
-      tmp = LEFT;
+      tNode = getNodeMinGreaterThan(key, current->left);
     } else {
-      tmp = RIGHT;
+      tNode = getNodeMinGreaterThan(key, current->right);
     }
     
-    return findOpening(key, current->getLeaf(tmp));
-    
-  }
-  
-  template <class TreeNodeType, class DataType, class KeyType>
-  TreeNodeType *Tree<TreeNodeType,DataType,KeyType>::insert_r(DataType data, KeyType key) {
-    
-    TreeNodeType *tNode = findOpening(key, treeRoot);
-    
-    if (tNode == NULL) {
+    if (tNode == &nullNode) {
       return NULL;
     }
-    
-    TreeNodeType *left = new TreeNodeType();
-    TreeNodeType *right = new TreeNodeType();
-    
-    tNode->setLeaf(LEFT, left);
-    tNode->setLeaf(RIGHT, right);
-    tNode->data = data;
-    tNode->key = key;
-    
-    return tNode;
-  }
-  
-  
-  template <class TreeNodeType, class DataType, class KeyType>
-  void Tree<TreeNodeType,DataType,KeyType>::insert(DataType data, KeyType key) {
-    
-    insert_r(data,key);
-    
-  }
-  
-#if 0
-  template <class TreeNodeType, class DataType, class KeyType>
-  TreeNodeType *Tree<TreeNodeType,DataType,KeyType>::remove_r(KeyType key) {
-    
-    TreeNodeType *parent, *victim, *tmp, *opening;
-    
-    tmp = NULL;
-    victim = getNode(key, treeRoot);
-    parent = victim->parent;
-    
-    if (parent->getLeaf(LEFT) == victim) {
-      parent->setLeaf(LEFT, victim->getLeaf(RIGHT));
-      if (victim->getLeaf(LEFT)->getLeaf(0) != NULL) {
-        tmp = victim->getLeaf(LEFT);
-      }
-    } else {
-      parent->setLeaf(RIGHT, victim->getLeaf(LEFT));
-      if (victim->getLeaf(RIGHT)->getLeaf(0) != NULL) {
-        tmp = victim->getLeaf(RIGHT);
-      }
-    }
-    
-    if (tmp->getLeaf(LEFT) != NULL) {
-      opening = findOpening(tmp->key, victim);
-      
-      parent = opening->parent;
-      tmp->parent = parent;
-      
-      if (parent->getLeaf(LEFT) == opening) {
-        parent->setLeaf(LEFT, tmp);
-      } else {
-        parent->setLeaf(RIGHT, tmp);
-      }
-      
-      delete opening;
-    } else {
-      delete tmp;
-    }
-    
-    return victim;
-    
-  }
-  
-  template <class TreeNodeType, class DataType, class KeyType>
-  void Tree<TreeNodeType,DataType,KeyType>::remove(KeyType key) {
-    delete remove_r(key);
-    
-  }
-#endif
-  
-  template <class TreeNodeType, class DataType, class KeyType>
-  TreeNodeType *Tree<TreeNodeType,DataType,KeyType>::getTreeRoot() {
-    
-    return treeRoot;
-    
-  }
-  
-  template <class TreeNodeType, class DataType, class KeyType>
-  TreeNodeType *Tree<TreeNodeType,DataType,KeyType>::getNode(KeyType key, TreeNodeType *current) {
-    
-    uint8_t tmp;
-    
-    if (current->key == key) {
-      return current;
-    }
-    
-    if (key < current->key) {
-      tmp = LEFT;
-    } else {
-      tmp = RIGHT;
-    }
-    
-    return getNode(key, current->getLeaf(tmp));
-  }
-  
-  template <class TreeNodeType, class DataType, class KeyType>
-  TreeNodeType *Tree<TreeNodeType,DataType,KeyType>::getNodeMinGreaterThan(KeyType key, TreeNodeType *current) {
-    TreeNodeType *tNode = NULL;
-    
-    if ((current->getLeaf(0) == NULL) || (current->key == key)) {
-      return NULL;
-    }
-    
-    if (key < current->key) {
-      return getNodeMinGreaterThan(key, current->getLeaf(LEFT));
-    }
-    
-    tNode = getNodeMinGreaterThan(key, current->getLeaf(RIGHT));
     
     if (tNode == NULL) {
       return current;
     }
+
     
     return tNode;
     
   }
   
   template <class TreeNodeType, class DataType, class KeyType>
-  DataType Tree<TreeNodeType,DataType,KeyType>::search(KeyType key) {
+  DataType Tree<TreeNodeType,DataType,KeyType>::search(TreeNodeType *treeRoot, KeyType key) {
     
     return getNode(key,treeRoot)->data;
   }
   
   template <class TreeNodeType, class DataType, class KeyType>
-  TreeNodeType *Tree<TreeNodeType,DataType,KeyType>::rLeftSuccesor(TreeNodeType *tNode) {
+  TreeNodeType *Tree<TreeNodeType,DataType,KeyType>::next(TreeNodeType *tNode) {
     
-    if (tNode->getLeaf(LEFT)->getLeaf(0) != NULL) {
-      return rLeftSuccesor(tNode->getLeaf(LEFT));
+    TreeNodeType *tmp;
+    TreeNodeType *lastGT = NULL;
+    
+    if (tNode->right != &nullNode) {
+      return min(tNode->right);
+    }
+    
+    if (treeRoot == tNode) {
+      return NULL;
+    }
+    
+    tmp = treeRoot;
+    
+    while (true) {
+      if (tmp->left->key == tNode->key) {
+        return tmp;
+      }
+      
+      if (tmp->right->key == tNode->key) {
+        break;
+      }
+      
+      if (tmp->key > tNode->key) {
+        lastGT = tmp;
+        tmp = tmp->left;
+      } else {
+        tmp = tmp->right;
+      }
+      
+    }
+    
+    return lastGT;
+  }
+  
+  template <class TreeNodeType, class DataType, class KeyType>
+  TreeNodeType *Tree<TreeNodeType,DataType,KeyType>::min(TreeNodeType *tNode) {
+    
+    while (tNode->left != &nullNode) {
+      tNode = tNode->left;
     }
     
     return tNode;
-  }
-  
-  template <class TreeNodeType, class DataType, class KeyType>
-  TreeNodeType *Tree<TreeNodeType,DataType,KeyType>::nextNode(TreeNodeType *tNode) {
-    
-    if (tNode->getLeaf(RIGHT)->getLeaf(0) != NULL) {
-      return rLeftSuccesor(tNode->getLeaf(RIGHT));
-    }
-    
-    return getNodeMinGreaterThan(tNode->key, treeRoot);
-  }
-  
-  template <class TreeNodeType, class DataType, class KeyType>
-  TreeNodeType *Tree<TreeNodeType,DataType,KeyType>::firstNode(TreeNodeType *tNode) {
-    
-    return rLeftSuccesor(tNode);
   }
   
   template <class TreeNodeType, class DataType, class KeyType>
@@ -306,14 +202,15 @@ namespace Graph {
     
     newKey = action(current, object);
     
-    this->updateKey(current->key, newKey, instance);
+    // TODO
+    //updateKey(current->key, newKey, instance);
     
-    if (current->getLeaf(LEFT) != NULL) {
-      rModifyAll(action, object, current->getLeaf(LEFT), ((current->key == current->getLeaf(LEFT)->key) ? ++instance : 0));
+    if (current->left != NULL) {
+      rModifyAll(action, object, current->left, ((current->key == current->left->key) ? ++instance : 0));
     }
     
-    if (current->getLeaf(RIGHT) != NULL) {
-      rModifyAll(action, object, current->getLeaf(RIGHT), ((current->key == current->getLeaf(RIGHT)->key) ? ++instance : 0));
+    if (current->right != NULL) {
+      rModifyAll(action, object, current->right, ((current->key == current->right->key) ? ++instance : 0));
     }
   }
   

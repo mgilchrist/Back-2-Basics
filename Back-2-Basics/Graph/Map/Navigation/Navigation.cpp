@@ -26,6 +26,7 @@
 #define ERROR -1
 
 namespace Graph {
+
   
   Coordinate::Coordinate() {
     this->X = 0.0;
@@ -44,27 +45,30 @@ namespace Graph {
     Collection::HashTable<bool,Coordinate *> *openTable;
     Collection::HashTable<double,Coordinate *> *closed;
     Coordinate *u;
-    Collection::Stack<Path *> *ret;
+    vector<Path *> *ret;
+    vector <Coordinate *> *dirtyNodes;
     bool tmpBool;
-    double tmpDouble;
     
     open = new Collection::Heap<Coordinate *,double>();
     openTable = new Collection::HashTable<bool,Coordinate *>();
     closed = new Collection::HashTable<double,Coordinate *>();
+    dirtyNodes = new vector<Coordinate *>();
     
-    // set initial distances to infinity
-    for (int ix = 0; ix < this->getNumNodes(); ix++) {
-      this->nodeAtIndex(ix)->previousEdge = NULL;
-    }
+    AStarStorage *aStarStorage = new AStarStorage;
+    
+    aStarStorage->open = open;
+    aStarStorage->openTable = openTable;
+    aStarStorage->closed = closed;
     
     this->start->distanceFromStart = 0.0;
     
-    this->nodeAtIndex(0)->auxIndex = open->push(this->start,0.0);
+    start->auxIndex = open->push(this->start,0.0);
 
     openTable->insert(true, this->start);
     
     while (open->getSize()) {
       u = open->pop();
+      dirtyNodes->push_back(u);
       
       if (!openTable->get(u, &tmpBool) || (!tmpBool)) {
         break;
@@ -72,37 +76,7 @@ namespace Graph {
       
       closed->insert(u->distanceFromStart, u);
       
-      for (int ix = 0; ix < u->getNumEdges(); ix++) {
-        if (u->getAdjacentEdge(ix)->blocked) {
-          continue;
-        }
-        
-        Coordinate *v = u->getAdjacentEdge(ix)->getForward();
-        double cost = u->distanceFromStart + u->getAdjacentEdge(ix)->length;
-        
-        if (cost < v->distanceFromStart) {
-          if (!openTable->get(u, &tmpBool) && (tmpBool)) {
-            openTable->update(false, v, &tmpBool);
-          }
-          
-          closed->remove(v, &tmpDouble);
-        }
-        
-        if ((openTable->get(u, &tmpBool) || (!tmpBool)) &&
-            ((!closed->get(v, &tmpDouble)) && (tmpDouble != 0.0))) {
-          
-          v->distanceFromStart = cost;
-          
-          if (!openTable->update(true, v, &tmpBool) && (!tmpBool)) {
-            open->removeHeapEntry(*(v->auxIndex));
-          }
-          
-          this->nodeAtIndex(v->getIndex())->auxIndex =
-            open->push(v, cost + costHeuristic->at(v->getIndex()));
-          v->previousEdge = u->getAdjacentEdge(ix);
-          
-        }
-      }
+      u->modifyAllAdjacent(aStarGambit, (void *)aStarStorage);
     }
     
     if (shortestPathToTerminal != NULL) {
@@ -110,13 +84,13 @@ namespace Graph {
       shortestPathToTerminal = NULL;
     }
     
-    ret = new Collection::Stack<Path *>();
+    ret = new vector<Path *>();
     
     u = this->terminal;
     
     while (u->previousEdge != NULL) {
       if (u->previousEdge->getBackward() != NULL) {
-        ret->push(u->previousEdge);
+        ret->push_back(u->previousEdge);
       }
       
        u = u->previousEdge->getBackward();
@@ -124,9 +98,15 @@ namespace Graph {
     
     shortestPathToTerminal = ret;
     
+    // set initial distances to infinity
+    for (int ix = 0; ix < dirtyNodes->size(); ix++) {
+      dirtyNodes->at(ix)->distanceFromStart = 1.0/0.0;
+      dirtyNodes->at(ix)->previousEdge = NULL;
+    }
+    
   }
   
-  Collection::Stack<Path *> *HeuristicMap::getShortestPath() {
+  vector<Path *> *HeuristicMap::getShortestPath() {
     
     if (shortestPathToTerminal != NULL) {
       delete shortestPathToTerminal;
@@ -135,7 +115,7 @@ namespace Graph {
     
     aStar();
     
-    return shortestPathToTerminal->clone();
+    return shortestPathToTerminal;
     
   }
   

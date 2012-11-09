@@ -27,7 +27,6 @@ using namespace std;
 #include "HashTable.h"
 #include "SecureHashTable.h"
 #include "Graph.h"
-#include "RedBlackTree.h"
 #include "LLRB_Tree.h"
 #include "Navigation.h"
 #include "Network.h"
@@ -35,9 +34,9 @@ using namespace std;
 #include "Genetic.h"
 #include "Metaheuristic.h"
 
-const uint64_t glbInputSize = 0x100;
-const uint64_t glbOutputSize = 0x100;
-const uint64_t glbIterations = 0x1000;
+const uint64_t glbInputSize = 0x20;
+const uint64_t glbOutputSize = 0x20;
+const uint64_t glbIterations = 0x100;
 const uint64_t glbTestSize = 0x10000;
 
 
@@ -203,53 +202,11 @@ int testStack() {
   return 0;
 }
 
-#if 0
-int testRBTree() {
-  RedBlackTree<u_int64_t,uint64_t> *rbTree;
-  Collection::ArrayList<uint64_t,uint64_t> *arrayList;
-  RedBlackTreeNode<uint64_t,uint64_t> *current;
-  uint64_t tmp;
-  uint64_t index = 0;
-  
-  cout << "\nTesting RedBlackTree\n";
-  
-  rbTree = new RedBlackTree<uint64_t, uint64_t>();
-  arrayList = new Collection::ArrayList<uint64_t,uint64_t>(glbTestSize);
-  
-  for (uint64_t ix = 0; ix < glbTestSize; ix++) {
-    uint64_t value = random();
-    rbTree->insert(value, value);
-  }
-  
-  current = rbTree->firstNode(rbTree->getTreeRoot());
-  tmp = current->key;
-  
-  while (current != NULL) {
-    
-    if (current->key < tmp) {
-      cout << "Index ";
-      cout << index;
-      cout << " not sorted!\n";
-    }
-    
-    tmp = current->key;
-    current = rbTree->nextNode(current);
-    index++;
-    
-  }
-  
-  cout << "RedBlackTree:Done\n";
-  
-  return 0;
-}
-#endif
-
 int testLLRBTree() {
   LLRB_Tree<uint64_t,uint64_t> *rbTree;
   Collection::ArrayList<uint64_t,uint64_t> *arrayList;
   LLRB_TreeNode<uint64_t,uint64_t> *current;
   uint64_t tmp;
-  uint64_t index = 0;
   
   cout << "\nTesting LLRB_Tree\n";
   
@@ -259,22 +216,40 @@ int testLLRBTree() {
   for (uint64_t ix = 0; ix < glbTestSize; ix++) {
     uint64_t value = random();
     rbTree->insert(value, value);
+    
+#if 0
+    current = rbTree->firstNode(rbTree->getTreeRoot());
+    tmp = current->key;
+    
+    for (uint64_t jx = 0; jx < ix; jx++) {
+      current = rbTree->nextNode(current);
+      
+      if (current->key < tmp) {
+        cout << "Index ";
+        cout << jx;
+        cout << " not sorted!\n";
+      }
+      tmp = current->key;
+    }
+    
+#endif
   }
   
-  current = rbTree->firstNode(rbTree->getTreeRoot());
+  current = rbTree->min(rbTree->getTreeRoot());
   tmp = current->key;
   
-  while (current != NULL) {
+  for (uint64_t ix = 0; ix < rbTree->size()-1; ix++) {
+    current = rbTree->next(current);
     
     if (current->key < tmp) {
-      cout << "Index ";
-      cout << index;
+      cout << "Index/Key:";
+      cout << ix;
+      cout << "/";
+      cout << tmp;
       cout << " not sorted!\n";
     }
     
     tmp = current->key;
-    current = rbTree->nextNode(current);
-    index++;
     
   }
   
@@ -384,7 +359,6 @@ int testArrayList() {
 int testNeuralNetwork() {
   std::vector<double> *input = new std::vector<double>();
   NeuralNetwork::NeuralNetwork *NNetwork;
-  double *reality = new double[glbOutputSize];
   std::vector<double> *expectation = new std::vector<double>();
   uint64_t iterations = 0;
   std::vector<double *> *thisInput, *thisOutput, *thisExpect;
@@ -404,15 +378,18 @@ int testNeuralNetwork() {
   
   cout << "\nTesting NeuralNetwork\n";
   
-  thisInput = new std::vector<double *>(glbInputSize);
-  thisOutput = new std::vector<double *>(glbOutputSize);
-  thisExpect = new std::vector<double *>(glbOutputSize);
+  thisInput = new std::vector<double *>();
+  thisOutput = new std::vector<double *>();
+  thisExpect = new std::vector<double *>();
+  
+  thisInput->resize(glbInputSize);
+  thisOutput->resize(glbOutputSize);
+  thisExpect->resize(glbOutputSize);
 
   
   for (int jx = 0; jx < glbInputSize; jx++) {
     thisInput->at(jx) = &input->at(jx);
     thisOutput->at(jx) = &input->at(jx);
-    
   }
   
   for (uint64_t jx = 0; jx < glbOutputSize; jx++) {
@@ -422,7 +399,7 @@ int testNeuralNetwork() {
   NNetwork = new NeuralNetwork::NeuralNetwork(thisInput, thisOutput, thisExpect, layers);
   
   for (uint64_t jx = 0; jx < thisInput->size(); jx++) {
-    *(thisInput->at(jx)) = (rand() % precision) / (precision * 1.0);
+    *(thisInput->at(jx)) = (random() % precision) / (precision * 1.0);
   }
   
   do {
@@ -434,14 +411,14 @@ int testNeuralNetwork() {
     NNetwork->calcExpectation();
     
     for (int ix = 0; ix < glbOutputSize; ix++) {
-      reality[ix] = *(thisInput->at(ix));
+      *(thisOutput->at(ix)) = *(thisInput->at(ix));
     }
     
     NNetwork->doCorrection();
     
     if (iterations > endPraticeTests) {
       for (int ix = 0; ix < glbOutputSize; ix++) {
-        errorRate += ((reality[ix] - expectation->at(ix)) * (reality[ix] - expectation->at(ix))) * 1000000.0;
+        errorRate += ((*thisOutput->at(ix) - expectation->at(ix)) * (*thisOutput->at(ix) - expectation->at(ix))) * 1000000.0;
       }
     }
     iterations++;
@@ -449,9 +426,9 @@ int testNeuralNetwork() {
   
   for (int ix = 0; ix < glbOutputSize; ix++) {
     cout << "{";
-    cout << (uint64_t)(reality[ix] * precision);
+    cout << (uint64_t)(*thisOutput->at(ix) * precision);
     cout << ":";
-    cout << (uint64_t)(expectation->at(ix) * precision);
+    cout << (uint64_t)(*thisExpect->at(ix) * precision);
     cout << "},";
   }
   
@@ -466,7 +443,7 @@ int testNeuralNetwork() {
   
   
   //NNetwork->g
-  NNetwork->getMaximumFlow();
+  //NNetwork->getMaximumFlow();
   
   delete thisInput;
   
@@ -484,7 +461,7 @@ int testNavigation() {
   vector<Coordinate *> locs;
   Coordinate *v, *u;
   Path *tmpPath;
-  Collection::Stack<Path *> *shortPath;
+  vector<Path *> *shortPath;
   uint64_t width = 100;
   uint64_t length = 100;
   double distance;
@@ -498,7 +475,7 @@ int testNavigation() {
   for (uint64_t ix = 0; ix < width; ix++) {
     for (uint64_t jx = 0; jx < length; jx++) {
       Coordinate *thisCoordinate = new Coordinate(ix,jx,0);
-      navigation->add(thisCoordinate);
+      //navigation->add(thisCoordinate);
       
       locs[ix+(jx*length)] = thisCoordinate;
     }
@@ -597,8 +574,7 @@ int testNavigation() {
   navigation->setTerminal(locs[length*width-1]);
   
   if ((shortPath = navigation->getShortestPath()) != NULL) {
-    while (shortPath->peek() != NULL) {
-      tmpPath = shortPath->pop();
+    while ((!shortPath->empty()) && ((tmpPath = shortPath->back()) != NULL)) {
       u = tmpPath->getBackward();
       v = tmpPath->getForward();
       
@@ -624,104 +600,6 @@ int testNavigation() {
   
   return 0;
 }
-
-#if 0
-
-int testMetaheuristic() {
-  
-  std::vector<double> *input = new std::vector<double>();
-  std::vector<double> expectation[16];
-  std::vector<NeuralNetwork::NeuralNetwork *> *candidates = new std::vector<NeuralNetwork::NeuralNetwork *>();
-  double *reality = new double[glbOutputSize];
-  uint64_t iterations = 0;
-  uint64_t tmpSize;
-  std::vector<double *> *thisInput = new std::vector<double *>();
-  std::vector<double *> *thisOutput = new std::vector<double *>();
-  std::vector<double *> thisExpect[16];
-  
-  input->resize(glbInputSize);
-  
-  for (uint64_t ix = 0; ix < 16; ix++) {
-    expectation[ix].resize(glbOutputSize);
-  }
-  
-  double errorRate = 0.0;
-  uint64_t endPraticeTests = (100 * glbIterations / 90);
-  uint64_t nonPracticeTests = glbIterations - endPraticeTests;
-  std::vector<uint64_t> *layers = new std::vector<uint64_t>();
-  
-  layers->resize(2);
-  
-  layers->at(0) = glbOutputSize/8;
-  layers->at(1) = glbOutputSize/8;
-  
-  cout << "\nTesting MetaHeuristic\n";
-  
-  candidates->resize(16);
-  
-  for (int ix = 0; ix < 16; ix ++) {
-    tmpSize = (random() % input->size()) + 1;
-    thisInput->resize(tmpSize);
-    thisOutput->resize(tmpSize);
-    for (uint64_t jx = 0; jx < tmpSize; jx++) {
-      thisInput->at(jx) = &input->at(jx);
-      thisOutput->at(jx) = &input->at(jx);
-    }
-    
-    for (uint64_t jx = 0; jx < tmpSize; jx++) {
-      thisExpect[ix].at(jx) = &(expectation[ix].at(jx));
-    }
-    
-    candidates->at(ix) = new NeuralNetwork::NeuralNetwork(thisInput, thisOutput, &thisExpect[ix], layers);
-  }
-  
-  delete thisInput;
-  
-  Metaheuristic<NeuralNetwork::NeuralNetwork,double> *masterMind = new Metaheuristic<NeuralNetwork::NeuralNetwork,double>(input, candidates);
-  
-  do {
-    for (int ix = 0; ix < 1 /*glbOutputSize*/; ix++) {
-      for (int jx = 0; jx < input->size(); jx++) {
-        input->at(jx) = 0.1 * (random()%10);
-      }
-      masterMind->getConsensus(expectation);
-      reality[ix] = 1.0;
-      /*if ((input->atIndex(ix%glbInputSize)) +
-       (input->atIndex((ix+1)%glbInputSize)) +
-       (input->atIndex((ix+2)%glbInputSize)) > 2.5) {
-       reality[ix] = 1.0;
-       } else if ((input->atIndex(ix%glbInputSize)) +
-       (input->atIndex((ix+1)%glbInputSize)) +
-       (input->atIndex((ix+2)%glbInputSize)) < 0.5) {
-       reality[ix] = 0.0;
-       }*/
-      masterMind->postResult(reality[ix]);
-      
-      if (iterations > endPraticeTests) {
-        errorRate += ((reality[ix] - expectation->at(ix)) * (reality[ix] - expectation->at(ix))) * 1000000.0;
-      }
-    }
-    iterations++;
-  } while (iterations < glbIterations);
-  
-  if (nonPracticeTests) {
-    errorRate /= (double)nonPracticeTests;
-    errorRate = sqrt(errorRate);
-    cout << "Error Rate is ";
-    cout << errorRate;
-    cout << "PPM\n";
-  }
-  
-  delete input;
-  delete masterMind;
-  
-  cout << "MetaHeuristic:Done\n";
-  
-  return 0;
-}
-
-#endif
-
 
 int main(int argc, const char * argv[])
 {

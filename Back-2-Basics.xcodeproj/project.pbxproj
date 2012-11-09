@@ -24,7 +24,6 @@
 		2CA21510160C17C100347D58 /* Collection.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA214F7160C17C100347D58 /* Collection.h */; };
 		2CA21511160C17C100347D58 /* Map.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA214F9160C17C100347D58 /* Map.h */; };
 		2CA21512160C17C100347D58 /* Network.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA214FA160C17C100347D58 /* Network.h */; };
-		2CA21513160C17C100347D58 /* RedBlackTree.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA214FC160C17C100347D58 /* RedBlackTree.h */; };
 		2CA21514160C17C100347D58 /* Tree.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA214FD160C17C100347D58 /* Tree.h */; };
 		2CA21515160C17C100347D58 /* Graph.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA214FE160C17C100347D58 /* Graph.h */; };
 		2CA21516160C17C100347D58 /* NeuralNetwork.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA21500160C17C100347D58 /* NeuralNetwork.h */; };
@@ -77,7 +76,6 @@
 		2CA214F7160C17C100347D58 /* Collection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Collection.h; path = "Back-2-Basics/Collection.h"; sourceTree = "<group>"; };
 		2CA214F9160C17C100347D58 /* Map.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Map.h; sourceTree = "<group>"; };
 		2CA214FA160C17C100347D58 /* Network.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Network.h; sourceTree = "<group>"; };
-		2CA214FC160C17C100347D58 /* RedBlackTree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RedBlackTree.h; sourceTree = "<group>"; };
 		2CA214FD160C17C100347D58 /* Tree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Tree.h; sourceTree = "<group>"; };
 		2CA214FE160C17C100347D58 /* Graph.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Graph.h; path = "Back-2-Basics/Graph.h"; sourceTree = "<group>"; };
 		2CA21500160C17C100347D58 /* NeuralNetwork.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NeuralNetwork.h; sourceTree = "<group>"; };
@@ -208,7 +206,6 @@
 		2CA214FB160C17C100347D58 /* Tree */ = {
 			isa = PBXGroup;
 			children = (
-				2CA214FC160C17C100347D58 /* RedBlackTree.h */,
 				2CDE7A6A1629F95D00805A47 /* LLRB_Tree.h */,
 			);
 			path = Tree;
@@ -266,7 +263,6 @@
 				2CA21510160C17C100347D58 /* Collection.h in Headers */,
 				2CA21511160C17C100347D58 /* Map.h in Headers */,
 				2CA21512160C17C100347D58 /* Network.h in Headers */,
-				2CA21513160C17C100347D58 /* RedBlackTree.h in Headers */,
 				2CA21514160C17C100347D58 /* Tree.h in Headers */,
 				2CA21515160C17C100347D58 /* Graph.h in Headers */,
 				2CA21516160C17C100347D58 /* NeuralNetwork.h in Headers */,

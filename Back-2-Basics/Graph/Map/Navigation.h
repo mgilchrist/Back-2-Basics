@@ -22,13 +22,18 @@
 
 namespace Graph {
   
-  
   class Path;
   
   class Coordinate;
   class Vector;
   
-  class Path : public Via<Coordinate>
+  typedef struct AStarStorage {
+    Collection::Heap<Coordinate *,double> *open;
+    Collection::HashTable<bool,Coordinate *> *openTable;
+    Collection::HashTable<double,Coordinate *> *closed;
+  } AStarStorage;
+  
+  class Path : public Via<Coordinate,Path>
   {
   public:
     Path();
@@ -42,6 +47,8 @@ namespace Graph {
     double X;
     double Y;
     double Z;
+    
+    double *heuritic;
     
     Coordinate();
     Coordinate(double X, double Y, double Z);
@@ -100,11 +107,52 @@ namespace Graph {
   
   
   class HeuristicMap : public Map<Coordinate, Path>
-  {    
+  {
   protected:
     const char *name;
     Vector *origin;
     std::vector<double> *costHeuristic;
+    
+    static uint64_t aStarGambit(LLRB_TreeNode<Path *, uint64_t> *current, void *storage) {
+      
+      Path *uv = current->data;
+      bool tmpBool;
+      double tmpDouble;
+      Collection::Heap<Coordinate *,double> *open = ((AStarStorage *)storage)->open;
+      Collection::HashTable<bool,Coordinate *> *openTable = ((AStarStorage *)storage)->openTable;
+      Collection::HashTable<double,Coordinate *> *closed = ((AStarStorage *)storage)->closed;
+      
+      if (!uv->blocked) {
+        Coordinate *u = uv->getBackward();
+        Coordinate *v = uv->getForward();
+        double cost = u->distanceFromStart + uv->length;
+        
+        if (cost < v->distanceFromStart) {
+          if (!openTable->get(u, &tmpBool) && (tmpBool)) {
+            openTable->update(false, v, &tmpBool);
+          }
+          
+          closed->remove(v, &tmpDouble);
+        }
+        
+        if ((openTable->get(u, &tmpBool) || (!tmpBool)) &&
+            ((!closed->get(v, &tmpDouble)) && (tmpDouble != 0.0))) {
+          
+          v->distanceFromStart = cost;
+          
+          if (!openTable->update(true, v, &tmpBool) && (!tmpBool)) {
+            open->removeHeapEntry(*(v->auxIndex));
+          }
+          
+          /* TODO */
+          v->auxIndex = open->push(v, cost + *v->heuritic);
+          v->previousEdge = uv;
+          
+        }
+      }
+      
+      return current->key;
+    }
     
     void aStar();
     
@@ -113,13 +161,28 @@ namespace Graph {
       
     }
     
+    static uint64_t calcPathLengthEach(LLRB_TreeNode<Path *, uint64_t> *current, void *reserved) {
+      Path *path = current->data;
+      
+      double deltaX = path->getForward()->X - path->getBackward()->X;
+      double deltaY = path->getForward()->Y - path->getBackward()->Y;
+      double deltaZ = path->getForward()->Z - path->getBackward()->Z;
+      
+      path->length = sqrt((deltaX * deltaX) +
+                          (deltaY * deltaY) +
+                          (deltaZ * deltaZ));
+      
+      return current->key;
+    }
+    
     void updateOrgin(Vector *origin) {
       if ((this->origin == NULL) ||
           (!bcmp(this->origin, origin, sizeof(Vector)))) {
         this->origin = origin;
         return;
       }
-          
+      
+      vector<Coordinate *> *nodes;
       double X, Y, Z;
       double deltaAlpha;
       double deltaBeta;
@@ -138,29 +201,21 @@ namespace Graph {
       this->origin->Y += Y;
       this->origin->Z += Z;
       
-      for (int ix = 0; ix < this->getNumNodes(); ix ++) {
-        this->nodeAtIndex(ix)->X += X;
-        this->nodeAtIndex(ix)->Y += Y;
-        this->nodeAtIndex(ix)->Z += Z;
+      nodes = this->getReachableNodes(this->start, this->terminal);
+      
+      for (int ix = 0; ix < nodes->size(); ix ++) {
+        nodes->at(ix)->X += X;
+        nodes->at(ix)->Y += Y;
+        nodes->at(ix)->Z += Z;
       }
       
-      for (int ix = 0; ix < this->getNumNodes(); ix ++) {
-        for (int jx = 0; jx < this->nodeAtIndex(ix)->getNumEdges(); jx++) {
-          Path *path = this->nodeAtIndex(ix)->getAdjacentEdge(jx);
-          
-          double deltaX = path->getForward()->X - path->getBackward()->X;
-          double deltaY = path->getForward()->Y - path->getBackward()->Y;
-          double deltaZ = path->getForward()->Z - path->getBackward()->Z;
-          
-          path->length = sqrt((deltaX * deltaX) +
-                              (deltaY * deltaY) +
-                              (deltaZ * deltaZ));
-        }
+      for (int ix = 0; ix < nodes->size(); ix ++) {
+        nodes->at(ix)->modifyAllAdjacent(HeuristicMap::calcPathLengthEach, 0);
       }
       
     }
     
-    Collection::Stack<Path *> *getShortestPath();
+    vector<Path *> *getShortestPath();
     
     
   };

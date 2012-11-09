@@ -31,11 +31,11 @@ namespace Graph {
   template <class NodeType, class EdgeType>
   class Location;
   
-  template <class LocationType>
-  class Via : public Edge<LocationType>
+  template <class LocationType, class ViaType>
+  class Via : public Edge<LocationType,ViaType>
   {
   public:
-    double      length;
+    double      length = 0.0;
     Via<LocationType>();
     Via<LocationType>(Location<LocationType,Via> *v, Location<LocationType,Via> *u, double length);
   };
@@ -47,9 +47,9 @@ namespace Graph {
     
   public:
     
-    bool        explored;
-    double      distanceFromStart;
-    uint64_t    *auxIndex;
+    bool        explored = false;
+    double      distanceFromStart = 1.0/0.0;
+    uint64_t    *auxIndex = NULL;
     
   public:
     
@@ -60,18 +60,20 @@ namespace Graph {
   
   /* Via */
   
-  template <class LocationType>
-  Via<LocationType>::Via() {
-    this->u = NULL;
-    this->v = NULL;
-    length = 0;
+  template <class LocationType, class ViaType>
+  Via<LocationType,ViaType>::Via() {
+    
   }
   
-  template <class LocationType>
-  Via<LocationType>::Via(Location<LocationType,Via> *v, Location<LocationType,Via> *u, double length) {
+  template <class LocationType, class ViaType>
+  Via<LocationType,ViaType>::Via(Location<LocationType,Via> *v, Location<LocationType,Via> *u, double length) {
     this->u = u;
     this->v = v;
-    length = length;
+    
+    v->references++;
+    u->addEdge((ViaType *)this);
+    
+    this->length = length;
   }
   
   
@@ -79,10 +81,7 @@ namespace Graph {
   
   template <class NodeType, class EdgeType>
   Location<NodeType,EdgeType>::Location() {
-    this->forwardEdges = new Collection::Stack<EdgeType *>();
-    this->discovered = false;
-    explored = false;
-    distanceFromStart = 0.0;
+    
   }
   
   
@@ -91,15 +90,55 @@ namespace Graph {
   {
   protected:
     
-    Collection::Stack<EdgeType *> *shortestPathToTerminal;
+    vector<EdgeType *> *shortestPathToTerminal;
     uint64_t numNegativeEdges;
-    Collection::Stack<EdgeType *> *shortPathTree;
+    vector<EdgeType *> *shortPathTree;
     
   private:
     
     void destroyPath();
     
   protected:
+    
+    static uint64_t bellmanFordsGambit(LLRB_TreeNode<EdgeType *, uint64_t> *current, void *reserved) {
+      
+      EdgeType *uv = current->data;
+      
+      if (!uv->blocked) {
+        
+        NodeType *u = uv->getBackward();
+        NodeType *v = uv->getForward();
+        
+        if ((u->distanceFromStart + uv->length) < v->distanceFromStart) {
+          v->distanceFromStart = u->distanceFromStart + uv->length;
+          v->previousEdge = uv;
+        }
+      }
+      return current->key;
+    }
+    
+    static uint64_t dijkstrasGambit(LLRB_TreeNode<EdgeType *, uint64_t> *current, void *queue) {
+      
+      if (!current->data->blocked) {
+        
+        NodeType *u = current->data->getBackward();
+        NodeType *v = current->data->getForward();
+        double tmp = u->distanceFromStart + current->data->length;
+        
+        if (v->distanceFromStart == 1.0/0.0) {
+          v->distanceFromStart = tmp;
+          v->previousEdge = current->data;
+          v->auxIndex = ((Collection::Heap<NodeType *,double> *)queue)->push(v, tmp);
+        }
+        
+        if (tmp < v->distanceFromStart) {
+          v->distanceFromStart = tmp;
+          v->previousEdge = current->data;
+          ((Collection::Heap<NodeType *,double> *)queue)->update(*(v->auxIndex), tmp);
+        }
+      }
+      return current->key;
+    }
     
     void dijkstras();
     void bellmanFord();
@@ -112,7 +151,7 @@ namespace Graph {
     EdgeType *addEdge(NodeType *a, NodeType *b, double location);
     void setStart(NodeType *start);
     void setTerminal(NodeType *terminal);
-    virtual Collection::Stack<EdgeType *> *getShortestPath();
+    virtual vector<EdgeType *> *getShortestPath();
     
   };
   
@@ -152,39 +191,28 @@ namespace Graph {
   
   template <class NodeType, class EdgeType>
   void Map<NodeType,EdgeType>::bellmanFord() {
-    Collection::Stack<EdgeType *> *ret = new Collection::Stack<EdgeType *>();
+    vector<EdgeType *> *ret = new vector<EdgeType *>();
     NodeType *u, *v;
     EdgeType *uv;
     
+    vector<NodeType *> *nodes = this->getReachableNodes(this->start,this->terminal);
     
-    for (int ix = 0; ix < this->getNumNodes(); ix++) {
-      this->nodeAtIndex(ix)->distanceFromStart = 1.0/0.0;
-      this->nodeAtIndex(ix)->previousEdge = NULL;
-    }
-    
-    this->swapNodeIndexes(0, this->start->index);
+    nodes->push_back(this->terminal);
+    u = nodes->at(0);
+    nodes->at(0) = this->start;
+    nodes->push_back(u);
     
     this->start->distanceFromStart = 0.0;
     
-    for (int ix = 1; ix < this->getNumNodes(); ix++) {
-      for (int jx = 0; jx < this->getNumEdges(); jx++) {
-        uv = this->edgeAtIndex(jx);
-        
-        if (uv->blocked) {
-          continue;
-        }
-        
-        u = uv->getBackward();
-        v = uv->getForward();
-        if ((u->distanceFromStart + uv->length) < v->distanceFromStart) {
-          v->distanceFromStart = u->distanceFromStart + uv->length;
-          v->previousEdge = uv;
-        }
-      }
+    for (int ix = 1; ix < nodes->size(); ix++) {
+      u = nodes->at(ix);
+      u->modifyAllAdjacent(bellmanFordsGambit,0);
     }
     
-    for (int ix = 0; ix < this->getNumEdges(); ix++) {
-      uv = this->edgeAtIndex(ix);
+    vector<EdgeType *> *edges = this->getEdges(nodes);
+    
+    for (int ix = 0; ix < edges->size(); ix++) {
+      uv = edges->at(ix);
       
       if (uv->blocked) {
         continue;
@@ -210,10 +238,15 @@ namespace Graph {
     
     while (u->previousEdge != NULL) {
       if (u->previousEdge->getBackward() != NULL) {
-        ret->push(u->previousEdge);
+        ret->push_back(u->previousEdge);
       }
       
       u = u->previousEdge->getBackward();
+    }
+    
+    for (uint64_t ix = 0; ix < nodes->size(); ix++) {
+      nodes->at(ix)->distanceFromStart = 1.0/0.0;
+      nodes->at(ix)->previousEdge = NULL;
     }
     
     shortestPathToTerminal = ret;
@@ -224,21 +257,13 @@ namespace Graph {
   template <class NodeType, class EdgeType>
   void Map<NodeType,EdgeType>::dijkstras() {
     Collection::Heap<NodeType *,double> *queue = new Collection::Heap<NodeType *,double>();
-    NodeType *u, *v;
-    double tmp;
-    Collection::Stack<EdgeType *> *ret;
-    
-    // set initial distances to infinity
-    for (uint64_t ix = 0; ix < this->getNumNodes(); ix++) {
-      this->nodeAtIndex(ix)->distanceFromStart = 1.0/0.0;
-      this->nodeAtIndex(ix)->previousEdge = NULL;
-    }
+    NodeType *u;
+    vector<EdgeType *> *ret;
+    vector<NodeType *> *dirtyNodes = new vector<NodeType *>();
     
     this->start->distanceFromStart = 0.0;
     
-    for (uint64_t ix = 0; ix < this->getNumNodes(); ix++) {
-      this->nodeAtIndex(ix)->auxIndex = queue->push(this->nodeAtIndex(ix),this->nodeAtIndex(ix)->distanceFromStart);
-    }
+    this->start->auxIndex = queue->push(this->start,0.0);
     
     while (queue->getSize()) {
       u = queue->peekAtHeapEntry(0);
@@ -247,36 +272,25 @@ namespace Graph {
       }
       
       u = queue->pop();
+      dirtyNodes->push_back(u);
       
-      for (uint64_t ix = 0; ix < u->getNumEdges(); ix++) {
-        if (u->getAdjacentEdge(ix)->blocked) {
-          continue;
-        }
-        tmp = u->distanceFromStart + u->getAdjacentEdge(ix)->length;
-        v = u->getAdjacentNode(ix);
-        
-        if (tmp < v->distanceFromStart) {
-          v->distanceFromStart = tmp;
-          v->previousEdge = u->getAdjacentEdge(ix);
-          queue->update(*(v->auxIndex), tmp);
-        }
-      }
+      u->modifyAllAdjacent(dijkstrasGambit,queue);
+      
     }
     
     // Contruct Tree
     
     if (shortestPathToTerminal != NULL) {
       delete shortestPathToTerminal;
-      shortestPathToTerminal = NULL;
     }
     
-    ret = new Collection::Stack<EdgeType *>();
+    ret = new vector<EdgeType *>();
     
     u = this->terminal;
     
     while ((u->previousEdge != NULL) && (u != this->start)) {
       if (u->previousEdge->getBackward() != NULL) {
-        ret->push(u->previousEdge);
+        ret->push_back(u->previousEdge);
       }
       
       u = u->previousEdge->getBackward();
@@ -284,10 +298,20 @@ namespace Graph {
     
     shortestPathToTerminal = ret;
     
+    // reset initial distances to infinity
+    for (uint64_t ix = 0; ix < dirtyNodes->size(); ix++) {
+      dirtyNodes->at(ix)->distanceFromStart = 1.0/0.0;
+      dirtyNodes->at(ix)->previousEdge = NULL;
+    }
+    
+    dirtyNodes->resize(0);
+    
+    delete dirtyNodes;
+    
   }
   
   template<class NodeType, class EdgeType>
-  Collection::Stack<EdgeType *> *Map<NodeType,EdgeType>::getShortestPath() {
+  vector<EdgeType *> *Map<NodeType,EdgeType>::getShortestPath() {
     
     if (shortestPathToTerminal != NULL) {
       delete shortestPathToTerminal;
@@ -300,7 +324,7 @@ namespace Graph {
       dijkstras();
     }
     
-    return shortestPathToTerminal->clone();
+    return shortestPathToTerminal;
     
   }
   
@@ -312,10 +336,6 @@ namespace Graph {
     if (location < 0.0) {
       numNegativeEdges++;
     }
-    
-    u->addAdjacentEdge(tmpEdge);
-    
-    this->addEdgeObj(tmpEdge);
     
     return tmpEdge;
   }
@@ -329,11 +349,12 @@ namespace Graph {
         return;
       }
       
-      do {
-        if (shortestPathToTerminal->peek() == NULL) {
+      while (start != shortestPathToTerminal->back()->getBackward()) {
+        if (shortestPathToTerminal->back() == NULL) {
           destroyPath();
         }
-      } while (start != shortestPathToTerminal->pop()->getForward());
+        shortestPathToTerminal->resize(shortestPathToTerminal->size()-1);
+      }
     }
   }
   

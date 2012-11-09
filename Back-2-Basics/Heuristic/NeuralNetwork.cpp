@@ -24,23 +24,24 @@
 using namespace std;
 
 #include "NeuralNetwork.h"
-#include "LLRB_Tree.h"
-using namespace Graph;
 
 //#define NEURALNETWORK_DEBUG
 
 namespace NeuralNetwork
 {
   
-#define RANDOM_INFLUENCE ((rand() > rand()) ? 1.0 : -1.0)
 #define MAX_LAYERS    7   // 3 for space 7 for oct math and 10 for m-theory
   
   static const double zeroInfluence = 0.0;
+  static double glbBias = 1.0;
   
-  Synapse::Synapse(Neuron *neuron, Neuron *input, double influence) {
+  Synapse::Synapse(Neuron *input, Neuron *neuron, double influence) {
     this->u = neuron;
     this->v = input;
-    this->influence = influence;
+    
+    input->references++;
+    neuron->addEdge(this);
+    influence = influence;
     //this->capacity = (influence < 0) ? -influence : influence;
     lastCorrection = 0.0;
   }
@@ -65,23 +66,14 @@ namespace NeuralNetwork
     return (INERTIA_DEFAULT * this->lastCorrection);
   }
   
-  Neuron::Neuron(NeuralNetwork *network, Collection::Stack<Neuron *> *input) {
-    this->forwardEdges = new Collection::Stack<Synapse *>();
-    this->discovered = false;
+  Neuron::Neuron(LLRB_Tree<Harmony *, uint64_t> *layer, double *inputData, double *expectation) {
     this->capacity = 0.0;
     
-    Synapse *synapse;
-    this->inputBias = new double;
-    *(this->inputBias) = 1.0;
+    this->inputBias = inputData;
     inputInfluence = RANDOM_INFLUENCE;
     memory = new double(0.0);
     
-    for (int ix = 0; ix < input->getSize(); ix++) {
-      synapse = new Synapse(this, input->atIndex(ix), RANDOM_INFLUENCE);
-      network->addEdgeObj(synapse);
-      this->addAdjacentEdge(synapse);
-      
-    }
+    layer->modifyAll(Neuron::addInputsEach, this);
     
     iteration = 0;
     delta = 0.0;
@@ -89,21 +81,21 @@ namespace NeuralNetwork
     
   }
   
-  Neuron::Neuron(NeuralNetwork *network, Collection::Stack<Neuron *> *input, double *expectation) {
-    this->forwardEdges = new Collection::Stack<Synapse *>();
-    this->discovered = false;
+  Neuron::Neuron(Collection::Stack<Neuron *> *input, double *inputData, double *expectation) {
     this->capacity = 0.0;
     
     Synapse *synapse;
-    this->inputBias = new double;
-    *(this->inputBias) = 1.0;
+    inputBias = inputData;
     inputInfluence = RANDOM_INFLUENCE;
-    memory = expectation;
+    
+    if (expectation == NULL) {
+      memory = new double;
+    } else {
+      memory = expectation;
+    }
     
     for (int ix = 0; ix < input->getSize(); ix++) {
-      synapse = new Synapse(this, input->atIndex(ix), RANDOM_INFLUENCE);
-      network->addEdgeObj(synapse);
-      this->addAdjacentEdge(synapse);
+      synapse = new Synapse(input->atIndex(ix), this, RANDOM_INFLUENCE);
       
     }
     
@@ -113,15 +105,18 @@ namespace NeuralNetwork
     
   }
   
-  Neuron::Neuron(NeuralNetwork *network, double *inputData) {
-    this->forwardEdges = new Collection::Stack<Synapse *>();
-    this->discovered = false;
+  Neuron::Neuron(double *inputData, double *expectation) {
     this->capacity = 0.0;
     
     this->inputBias = inputData;
     inputInfluence = RANDOM_INFLUENCE;
     inputLastCorrection = 0.0;
-    memory = new double(0.0);
+    
+    if (expectation == NULL) {
+      memory = new double;
+    } else {
+      memory = expectation;
+    }
     
     iteration = 0;
     delta = 0.0;
@@ -135,15 +130,12 @@ namespace NeuralNetwork
       return *memory;
     }
     
-    double tmp = *inputBias * inputInfluence;
+    *memory = *inputBias * inputInfluence;
     
     // Get impulse from relavent connected neurons
-    for (int ix = 0; ix < this->getNumEdges(); ix++) {
-      tmp += this->getAdjacentNode(ix)->probeActivation(iteration) *
-      this->getAdjacentEdge(ix)->getInfluence();
-    }
+    modifyAllAdjacent(NeuralNetwork::probeActivationEach, this);
     
-    *memory = (1.0 / (1.0 + exp(double((-1.0) * tmp))));
+    *memory = (1.0 / (1.0 + exp(double((-1.0) * *memory))));
     
     this->iteration = iteration;
     
@@ -152,67 +144,38 @@ namespace NeuralNetwork
     
     return *memory;
   }
-  
-  double Neuron::getInputInfluence(uint64_t index) {
-    
-    if (!index) {
-      return inputInfluence;
-    }
-    return this->getAdjacentEdge(index-1)->getInfluence();
-  }
-  
-  double Neuron::getInputMomentum(uint64_t index) {
-    
-    if (!index) {
-      return inputLastCorrection * inertia;
-    }
-    
-    return this->getAdjacentEdge(index-1)->getMomentum();
-  }
+  /*
+   double Neuron::getInputInfluence(uint64_t index) {
+   
+   if (!index) {
+   return inputInfluence;
+   }
+   return this->getAdjacentEdge(index-1)->getInfluence();
+   }
+   
+   double Neuron::getInputMomentum(uint64_t index) {
+   
+   if (!index) {
+   return inputLastCorrection * inertia;
+   }
+   
+   return this->getAdjacentEdge(index-1)->getMomentum();
+   }
+   */
   
   void Neuron::addInputNeuron(NeuralNetwork *network, Neuron *input) {
     
-    Synapse *nLink = new Synapse(this, input, RANDOM_INFLUENCE);
-    
-    network->addEdgeObj(nLink);
-    
-    this->addAdjacentEdge(nLink);
+    new Synapse(input, this, RANDOM_INFLUENCE);
     
   }
   
-  void Neuron::changeInputInfluence(uint64_t index) {
+  void Neuron::changeInputInfluence() {
     double correction;
     
-    if (!index) {
-      correction = LEARNING_RULE_DEFAULT * this->inputInfluenceDelta;
-      correction += this->inputLastCorrection * this->inertia;
-    } else {
-      correction = LEARNING_RULE_DEFAULT * this->delta;
-      correction += this->getAdjacentEdge(index-1)->getMomentum();
-    }
-    
-    if (!index) {
-      inputLastCorrection = correction;
-      inputInfluence += this->inputInfluenceDelta;
-    } else {
-      this->getAdjacentEdge(index-1)->changeInfluence(correction);
-    }
-  }
-  
-  void Neuron::colapseInputNeuron(uint64_t index) {
-    
-    double tmp = this->getAdjacentEdge(index-1)->getInfluence();
-    Neuron *input = this->getAdjacentNode(index-1);
-    Synapse *tmpSynapse;
-    
-    while ((tmpSynapse = input->removeNewestEdge()) != NULL) {
-      tmpSynapse->multInfluence(tmp);
-      this->addAdjacentEdge(tmpSynapse);
-    }
-    
-    this->inputLastCorrection += (input->inputLastCorrection * tmp);
-    
-    delete input;
+    correction = LEARNING_RULE_DEFAULT * this->inputInfluenceDelta;
+    correction += this->inputLastCorrection * this->inertia;
+    inputLastCorrection = correction;
+    inputInfluence += this->inputInfluenceDelta;
   }
   
   NeuralNetwork::NeuralNetwork(std::vector<double *> *input,
@@ -224,16 +187,16 @@ namespace NeuralNetwork
     Neuron *currentNeuron;
     
     
-    this->layers = new Collection::Stack<Collection::Stack<Neuron *> *>(layers->size());
+    this->layers = new Collection::Stack<Collection::Stack<Neuron *> *>(layers->size()+2);
     
     
     currentStack = new Collection::Stack<Neuron *>(input->size());
     
     for (int jx = 0; jx < input->size(); jx++) {
-      currentNeuron = new Neuron(this, input->at(jx));
+      currentNeuron = new Neuron(input->at(jx), NULL);
       inputs.insert(currentNeuron, (uint64_t)input->at(jx));
-      this->add(currentNeuron);
-      currentStack->push(currentNeuron);    }
+      currentStack->push(currentNeuron);
+    }
     
     this->layers->push(currentStack);
     
@@ -242,30 +205,25 @@ namespace NeuralNetwork
       currentStack = new Collection::Stack<Neuron *>(layers->at(ix));
       
       for (uint64_t jx = 0; jx < layers->at(ix); jx++) {
-        currentNeuron = new Neuron(this, previousStack);
-        this->add(currentNeuron);
-        currentStack->push(currentNeuron);      }
+        currentNeuron = new Neuron(previousStack,&glbBias, NULL);
+        currentStack->push(currentNeuron);
+      }
       this->layers->push(currentStack);
     }
     
     previousStack = currentStack;
-    currentStack = new Collection::Stack<Neuron *>(layers->at(layers->size()-1));
+    currentStack = new Collection::Stack<Neuron *>(output->size());
     
-    for (uint64_t jx = 0; jx < layers->at(layers->size()-1); jx++) {
-      currentNeuron = new Neuron(this, previousStack);
-      start = currentNeuron;  // Output Neuron
-      
+    for (int ix = 0; ix < output->size(); ix++) {
+      currentNeuron = new Neuron(previousStack, &glbBias, expectation->at(ix));
+      Harmony *tmp = new Harmony;
+      tmp->expectation = currentNeuron;
+      tmp->reality = output->at(ix);
+      outputs.insert(tmp, (uint64_t)(output->at(ix)));
+      currentStack->push(currentNeuron);
     }
     
     this->layers->push(currentStack);
-    
-    for (int ix = 0; ix < output->size(); ix++) {
-      currentNeuron = new Neuron(this, previousStack);
-      std::pair<Neuron *, double *> *tmp = new std::pair<Neuron *, double *>(currentNeuron, output->at(ix));
-      this->output.insert(tmp, (uint64_t)output->at(ix));
-      this->add(currentNeuron);
-      currentStack->push(currentNeuron);
-    }
     
     currentIteration = 0;
   }
@@ -274,28 +232,38 @@ namespace NeuralNetwork
     
     currentIteration++;
     
-    this->output.modifyAll(calcExpectationEach, (void *)currentIteration);
+    this->outputs.modifyAll(NeuralNetwork::calcExpectationEach, (void *)currentIteration);
   }
   
   void NeuralNetwork::doCorrection() {
     
-    Collection::Stack<Neuron *> *currentLayer;
+    vector<vector<Neuron *> *> *layers;
+    vector<Neuron *> *currentLayer;
     Neuron *pCurrentNeuron;
     double nCurrentOutput;
     
-    getLayers();
     
-    if ((this->layers == NULL) || (this->layers->peek() == NULL)) {
-      return;
-    }
+    start = new Neuron(&outputs,&glbBias,NULL);
+    terminal = new Neuron(&glbBias,NULL);
     
-    output.modifyAll(doCorrectionEach, 0);
+    terminalEdges.reserve(inputs.size());
+    inputs.modifyAll(NeuralNetwork::addTerminal, this);
     
-    for (uint64_t ix = 2; ix < this->layers->getSize(); ix++) {
-      currentLayer = this->layers->atIndex(this->layers->getSize()-ix);
-      for (uint64_t jx = 0; jx < currentLayer->getSize(); jx++) {
-        pCurrentNeuron = currentLayer->atIndex(jx);
-        nCurrentOutput = pCurrentNeuron->getMemory();
+    
+    layers = getLayers();
+    
+    delete start;
+    terminalEdges.clear();
+    
+    layersDetermined = true;
+    
+    outputs.modifyAll(NeuralNetwork::doCorrectionEach, 0);
+    
+    for (uint64_t ix = 2; ix <= layers->size(); ix++) {
+      currentLayer = layers->at(layers->size()-ix);
+      for (uint64_t jx = 0; jx < currentLayer->size(); jx++) {
+        pCurrentNeuron = currentLayer->at(jx);
+        nCurrentOutput = *pCurrentNeuron->memory;
         
         pCurrentNeuron->delta = (nCurrentOutput *
                                  (1.0 - nCurrentOutput) *
@@ -303,12 +271,13 @@ namespace NeuralNetwork
       }
     }
     
-    for (uint64_t ix = 1; ix < this->layers->getSize(); ix++) {
-      currentLayer = this->layers->atIndex(this->layers->getSize()-ix);
-      for (uint64_t jx = 0; jx < currentLayer->getSize(); jx++) {
-        for (uint64_t kx = 0; kx <= currentLayer->atIndex(jx)->getNumEdges(); kx++) {
-          currentLayer->atIndex(jx)->changeInputInfluence(kx);
-        }
+    for (uint64_t ix = 0; ix < layers->size(); ix++) {
+      currentLayer = layers->at(ix);
+      
+      for (uint64_t jx = 0; jx < currentLayer->size(); jx++) {
+        pCurrentNeuron = currentLayer->at(jx);
+        pCurrentNeuron->changeInputInfluence();
+        pCurrentNeuron->modifyAllAdjacent(Neuron::changeInputInfluenceEach, 0);
       }
     }
   }
@@ -316,8 +285,7 @@ namespace NeuralNetwork
   void NeuralNetwork::simplify() {
     Collection::Array<Neuron *> *currentLayer;
     Neuron *pCurrentNeuron;
-    terminal = new Neuron(this, (double *)NULL);
-    const double irrelevant = 10e-14;
+    terminal = new Neuron((double *)NULL,NULL);
     
     /* Eliminate synapses that never carry significant charge */
     /* Count output synapses */
@@ -341,68 +309,9 @@ namespace NeuralNetwork
       
       for (uint64_t jx = 0; jx < currentLayer->getSize(); jx++) {
         pCurrentNeuron = currentLayer->atIndex(jx);
-        double cutoff = irrelevant / pCurrentNeuron->getNumEdges();
-        double inputCharge = 0;
         
         /* Get rid of irrelevant synapses */
-        for (uint64_t ix = 0; ix < pCurrentNeuron->getNumEdges(); ix++) {
-          inputCharge += pCurrentNeuron->getAdjacentEdge(ix)->capacity;
-          if (pCurrentNeuron->getAdjacentEdge(ix)->capacity < cutoff) {
-            pCurrentNeuron->getAdjacentEdge(ix)->blocked = true;
-          } else {
-            pCurrentNeuron->getAdjacentEdge(ix)->blocked = false;
-            pCurrentNeuron->getAdjacentNode(ix)->outputCount++;
-          }
-        }
-        
-        pCurrentNeuron->cleanUp();
-      }
-    }
-    
-    /* Push stub neuron bias forward */
-    /*
-     for (uint64_t kx = 1; kx < this->layers->getSize(); kx++) {
-     currentLayer = this->layers->atIndex(this->layers->getSize()-kx);
-     
-     for (uint64_t jx = 0; jx < currentLayer->getSize(); jx++) {
-     pCurrentNeuron = currentLayer->atIndex(jx);
-     
-     for (uint64_t ix = 0; ix < pCurrentNeuron->getNumEdges(); ix++) {
-     if (!pCurrentNeuron->getAdjacentNode(ix)->getNumEdges()) {
-     pCurrentNeuron->changeBias(pCurrentNeuron->getAdjacentNode(ix)->getBias() * pCurrentNeuron->getAdjacentEdge(ix)->getInfluence());
-     pCurrentNeuron->getAdjacentEdge(ix)->blocked = true;
-     } else {
-     pCurrentNeuron->getAdjacentEdge(ix)->blocked = false;
-     }
-     }
-     
-     pCurrentNeuron->cleanUp();
-     }
-     }
-     */
-    
-    /* Rid stray Neurons */
-    
-    for (uint64_t kx = 1; kx < this->layers->getSize(); kx++) {
-      currentLayer = this->layers->atIndex(kx);
-      
-      for (uint64_t jx = 0; jx < currentLayer->getSize(); jx++) {
-        //pCurrentNeuron = currentLayer->atIndex(jx);
-        
-        if (!currentLayer->atIndex(jx)->outputCount) {
-          delete pCurrentNeuron;
-          continue;
-        }
-        
-        /*
-         for (uint64_t ix = 0; ix < pCurrentNeuron->getNumEdges(); ix++) {
-         if (pCurrentNeuron->getAdjacentNode(ix)->outputCount == 1) {
-         pCurrentNeuron->colapseInputNeuron(ix);
-         }
-         }
-         
-         pCurrentNeuron->cleanUp();
-         */
+        pCurrentNeuron->modifyAllAdjacent(Neuron::pruneEdgesEach, 0);
       }
     }
     
@@ -417,7 +326,7 @@ namespace NeuralNetwork
     Neuron *tmpInput;
     uint64_t outputSize;
     
-    network->inputs.modifyAll(addEach, this);
+    network->inputs.modifyAll(NeuralNetwork::addEach, this);
     
     currentStack = this->layers->atIndex(network->layers->getSize()-1);
     

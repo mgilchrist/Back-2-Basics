@@ -23,14 +23,16 @@
 #define __Algorithms__Graph__
 
 #include <iostream>
+using namespace std;
 
 #include "Stack.h"
+#include "LLRB_Tree.h"
 
 
 namespace Graph {
   
   
-  template <class NodeType>
+  template <class NodeType, class EdgeType>
   class Edge;
   template <class NodeType, class EdgeType>
   class Node;
@@ -39,14 +41,13 @@ namespace Graph {
   class Graph;
   
   
-  template <class NodeType>
+  template <class NodeType, class EdgeType>
   class Edge
   {
     
   protected:
     NodeType    *u;
     NodeType    *v;
-    uint64_t    index;
     
   public:
     
@@ -54,12 +55,12 @@ namespace Graph {
     
     Edge();
     Edge(NodeType *v, NodeType *u);
-    
-    virtual void setIndex(uint64_t index);
-    virtual uint64_t getIndex();
+    ~Edge();
     
     virtual NodeType *getForward();
     virtual NodeType *getBackward();
+    
+    friend class Node<NodeType,EdgeType>;
   };
   
   
@@ -69,24 +70,28 @@ namespace Graph {
   {
     
   protected:
-    Collection::Stack<EdgeType *> *forwardEdges;
+    LLRB_Tree<EdgeType *, uint64_t> forwardEdges;
+    static uint64_t deleteEdgesEach(LLRB_TreeNode<EdgeType *, uint64_t> *current, void *reserved) {
+      delete current->data;
+      
+      return current->key;
+    }
     
+    void rModifyAllAdjacent(uint64_t (*action)(LLRB_TreeNode<EdgeType *, uint64_t> *, void *), void *, uint64_t);
   public:
-    bool        discovered;
-    uint64_t    index;
-    EdgeType    *previousEdge;
+    uint64_t    discovered = 0;
+    uint64_t    references = 0;
+    EdgeType    *previousEdge = NULL;
     
   public:
     
     Node();
-    virtual void setIndex(uint64_t);
-    uint64_t getIndex();
-    uint64_t getNumEdges();
-    virtual void addAdjacentEdge(EdgeType *adjacent);
-    virtual EdgeType *removeNewestEdge();
-    virtual void cleanUp();
-    virtual EdgeType *getAdjacentEdge(uint64_t index);
-    virtual NodeType *getAdjacentNode(uint64_t index);
+    ~Node();
+    
+    void addEdge(EdgeType *);
+    void removeEdge(EdgeType *);
+    
+    void modifyAllAdjacent(uint64_t (*action)(LLRB_TreeNode<EdgeType *, uint64_t> *, void *), void *);
   };
   
   
@@ -94,42 +99,88 @@ namespace Graph {
   class Graph
   {
   private:
-    Collection::Stack<NodeType *> *nodes;
-    Collection::Stack<EdgeType *> *edges;
     
   protected:
     NodeType *start;
     NodeType *terminal;
     
+    static uint64_t getEdgeEach(LLRB_TreeNode<EdgeType *, uint64_t> *current, void *vect) {
+      ((vector<EdgeType *> *)vect)->push_back(current->data);
+      
+      return current->key;
+    }
+    
+    static uint64_t pathDiscoveryBFSEach(LLRB_TreeNode<EdgeType *, uint64_t> *current, void *nextL) {
+      
+      NodeType *v;
+      
+      if (!current->data->blocked) {
+        
+        if (!(v = current->data->getForward())->discovered) {
+          v->previousEdge = current->data;
+          ((vector<NodeType *> *)nextL)->push_back(v);
+        }
+        
+        v->discovered++;
+        
+      }
+      
+      return current->key;
+    }
+    
+    static uint64_t pathDiscoveryBFSAllEach(LLRB_TreeNode<EdgeType *, uint64_t> *current, void *nextL) {
+      
+      NodeType *v;
+      
+      if (!current->data->blocked) {
+        if (!(v = current->data->getForward())->discovered) {
+          ((vector<NodeType *> *)nextL)->push(v);
+        }
+        
+        v->discovered++;
+      }
+      
+      
+      return current->key;
+    }
+    
+    static uint64_t pathDiscoveryFAPEach(LLRB_TreeNode<EdgeType *, uint64_t> *current, void *nextL) {
+      
+      NodeType *v;
+      
+      if (!current->data->blocked) {
+        
+        if ((v = current->data->getForward())->discovered == false) {
+          v->previousEdge = current->data;
+          ((vector<NodeType *> *)nextL)->push_back(v);
+        }
+        v->discovered++;
+      }
+      
+      return current->key;
+    }
+    
   public:
-    Collection::Stack<Collection::Stack<NodeType *> *> *layers;
-    Collection::Stack<EdgeType *> *pathToTerminal;
     
-    virtual Collection::Stack<EdgeType *> *breadthFirstSearch(NodeType *start, NodeType *terminal);
-    virtual Collection::Stack<Collection::Stack<NodeType *> *> *breadthFirstSearch(NodeType *start);
-    
-    virtual void swapNodeIndexes(uint64_t a,uint64_t b);
+    static vector<EdgeType *> *findAPath(NodeType *start, NodeType *terminal);
+    static vector<vector<NodeType *> *> *breadthFirstSearch(NodeType *start, NodeType *terminal);
+    static vector<vector<NodeType *> *> *breadthFirstSearchAll(NodeType *start);
     
   public:
     
     Graph();
-    ~Graph();
     
-    void add(NodeType *node);
-    void addEdgeObj(EdgeType *edge);
+    vector<vector<NodeType *> *> *getLayers();
     
-    virtual Collection::Stack<Collection::Stack<NodeType *> *> *getLayers();
+    static vector<NodeType *> *getReachableNodes(NodeType *a, NodeType *b);
+    static vector<EdgeType *> *getEdges(vector<NodeType *> *nodes);
     
-    virtual Collection::Stack<EdgeType *> *getPathToTerminal();
+    virtual vector<EdgeType *> *getPathToTerminal();
     
-    virtual NodeType *nodeAtIndex(uint64_t index);
-    virtual EdgeType *edgeAtIndex(uint64_t index);
-    virtual uint64_t getNumNodes();
-    virtual uint64_t getNumEdges();
-    virtual void setStart(NodeType *start);
-    virtual void setTerminal(NodeType *terminal);
-    virtual NodeType *getStart();
-    virtual NodeType *getTerminal();
+    void setStart(NodeType *start);
+    void setTerminal(NodeType *terminal);
+    NodeType *getStart();
+    NodeType *getTerminal();
     
   };
   
@@ -147,36 +198,40 @@ namespace Graph {
   
   
   
-  /* Node */
+  /* Edge */
   
-  template <class NodeType>
-  Edge<NodeType>::Edge() {
+  template <class NodeType, class EdgeType>
+  Edge<NodeType,EdgeType>::Edge() {
     
   }
   
-  template <class NodeType>
-  Edge<NodeType>::Edge(NodeType *v, NodeType *u) {
+  template <class NodeType, class EdgeType>
+  Edge<NodeType,EdgeType>::Edge(NodeType *v, NodeType *u) {
     this->u = u;
     this->v = v;
+    
+    v->references++;
+    u->addEdge((EdgeType *)this);
   }
   
-  template <class NodeType>
-  void Edge<NodeType>::setIndex(uint64_t index) {
-    this->index = index;
+  template <class NodeType, class EdgeType>
+  Edge<NodeType,EdgeType>::~Edge() {
+    
+    v->references--;
+    
+    if (!(v->references)) {
+      delete v;
+    }
+    u->removeEdge((EdgeType *)this);
   }
   
-  template <class NodeType>
-  uint64_t Edge<NodeType>::getIndex() {
-    return index;
-  }
-  
-  template <class NodeType>
-  NodeType *Edge<NodeType>::getForward() {
+  template <class NodeType, class EdgeType>
+  NodeType *Edge<NodeType,EdgeType>::getForward() {
     return v;
   }
   
-  template <class NodeType>
-  NodeType *Edge<NodeType>::getBackward() {
+  template <class NodeType, class EdgeType>
+  NodeType *Edge<NodeType,EdgeType>::getBackward() {
     return u;
   }
   
@@ -186,89 +241,153 @@ namespace Graph {
   
   template <class NodeType, class EdgeType>
   Node<NodeType,EdgeType>::Node() {
-    forwardEdges = new Collection::Stack<EdgeType *>();
-    discovered = false;
+  
+  }
+  
+  
+  
+  template <class NodeType, class EdgeType>
+  Node<NodeType,EdgeType>::~Node() {
+    forwardEdges.modifyAll(deleteEdgesEach, 0);
   }
   
   template <class NodeType, class EdgeType>
-  uint64_t Node<NodeType,EdgeType>::getNumEdges() {
-    return forwardEdges->getSize();
+  void Node<NodeType,EdgeType>::addEdge(EdgeType *edge) {
+    forwardEdges.insert(edge, (uint64_t)edge);
   }
   
   template <class NodeType, class EdgeType>
-  uint64_t Node<NodeType,EdgeType>::getIndex() {
-    return index;
+  void Node<NodeType,EdgeType>::removeEdge(EdgeType *edge) {
+    EdgeType *victim = forwardEdges.remove((uint64_t)edge);
+    delete victim;
   }
   
   template <class NodeType, class EdgeType>
-  void Node<NodeType,EdgeType>::setIndex(uint64_t index) {
-    this->index = index;
+  void Node<NodeType,EdgeType>::modifyAllAdjacent(uint64_t (*action)(LLRB_TreeNode<EdgeType *, uint64_t> *, void *), void *object) {
+    forwardEdges.modifyAll(action, object);
   }
-  
-  template <class NodeType, class EdgeType>
-  void Node<NodeType,EdgeType>::cleanUp() {
-    Collection::Stack<EdgeType *> *tmp = new Collection::Stack<EdgeType *>();
-    
-    for (int ix = 0; ix < forwardEdges->getSize(); ix++) {
-      EdgeType *tmpEdge = forwardEdges->atIndex(ix);
-      if (!tmpEdge->blocked) {
-        tmp->push(tmpEdge);
-      }
-    }
-    
-    delete forwardEdges;
-    
-    forwardEdges = tmp;
-  }
-  
-  template <class NodeType, class EdgeType>
-  void Node<NodeType,EdgeType>::addAdjacentEdge(EdgeType *adjacent) {
-    forwardEdges->push(adjacent);
-  }
-  
-  template <class NodeType, class EdgeType>
-  EdgeType *Node<NodeType,EdgeType>::removeNewestEdge() {
-    return forwardEdges->pop();
-  }
-  
-  template <class NodeType, class EdgeType>
-  EdgeType *Node<NodeType,EdgeType>::getAdjacentEdge(uint64_t index) {
-    return forwardEdges->atIndex(index);
-  }
-  
-  template <class NodeType, class EdgeType>
-  NodeType *Node<NodeType,EdgeType>::getAdjacentNode(uint64_t index) {
-    EdgeType *edge = forwardEdges->atIndex(index);
-    
-    if (edge->getForward() != this) {
-      return edge->getForward();
-    } else {
-      return edge->getBackward();
-    }
-  }
-  
-  
   
   /* Graph */
   
   template <class NodeType, class EdgeType>
-  Collection::Stack<Collection::Stack<NodeType *> *> *
-  Graph<NodeType,EdgeType>::breadthFirstSearch(NodeType *start) {
+  vector<NodeType *> *Graph<NodeType,EdgeType>::getReachableNodes(NodeType *a, NodeType *b) {
+    vector<vector<NodeType *> *> *layers, *reverseLayers;
+    vector<NodeType *> *layer;
+    NodeType *node;
+    vector<NodeType *> *ret = new vector<NodeType *>();
+    uint64_t totalNodes = 0;
     
-    Collection::Stack<Collection::Stack<NodeType *> *> *baseL;
-    Collection::Stack<NodeType *> *L;
-    Collection::Stack<NodeType *> *nextL;
-    NodeType *u, *v;
+    layers = breadthFirstSearch(a, b);
+    reverseLayers = new vector<vector<NodeType *> *>(layers->size());
     
-    for (int ix = 0; ix < this->getNumNodes(); ix++) {
-      this->nodeAtIndex(ix)->discovered = false;
+    while ((!layers->empty()) && ((layer = layers->back()) != NULL)) {
+      totalNodes += layer->size();
+      reverseLayers->push_back(layer);
+      layers->resize(layers->size()-1);
     }
     
-    start->discovered = true;
+    ret->reserve(totalNodes);
     
-    baseL = new Collection::Stack<Collection::Stack<NodeType *> *>();
-    L = new Collection::Stack<NodeType *>;
-    baseL->push(L);
+    while ((!reverseLayers->empty()) && ((layer = reverseLayers->back()) != NULL)) {
+      while ((!layer->empty()) && ((node = layer->back()) != NULL)) {
+        ret->push_back(node);
+        layer->resize(layer->size()-1);
+      }
+      reverseLayers->pop_back();
+    }
+    
+    delete layers;
+    delete reverseLayers;
+    
+    return ret;
+  }
+  
+  template <class NodeType, class EdgeType>
+  vector<EdgeType *> *Graph<NodeType,EdgeType>::getEdges(vector<NodeType *> *nodes) {
+    vector<EdgeType *> *ret = new vector<EdgeType *>();
+    
+    for (uint64_t ix = 0; ix < nodes->size(); ix++) {
+      nodes->at(ix)->modifyAllAdjacent(Graph::getEdgeEach, ret);
+    }
+    
+    return ret;
+  }
+  
+  template <class NodeType, class EdgeType>
+  vector<vector<NodeType *> *> *
+  Graph<NodeType,EdgeType>::breadthFirstSearch(NodeType *start,
+                                               NodeType *terminal) {
+    
+    vector<vector<NodeType *> *> *baseL;
+    vector<NodeType *> *L, *first;
+    vector<NodeType *> *nextL;
+    NodeType *u;
+    uint64_t terminalReachCnt = 0, lastTerminalLayer = 0, layerCnt = 0;
+    
+    start->discovered = 1;
+    terminal->discovered = 1;
+    
+    baseL = new vector<vector<NodeType *> *>();
+    L = new vector<NodeType *>();
+    first = L;
+    L->push_back(start);
+    
+    while (!(L->empty())) {
+      
+      // Initialize new layer
+      nextL = new vector<NodeType *>;
+      baseL->push_back(nextL);
+      layerCnt++;
+      
+      while ((!(L->empty())) && ((u = L->back()) != NULL)) {
+        u->modifyAllAdjacent(Graph::pathDiscoveryBFSEach, nextL);
+        
+        L->resize(L->size()-1);
+        if (terminalReachCnt != terminal->discovered) {
+          lastTerminalLayer = layerCnt;
+          terminalReachCnt = terminal->discovered;
+          if (terminal->discovered > terminal->references) {
+            goto bfs_cleanup;
+          }
+        }
+      }
+      L = nextL;
+    }
+    
+  bfs_cleanup:
+    
+    first->resize(0);
+    delete first;
+    
+    for (int ix = 0; ix < baseL->size(); ix++) {
+      for (int jx = 0; jx < baseL->at(ix)->size(); jx++) {
+        baseL->at(ix)->at(jx)->discovered = 0;
+      }
+    }
+    
+    while (layerCnt > lastTerminalLayer) {
+      layerCnt--;
+      baseL->back()->resize(0);
+      baseL->pop_back();
+    }
+    
+    return baseL;
+    
+  }
+  
+  template <class NodeType, class EdgeType>
+  vector<vector<NodeType *> *> *
+  Graph<NodeType,EdgeType>::breadthFirstSearchAll(NodeType *start) {
+    
+    vector<vector<NodeType *> *> *baseL;
+    vector<NodeType *> *L;
+    vector<NodeType *> *nextL;
+    NodeType *u;
+    
+    start->discovered = 1;
+    
+    baseL = new vector<vector<NodeType *> *>();
+    L = new vector<NodeType *>();
     
     L->push(start);
     
@@ -276,19 +395,21 @@ namespace Graph {
     while (L->peek() != NULL) {
       
       // Initialize new layer
-      nextL = new Collection::Stack<NodeType *>;
+      nextL = new vector<NodeType *>;
       baseL->push(nextL);
       
-      while ((u = L->pop()) != NULL) {
-        for (int jx = 0; jx < u->getNumEdges(); jx++) {
-          if (u->getAdjacentEdge(jx)->blocked) {
-            continue;
-          }
-          if ((v = u->getAdjacentNode(jx))->discovered == false) {
-            v->discovered = true;
-            nextL->push(v);
-          }
-        }
+      while ((!(L->empty())) && ((u = L->pop()) != NULL)) {
+        u->modifyAllAdjacent(Graph::pathDiscoveryBFSAllEach, nextL);
+      }
+      
+      L = nextL;
+      
+    }
+    
+    
+    for (int ix = 0; ix < baseL->size(); ix++) {
+      for (int jx = 0; jx < baseL->atIndex(ix)->size(); jx++) {
+        baseL->atIndex(ix)->atIndex(jx)->discovered = 0;
       }
     }
     
@@ -298,160 +419,83 @@ namespace Graph {
   
   
   template <class NodeType, class EdgeType>
-  Collection::Stack<EdgeType *> *
-  Graph<NodeType,EdgeType>::breadthFirstSearch(NodeType *start,
-                                               NodeType *terminal) {
+  vector<EdgeType *> *
+  Graph<NodeType,EdgeType>::findAPath(NodeType *start,
+                                      NodeType *terminal) {
     
-    Collection::Stack<Collection::Stack<NodeType *> *> *baseL;
-    Collection::Stack<NodeType *> *L;
-    Collection::Stack<NodeType *> *nextL;
+    vector<vector<NodeType *> *> *baseL;
+    vector<NodeType *> *L;
+    vector<NodeType *> *nextL;
     NodeType *u, *v;
-    Collection::Stack<EdgeType *> *ret;
+    vector<EdgeType *> *ret;
     
-    for (int ix = 0; ix < this->getNumNodes(); ix++) {
-      this->nodeAtIndex(ix)->discovered = false;
-    }
+    start->discovered = 1;
     
-    start->discovered = true;
+    baseL = new vector<vector<NodeType *> *>();
+    L = new vector<NodeType *>();
+    baseL->push_back(L);
     
-    baseL = new Collection::Stack<Collection::Stack<NodeType *> *>();
-    L = new Collection::Stack<NodeType *>;
-    baseL->push(L);
+    L->push_back(start);
     
-    L->push(start);
-    
-    while (L->peek() != NULL) {
+    while (!L->empty()) {
       
       // Initialize new layer
-      nextL = new Collection::Stack<NodeType *>;
-      baseL->push(nextL);
+      nextL = new vector<NodeType *>;
+      baseL->push_back(nextL);
       
-      while ((u = L->pop()) != NULL) {
-        for (int jx = 0; jx < u->getNumEdges(); jx++) {
-          if (u->getAdjacentEdge(jx)->blocked) {
-            continue;
-          }
-          if ((v = u->getAdjacentNode(jx))->discovered == false) {
-            v->discovered = true;
-            v->previousEdge = u->getAdjacentEdge(jx);
-            nextL->push(v);
-            if (v == terminal) {
-              goto bfs_cleanup;
-            }
-          }
+      while ((!L->empty()) && ((u = L->back()) != NULL)) {
+        u->modifyAllAdjacent(Graph::pathDiscoveryFAPEach, nextL);
+        
+        L->resize(L->size()-1);
+        
+        if (terminal->discovered) {
+          goto findAPath_cleanup;
         }
       }
+      
+    L = nextL;
     }
     
-  bfs_cleanup:
+  findAPath_cleanup:
     
-    for (int ix = 0; ix < baseL->getSize(); ix++) {
-      delete baseL->atIndex(ix);
+    for (int ix = 0; ix < baseL->size(); ix++) {
+      for (int jx = 0; jx < baseL->at(ix)->size(); jx++) {
+        baseL->at(ix)->at(jx)->discovered = 0;
+      }
+      baseL->at(ix)->resize(0);
     }
     delete baseL;
     
-    if (terminal == NULL) {
-      this->pathToTerminal = NULL;
-      return NULL;
-    }
-    
-    ret = new Collection::Stack<EdgeType *>();
+    ret = new vector<EdgeType *>();
     
     v = terminal;
     
     while (v->previousEdge != NULL) {
       if (v->previousEdge->getBackward() != NULL) {
-        ret->push(v->previousEdge);
+        ret->push_back(v->previousEdge);
       }
       v = v->previousEdge->getBackward();
     }
-    
-    this->pathToTerminal = ret;
     
     return ret;
     
   }
   
   template <class NodeType, class EdgeType>
-  void Graph<NodeType,EdgeType>::swapNodeIndexes(uint64_t a,uint64_t b) {
-    NodeType *tmp;
-    
-    tmp = nodes->atIndex(a);
-    nodes->setIndex(a, nodes->atIndex(b));
-    nodes->setIndex(b, tmp);
-    
-    nodes->atIndex(a)->index = a;
-    nodes->atIndex(b)->index = b;
-  }
-  
-  template <class NodeType, class EdgeType>
   Graph<NodeType,EdgeType>::Graph() {
-    nodes = new Collection::Stack<NodeType *>();
-    edges = new Collection::Stack<EdgeType *>();
-  }
-  
-  template <class NodeType, class EdgeType>
-  Graph<NodeType,EdgeType>::~Graph() {
-    for (int ix = 0; ix < nodes->getSize(); ix++) {
-      delete nodes->atIndex(ix);
-    }
-    for (int ix = 0; ix < edges->getSize(); ix++) {
-      delete edges->atIndex(ix);
-    }
-    delete nodes;
-    delete edges;
-  }
-  
-  template <class NodeType, class EdgeType>
-  void Graph<NodeType,EdgeType>::add(NodeType *node) {
-    node->index = nodes->getSize();
-    nodes->push(node);
-  }
-  
-  template <class NodeType, class EdgeType>
-  void Graph<NodeType,EdgeType>::addEdgeObj(EdgeType *edge) {
-    edge->setIndex(edges->getSize());
-    edges->push(edge);
-  }
-  
-  template <class NodeType, class EdgeType>
-  Collection::Stack<Collection::Stack<NodeType *> *> *Graph<NodeType,EdgeType>::getLayers() {
     
-    if (layers == NULL) {
-      layers = breadthFirstSearch(start);
-    }
+  }
+  
+  template <class NodeType, class EdgeType>
+  vector<vector<NodeType *> *> *Graph<NodeType,EdgeType>::getLayers() {
     
-    return layers;
+    return breadthFirstSearch(start, terminal);
   }
   
   template <class NodeType, class EdgeType>
-  Collection::Stack<EdgeType *> *Graph<NodeType,EdgeType>::getPathToTerminal() {
+  vector<EdgeType *> *Graph<NodeType,EdgeType>::getPathToTerminal() {
     
-    if (pathToTerminal == NULL) {
-      breadthFirstSearch(start, terminal);
-    }
-    
-    return pathToTerminal;
-  }
-  
-  template <class NodeType, class EdgeType>
-  NodeType *Graph<NodeType,EdgeType>::nodeAtIndex(uint64_t index) {
-    return nodes->atIndex(index);
-  }
-  
-  template <class NodeType, class EdgeType>
-  EdgeType *Graph<NodeType,EdgeType>::edgeAtIndex(uint64_t index) {
-    return edges->atIndex(index);
-  }
-  
-  template <class NodeType, class EdgeType>
-  uint64_t Graph<NodeType,EdgeType>::getNumNodes() {
-    return nodes->getSize();
-  }
-  
-  template <class NodeType, class EdgeType>
-  uint64_t Graph<NodeType,EdgeType>::getNumEdges() {
-    return edges->getSize();
+    return findAPath(start, terminal);
   }
   
   template <class NodeType, class EdgeType>

@@ -27,21 +27,15 @@
 
 namespace Graph {
   
-  
-  
-  template <class NodeType, class EdgeType>
-  class Hub;
-  
-  
-  template <class HubType>
-  class Pipe : public Edge<HubType>
+  template <class HubType, class PipeType>
+  class Pipe : public Edge<HubType,PipeType>
   {
   public:
-    double      capacity;
+    double      capacity = 0.0;
     
   public:
-    Pipe<HubType>();
-    Pipe<HubType>(HubType *v, HubType *u, double capacity);
+    Pipe<HubType,PipeType>();
+    Pipe<HubType,PipeType>(HubType *v, HubType *u, double capacity);
   };
   
   
@@ -50,7 +44,7 @@ namespace Graph {
   {
     
   public:
-    double        capacity;
+    double        capacity = 0.0;
     
   public:
     
@@ -60,16 +54,21 @@ namespace Graph {
   
   /* Pipe */
   
-  template <class HubType>
-  Pipe<HubType>::Pipe() {
+  template <class HubType, class PipeType>
+  Pipe<HubType,PipeType>::Pipe() {
     
   }
   
-  template <class HubType>
-  Pipe<HubType>::Pipe(HubType *v, HubType *u, double capacity) {
+  template <class HubType, class PipeType>
+  Pipe<HubType,PipeType>::Pipe(HubType *v, HubType *u, double capacity) {
     this->u = u;
     this->v = v;
-    capacity = capacity;
+    
+    v->references++;
+    u->addEdge((PipeType *)this);
+
+    
+    this->capacity = capacity;
   }
   
   
@@ -77,9 +76,7 @@ namespace Graph {
   
   template <class NodeType, class EdgeType>
   Hub<NodeType,EdgeType>::Hub() {
-    this->forwardEdges = new Collection::Stack<EdgeType *>();
-    this->discovered = false;
-    capacity = 0.0;
+  
   }
   
   
@@ -88,14 +85,14 @@ namespace Graph {
   template <class NodeType, class EdgeType>
   class Network : public Graph<NodeType, EdgeType>
   {
-    std::vector<double> *flow;
+    std::vector<double> *flow = NULL;
     
   protected:
-    Network *createAuxNetwork();
-    void deleteAuxNetwork(Network<NodeType, EdgeType> *auxGraph);
-    double bottleneck(double *flow, Collection::Stack<EdgeType *> *path);
-    double *augment(double *flow, Collection::Stack<EdgeType *> *path);
-    void maxFlow(NodeType *s, NodeType *t);
+    vector<EdgeType *> *createAuxNetwork(vector<EdgeType *> *);
+    void deleteAuxNetwork(vector<EdgeType *> *auxEdges);
+    double bottleneck(double *, vector<EdgeType *> *);
+    double *augment(double *, vector<EdgeType *> *,std::vector<EdgeType *> *);
+    void maxFlow(NodeType *, NodeType *);
     
   public:
     Network();
@@ -106,8 +103,7 @@ namespace Graph {
   
   template <class NodeType, class EdgeType>
   Network<NodeType,EdgeType>::Network() {
-    Graph<NodeType,EdgeType>();
-    flow = NULL;
+    
   }
   
   template <class NodeType, class EdgeType>
@@ -120,53 +116,43 @@ namespace Graph {
   
   /* Network Flow */
   template <class NodeType, class EdgeType>
-  Network<NodeType,EdgeType> *Network<NodeType,EdgeType>::createAuxNetwork() {
-    Network<NodeType,EdgeType> *auxGraph = new Network<NodeType,EdgeType>();
+  vector<EdgeType *> *Network<NodeType,EdgeType>::createAuxNetwork(vector<EdgeType *> *edges) {
+    vector<EdgeType *> *auxEdges = new vector<EdgeType *>();
     EdgeType *thisEdge;
     
-    for (int ix = 0; ix < this->getNumNodes(); ix++) {
-      auxGraph->add(this->nodeAtIndex(ix));
-    }
+    auxEdges->resize(edges->size());
     
-    for (int ix = 0; ix < this->getNumEdges(); ix++) {
-      thisEdge = this->edgeAtIndex(ix);
-      auxGraph->addEdgeObj(thisEdge);
+    for (uint64_t ix = 0; ix < edges->size(); ix++) {
+      thisEdge = edges->at(ix);
       
       thisEdge = new EdgeType(thisEdge->getBackward(), thisEdge->getForward(),
                               thisEdge->capacity);
-      
-      thisEdge->getBackward()->addAdjacentEdge(thisEdge);
       thisEdge->blocked = true;
       
+      auxEdges->at(ix) = thisEdge;
     }
-    return auxGraph;
+    
+    return auxEdges;
   }
   
   template <class NodeType, class EdgeType>
-  void Network<NodeType,EdgeType>::deleteAuxNetwork(Network<NodeType, EdgeType> *auxGraph) {
+  void Network<NodeType,EdgeType>::deleteAuxNetwork(vector<EdgeType *> *auxEdges) {
     EdgeType *thisEdge;
     
-    for (int ix = 1; ix < auxGraph->getNumEdges(); ix+=2) {
-      thisEdge = this->edgeAtIndex(ix);
-      
-      thisEdge = new EdgeType(thisEdge->getBackward(), thisEdge->getForward(),
-                              thisEdge->capacity);
-      
-      thisEdge->getBackward()->removeNewestEdge();
-      delete thisEdge;
-      
+    for (uint64_t ix = 0; ix < auxEdges->size(); ix++) {
+      delete auxEdges->at(ix);
     }
     
-    delete auxGraph;
+    delete auxEdges;
   }
   
   template <class NodeType, class EdgeType>
-  double Network<NodeType,EdgeType>::bottleneck(double *flow, Collection::Stack<EdgeType *> *path) {
-    double bottleneck = path->atIndex(0)->capacity - flow[0];
+  double Network<NodeType,EdgeType>::bottleneck(double *flow, vector<EdgeType *> *path) {
+    double bottleneck = path->at(0)->capacity - flow[0];
     
-    for (int ix = 1; ix < path->getSize(); ix++) {
-      if (bottleneck > (path->atIndex(ix)->capacity - flow[ix])) {
-        bottleneck = (path->atIndex(ix)->capacity - flow[ix]);
+    for (int ix = 1; ix < path->size(); ix++) {
+      if (bottleneck > (path->at(ix)->capacity - flow[ix])) {
+        bottleneck = (path->at(ix)->capacity - flow[ix]);
       }
     }
     
@@ -175,13 +161,15 @@ namespace Graph {
   
   template <class NodeType, class EdgeType>
   double *Network<NodeType,EdgeType>::augment(double *flow,
-                                              Collection::Stack<EdgeType *> *path) {
+                                              vector<EdgeType *> *path,
+                                              std::vector<EdgeType *> *edges) {
     
-    double *fPrime = new double[path->getSize()];
+    double *fPrime = new double[path->size()];
     double b = bottleneck(flow, path);
     
-    for (int ix = 0; ix < path->getSize(); ix++) {
-      if ((path->atIndex(ix)->getIndex()) % 2) {
+    for (int ix = 0; ix < path->size(); ix++) {
+      bool isAug = (((path->at(ix)) >= edges->at(0)) && ((path->at(ix)) < edges->at(edges->size()))) ? false : true;
+      if (isAug) {
         fPrime[ix] = flow[ix] - b;
       } else {
         fPrime[ix] = flow[ix] + b;
@@ -194,58 +182,57 @@ namespace Graph {
   template<class NodeType, class EdgeType>
   void Network<NodeType,EdgeType>::maxFlow(NodeType *s, NodeType *t) {
     
-    Collection::Stack<EdgeType *> *path;
+    vector<EdgeType *> *path;
     std::vector<double> *flow;
     double *subFlow, *subFlowPrime;
+    std::vector<NodeType *> *nodes = this->getReachableNodes(s,t);
     
-    Network<NodeType,EdgeType> *auxGraph = createAuxNetwork();
+    std::vector<EdgeType *> *edges = this->getEdges(nodes);
+    
+    std::vector<EdgeType *> *auxEdges = createAuxNetwork(edges);
     
     flow = new std::vector<double>();
     
-    flow->resize(this->getNumEdges());
+    flow->resize(nodes->size(),0.0);
     
-    if (this->pathToTerminal != NULL) {
-      delete this->pathToTerminal;
-      this->pathToTerminal = NULL;
-    }
-    
-    for (int ix = 0; ix < this->getNumEdges(); ix++) {
-      flow->at(ix) = 0.0;
-    }
-    
-    while ((path = auxGraph->breadthFirstSearch(s, t)) != NULL) {
-      subFlow = new double[path->getSize()];
+    while ((path = this->findAPath(s, t)) != NULL) {
+      subFlow = new double[path->size()];
       
-      for (int ix = 0; ix < path->getSize(); ix++) {
-        subFlow[ix] = flow->at((path->atIndex(ix)->getIndex())/2);
+      for (int ix = 0; ix < path->size(); ix++) {
+        uint64_t index = ((((path->at(ix)) >= edges->at(0)) && ((path->at(ix)) < edges->at(edges->size()))) ?
+                          (((path->at(ix))-edges->at(0))/sizeof(EdgeType *)) :
+                          (((path->at(ix))-auxEdges->at(0)))/sizeof(EdgeType *));
+        subFlow[ix] = flow->at(index);
       }
       
-      subFlowPrime = this->augment(subFlow, path);
+      subFlowPrime = this->augment(subFlow, path, edges);
       
-      for (int ix = 0; ix < path->getSize(); ix++) {
-        flow->at((path->atIndex(ix)->getIndex())/2) = subFlowPrime[ix];
+      for (int ix = 0; ix < path->size(); ix++) {
+        uint64_t index = ((((path->at(ix)) >= edges->at(0)) && ((path->at(ix)) < edges->at(edges->size()))) ?
+                          (((path->at(ix))-edges->at(0))/sizeof(EdgeType *)) :
+                          (((path->at(ix))-auxEdges->at(0)))/sizeof(EdgeType *));
+        flow->at(index) = subFlowPrime[ix];
       }
       
       for (int ix = 0; ix < flow->size(); ix++) {
-        if (flow->at(ix) == auxGraph->edgeAtIndex(ix*2)->capacity) {
-          auxGraph->edgeAtIndex(ix*2)->blocked = true;
+        if (flow->at(ix) == edges->at(ix)->capacity) {
+          edges->at(ix)->blocked = true;
         } else {
-          auxGraph->edgeAtIndex(ix*2)->blocked = false;
+          edges->at(ix)->blocked = false;
         }
         if (flow->at(ix) == 0.0) {
-          auxGraph->edgeAtIndex((ix*2)+1)->blocked = true;
+          auxEdges->at(ix)->blocked = true;
         } else {
-          auxGraph->edgeAtIndex((ix*2)+1)->blocked = false;
+          auxEdges->at(ix)->blocked = false;
         }
       }
       
       delete subFlow;
       delete subFlowPrime;
-      delete this->pathToTerminal;
-      this->pathToTerminal = NULL;
     }
     
-    deleteAuxNetwork(auxGraph);
+    delete nodes;
+    delete edges;
     
     this->flow = flow;
   }
