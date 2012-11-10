@@ -57,8 +57,8 @@ namespace Graph {
     Edge(NodeType *v, NodeType *u);
     ~Edge();
     
-    virtual NodeType *getForward();
-    virtual NodeType *getBackward();
+    NodeType *getForward();
+    NodeType *getBackward();
     
     friend class Node<NodeType,EdgeType>;
   };
@@ -77,7 +77,6 @@ namespace Graph {
       return current->key;
     }
     
-    void rModifyAllAdjacent(uint64_t (*action)(LLRB_TreeNode<EdgeType *, uint64_t> *, void *), void *, uint64_t);
   public:
     uint64_t    discovered = 0;
     uint64_t    references = 0;
@@ -92,6 +91,8 @@ namespace Graph {
     void removeEdge(EdgeType *);
     
     void modifyAllAdjacent(uint64_t (*action)(LLRB_TreeNode<EdgeType *, uint64_t> *, void *), void *);
+    
+    friend class Edge<NodeType,EdgeType>;
   };
   
   
@@ -258,13 +259,14 @@ namespace Graph {
   
   template <class NodeType, class EdgeType>
   void Node<NodeType,EdgeType>::removeEdge(EdgeType *edge) {
-    EdgeType *victim = forwardEdges.remove((uint64_t)edge);
-    delete victim;
+    forwardEdges.remove((uint64_t)edge);
   }
   
   template <class NodeType, class EdgeType>
   void Node<NodeType,EdgeType>::modifyAllAdjacent(uint64_t (*action)(LLRB_TreeNode<EdgeType *, uint64_t> *, void *), void *object) {
-    forwardEdges.modifyAll(action, object);
+    if (forwardEdges.size()) {
+      forwardEdges.modifyAll(action, object);
+    }
   }
   
   /* Graph */
@@ -339,10 +341,10 @@ namespace Graph {
       baseL->push_back(nextL);
       layerCnt++;
       
-      while ((!(L->empty())) && ((u = L->back()) != NULL)) {
+      for (uint64_t ix = 0; ix < L->size(); ix++) {
+        u = L->at(ix);
         u->modifyAllAdjacent(Graph::pathDiscoveryBFSEach, nextL);
         
-        L->resize(L->size()-1);
         if (terminalReachCnt != terminal->discovered) {
           lastTerminalLayer = layerCnt;
           terminalReachCnt = terminal->discovered;
@@ -392,13 +394,14 @@ namespace Graph {
     L->push(start);
     
     
-    while (L->peek() != NULL) {
+    while (!L->empty()) {
       
       // Initialize new layer
       nextL = new vector<NodeType *>;
       baseL->push(nextL);
       
-      while ((!(L->empty())) && ((u = L->pop()) != NULL)) {
+      for (uint64_t ix = 0; ix < L->size(); ix++) {
+        u = L->at(ix);
         u->modifyAllAdjacent(Graph::pathDiscoveryBFSAllEach, nextL);
       }
       
@@ -458,12 +461,6 @@ namespace Graph {
     
   findAPath_cleanup:
     
-    for (int ix = 0; ix < baseL->size(); ix++) {
-      for (int jx = 0; jx < baseL->at(ix)->size(); jx++) {
-        baseL->at(ix)->at(jx)->discovered = 0;
-      }
-      baseL->at(ix)->resize(0);
-    }
     delete baseL;
     
     ret = new vector<EdgeType *>();

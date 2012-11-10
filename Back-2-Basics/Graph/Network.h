@@ -66,7 +66,6 @@ namespace Graph {
     
     v->references++;
     u->addEdge((PipeType *)this);
-
     
     this->capacity = capacity;
   }
@@ -88,10 +87,10 @@ namespace Graph {
     std::vector<double> *flow = NULL;
     
   protected:
-    vector<EdgeType *> *createAuxNetwork(vector<EdgeType *> *);
-    void deleteAuxNetwork(vector<EdgeType *> *auxEdges);
-    double bottleneck(double *, vector<EdgeType *> *);
-    double *augment(double *, vector<EdgeType *> *,std::vector<EdgeType *> *);
+    vector<Pipe<NodeType,EdgeType> *> *createAuxNetwork(vector<Pipe<NodeType,EdgeType> *> *);
+    void deleteAuxNetwork(vector<Pipe<NodeType,EdgeType> *> *auxEdges);
+    double bottleneck(double *, vector<Pipe<NodeType,EdgeType> *> *);
+    double *augment(double *, vector<Pipe<NodeType,EdgeType> *> *,vector<Pipe<NodeType,EdgeType> *> *);
     void maxFlow(NodeType *, NodeType *);
     
   public:
@@ -116,16 +115,16 @@ namespace Graph {
   
   /* Network Flow */
   template <class NodeType, class EdgeType>
-  vector<EdgeType *> *Network<NodeType,EdgeType>::createAuxNetwork(vector<EdgeType *> *edges) {
-    vector<EdgeType *> *auxEdges = new vector<EdgeType *>();
-    EdgeType *thisEdge;
+  vector<Pipe<NodeType,EdgeType> *> *Network<NodeType,EdgeType>::createAuxNetwork(vector<Pipe<NodeType,EdgeType> *> *edges) {
+    vector<Pipe<NodeType,EdgeType> *> *auxEdges = new vector<Pipe<NodeType,EdgeType> *>();
+    Pipe<NodeType,EdgeType> *thisEdge;
     
     auxEdges->resize(edges->size());
     
     for (uint64_t ix = 0; ix < edges->size(); ix++) {
       thisEdge = edges->at(ix);
       
-      thisEdge = new EdgeType(thisEdge->getBackward(), thisEdge->getForward(),
+      thisEdge = new Pipe<NodeType,EdgeType>(thisEdge->getBackward(), thisEdge->getForward(),
                               thisEdge->capacity);
       thisEdge->blocked = true;
       
@@ -136,8 +135,8 @@ namespace Graph {
   }
   
   template <class NodeType, class EdgeType>
-  void Network<NodeType,EdgeType>::deleteAuxNetwork(vector<EdgeType *> *auxEdges) {
-    EdgeType *thisEdge;
+  void Network<NodeType,EdgeType>::deleteAuxNetwork(vector<Pipe<NodeType,EdgeType> *> *auxEdges) {
+    Pipe<NodeType,EdgeType> *thisEdge;
     
     for (uint64_t ix = 0; ix < auxEdges->size(); ix++) {
       delete auxEdges->at(ix);
@@ -147,7 +146,7 @@ namespace Graph {
   }
   
   template <class NodeType, class EdgeType>
-  double Network<NodeType,EdgeType>::bottleneck(double *flow, vector<EdgeType *> *path) {
+  double Network<NodeType,EdgeType>::bottleneck(double *flow, vector<Pipe<NodeType,EdgeType> *> *path) {
     double bottleneck = path->at(0)->capacity - flow[0];
     
     for (int ix = 1; ix < path->size(); ix++) {
@@ -161,8 +160,8 @@ namespace Graph {
   
   template <class NodeType, class EdgeType>
   double *Network<NodeType,EdgeType>::augment(double *flow,
-                                              vector<EdgeType *> *path,
-                                              std::vector<EdgeType *> *edges) {
+                                              vector<Pipe<NodeType,EdgeType> *> *path,
+                                              vector<Pipe<NodeType,EdgeType> *> *edges) {
     
     double *fPrime = new double[path->size()];
     double b = bottleneck(flow, path);
@@ -182,20 +181,20 @@ namespace Graph {
   template<class NodeType, class EdgeType>
   void Network<NodeType,EdgeType>::maxFlow(NodeType *s, NodeType *t) {
     
-    vector<EdgeType *> *path;
+    vector<Pipe<NodeType,EdgeType> *> *path;
     std::vector<double> *flow;
     double *subFlow, *subFlowPrime;
     std::vector<NodeType *> *nodes = this->getReachableNodes(s,t);
     
-    std::vector<EdgeType *> *edges = this->getEdges(nodes);
+    std::vector<Pipe<NodeType,EdgeType> *> *edges = (vector<Pipe<NodeType,EdgeType> *> *)this->getEdges(nodes);
     
-    std::vector<EdgeType *> *auxEdges = createAuxNetwork(edges);
+    std::vector<Pipe<NodeType,EdgeType> *> *auxEdges = createAuxNetwork(edges);
     
     flow = new std::vector<double>();
     
     flow->resize(nodes->size(),0.0);
     
-    while ((path = this->findAPath(s, t)) != NULL) {
+    while ((path = (vector<Pipe<NodeType,EdgeType> *> *)this->findAPath(s, t)) != NULL) {
       subFlow = new double[path->size()];
       
       for (int ix = 0; ix < path->size(); ix++) {

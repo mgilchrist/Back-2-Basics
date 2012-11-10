@@ -66,13 +66,15 @@ namespace NeuralNetwork
     
   public:
     
-    Synapse(Neuron *neuron, Neuron *input, double influence);
+    Synapse(Neuron *neuron, Neuron *input);
     
     void changeInfluence(double influence);
     void multInfluence(double influence);
     
     double getInfluence();
     double getMomentum();
+    
+    friend Neuron;
   };
   
   class Neuron : public Hub<Neuron,Synapse> {
@@ -88,48 +90,65 @@ namespace NeuralNetwork
     SIG_FNCT_TYPE sigmoidFunctionType = NORMAL;
     
     static uint64_t addInputsEach(LLRB_TreeNode<Harmony *, uint64_t> *current, void *neuron) {
-      new Synapse((Neuron *)neuron, current->data->expectation, RANDOM_INFLUENCE);
+      new Synapse((Neuron *)neuron, current->data->expectation);
       
       return current->key;
     }
-    
-  public:
-    
-    double delta;
-    double *memory;
-    double inputInfluenceDelta;
-    double inputInfluence = 0.0;
-    uint64_t outputCount = 0;
-    double *inputBias;
     
     static uint64_t pruneEdgesEach(LLRB_TreeNode<Synapse *, uint64_t> *current, void *neuron) {
       
       if (current->data->capacity < irrelevant) {
         ((Neuron *)neuron)->removeEdge(current->data);
       }
-
+      
       return current->key;
     }
     
-    Neuron(LLRB_Tree<Harmony *, uint64_t> *, double *, double *);
-    Neuron(Collection::Stack<Neuron *> *,double *, double *);
-    Neuron(double *, double *);
-    double probeActivation(uint64_t iteration);
+    static uint64_t probeActivationEach(LLRB_TreeNode<Synapse *, uint64_t> *current, void *neuron) {
+      
+      Synapse *synapse = current->data;
+      Neuron *input = synapse->getForward();
+      
+      if ((synapse != NULL) && (input != NULL)) {
+        *(((Neuron *)neuron)->memory) += input->probeActivation(currentIteration) * synapse->getInfluence();
+      }
+      return current->key;
+    }
     
     static uint64_t changeInputInfluenceEach(LLRB_TreeNode<Synapse *, uint64_t> *current, void *neuron) {
       double correction;
       Synapse *synapse = current->data;
-      Neuron *pCurrentNeuron =synapse->getForward();
+      Neuron *pCurrentNeuron = synapse->getForward();
       
-      correction = LEARNING_RULE_DEFAULT * pCurrentNeuron->delta;
-      correction += synapse->getMomentum();
-      
-      synapse->changeInfluence(correction);
+      if (pCurrentNeuron->discovered) {
+        correction = LEARNING_RULE_DEFAULT * pCurrentNeuron->delta;
+        correction += synapse->getMomentum();
+        
+        synapse->changeInfluence(correction);
+        pCurrentNeuron->discovered = 0;
+      }
       
       return current->key;
     }
+    
+  public:
+    
+    double delta = 0.0;
+    double *memory = NULL;
+    double inputInfluenceDelta = 0.0;
+    double inputInfluence = 1.0;
+    uint64_t outputCount = 0;
+    double *inputBias = NULL;
+    
+    Neuron(LLRB_Tree<Harmony *, uint64_t> *, vector<Neuron *> *, double *, double *);
+    
+    double probeActivation(uint64_t iteration);
+    
     void addInputNeuron(NeuralNetwork *,Neuron *);
     void changeInputInfluence();
+    
+    friend class NeuralNetwork;
+    friend class Synapse;
   };
   
   
@@ -139,7 +158,7 @@ namespace NeuralNetwork
     
     LLRB_Tree<Neuron *, uint64_t> inputs;
     LLRB_Tree<Harmony *, uint64_t> outputs;
-    Collection::Stack<Collection::Stack<Neuron *> *> *layers;
+    vector<vector<Neuron *> *> *layers;
     bool layersDetermined = false;
     double networkBias = 1.0;
     double learningRule = LEARNING_RULE_DEFAULT;
@@ -147,18 +166,16 @@ namespace NeuralNetwork
     
   protected:
     
-    static uint64_t addTerminal(LLRB_TreeNode<Neuron *, uint64_t> *current, void *nnetwork) {
-      Synapse *edge = new Synapse(((NeuralNetwork *)nnetwork)->terminal, current->data, 0.0);
-      
-      ((NeuralNetwork *)nnetwork)->terminalEdges.push_back(edge);
-      
-      current->data->addEdge(edge);
-      
-      return current->key;
-    }
+    double *glbBias;
     
-    static uint64_t removeTerminal(LLRB_TreeNode<Neuron *, uint64_t> *current, void *neuron) {
+    static uint64_t changeInputInfluenceEach(LLRB_TreeNode<Harmony *, uint64_t> *current, void *nnetwork) {
+      Neuron *pCurrentNeuron = current->data->expectation;
       
+      if (pCurrentNeuron->discovered) {
+        pCurrentNeuron->changeInputInfluence();
+        pCurrentNeuron->modifyAllAdjacent(Neuron::changeInputInfluenceEach, 0);
+        pCurrentNeuron->discovered = 0;
+      }
       
       return current->key;
     }
@@ -169,7 +186,26 @@ namespace NeuralNetwork
     }
     
     static uint64_t calcDeltaEach(LLRB_TreeNode<Synapse *, uint64_t> *current, void *neuron) {
-      current->data->getForward()->delta += current->data->getInfluence() * ((Neuron *)neuron)->delta;
+      Synapse *synapse = current->data;
+      Neuron *input = current->data->getForward();
+      
+      if (input->discovered < input->references) {
+        input->delta += synapse->getInfluence() * ((Neuron *)neuron)->delta;
+      }
+      
+      input->discovered++;
+      
+      if (input->discovered == input->references) {
+        input->modifyAllAdjacent(calcDeltaEach, input);
+        
+        Neuron *input = current->data->getForward();
+        
+        double nCurrentOutput = *(input->memory);
+        
+        input->delta = (nCurrentOutput *
+                        (1.0 - nCurrentOutput) *
+                        input->delta);
+      }
       
       return current->key;
     }
@@ -177,7 +213,7 @@ namespace NeuralNetwork
     static uint64_t doCorrectionEach(LLRB_TreeNode<Harmony *, uint64_t> *current, void *reserved) {
       Neuron *pCurrentNeuron = current->data->expectation;
       double reality = *(current->data->reality);
-      double expectation = *pCurrentNeuron->memory;
+      double expectation = *(pCurrentNeuron->memory);
       
       pCurrentNeuron->delta = (expectation *
                                (1.0 - expectation) *
@@ -185,11 +221,18 @@ namespace NeuralNetwork
       
       pCurrentNeuron->inputInfluenceDelta += ((pCurrentNeuron->inputInfluence *
                                                pCurrentNeuron->delta) *
-                                              (*pCurrentNeuron->memory *
-                                               (1.0 - *pCurrentNeuron->memory)));
+                                              (expectation * (1.0 - expectation)));
       
       pCurrentNeuron->modifyAllAdjacent(calcDeltaEach, pCurrentNeuron);
-
+      pCurrentNeuron->discovered = 1;
+      
+      return current->key;
+    }
+    
+    static uint64_t addEach(LLRB_TreeNode<Neuron *, uint64_t> *current, void *network) {
+      
+      ((NeuralNetwork *)network)->inputs.insert(current->data, current->key);
+      
       return current->key;
     }
     
@@ -203,19 +246,6 @@ namespace NeuralNetwork
     
     void calcExpectation(void);
     void doCorrection();
-    
-    static uint64_t probeActivationEach(LLRB_TreeNode<Synapse *, uint64_t> *current, void *output) {
-      *(((Neuron *)output)->memory) += current->data->getForward()->probeActivation(currentIteration) * current->data->getInfluence();
-      
-      return current->key;
-    }
-    
-    static uint64_t addEach(LLRB_TreeNode<Neuron *, uint64_t> *current, void *network) {
-      
-      ((NeuralNetwork *)network)->inputs.insert(current->data, current->key);
-      
-      return current->key;
-    }
     
     virtual void simplify();
     virtual void merge(NeuralNetwork *);

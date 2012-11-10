@@ -34,8 +34,8 @@ using namespace std;
 #include "Genetic.h"
 #include "Metaheuristic.h"
 
-const uint64_t glbInputSize = 0x20;
-const uint64_t glbOutputSize = 0x20;
+const uint64_t glbInputSize = 0x4;
+const uint64_t glbOutputSize = 0x4;
 const uint64_t glbIterations = 0x100;
 const uint64_t glbTestSize = 0x10000;
 
@@ -357,9 +357,7 @@ int testArrayList() {
 }
 
 int testNeuralNetwork() {
-  std::vector<double> *input = new std::vector<double>();
   NeuralNetwork::NeuralNetwork *NNetwork;
-  std::vector<double> *expectation = new std::vector<double>();
   uint64_t iterations = 0;
   std::vector<double *> *thisInput, *thisOutput, *thisExpect;
   double errorRate = 0.0;
@@ -370,11 +368,8 @@ int testNeuralNetwork() {
   
   layers->resize(2);
   
-  input->resize(glbInputSize);
-  expectation->resize(glbOutputSize);
-  
-  layers->at(0) = glbOutputSize/16;
-  layers->at(1) = glbOutputSize/16;
+  layers->at(0) = glbOutputSize;
+  layers->at(1) = glbOutputSize;
   
   cout << "\nTesting NeuralNetwork\n";
   
@@ -388,12 +383,12 @@ int testNeuralNetwork() {
 
   
   for (int jx = 0; jx < glbInputSize; jx++) {
-    thisInput->at(jx) = &input->at(jx);
-    thisOutput->at(jx) = &input->at(jx);
+    thisInput->at(jx) = new double();
+    thisOutput->at(jx) = thisInput->at(jx);
   }
   
   for (uint64_t jx = 0; jx < glbOutputSize; jx++) {
-    thisExpect->at(jx) = &expectation->at(jx);
+    thisExpect->at(jx) = new double();
   }
   
   NNetwork = new NeuralNetwork::NeuralNetwork(thisInput, thisOutput, thisExpect, layers);
@@ -418,7 +413,7 @@ int testNeuralNetwork() {
     
     if (iterations > endPraticeTests) {
       for (int ix = 0; ix < glbOutputSize; ix++) {
-        errorRate += ((*thisOutput->at(ix) - expectation->at(ix)) * (*thisOutput->at(ix) - expectation->at(ix))) * 1000000.0;
+        errorRate += ((*thisOutput->at(ix) - *(thisExpect->at(ix))) * (*thisOutput->at(ix) - *(thisExpect->at(ix)))) * 1000000.0;
       }
     }
     iterations++;
@@ -585,6 +580,7 @@ int testNavigation() {
       cout << ":";
       cout << u->Z;
       cout << "},";
+      shortPath->resize(shortPath->size()-1);
     }
     
     cout << "{";

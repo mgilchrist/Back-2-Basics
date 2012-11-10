@@ -81,6 +81,8 @@ namespace Graph {
     treeRoot = &nullNode;
     nullNode.left = &nullNode;
     nullNode.right = &nullNode;
+    nullNode.data = NULL;
+    nullNode.key = (uint64_t)-1;
   }
   
   template <class TreeNodeType, class DataType, class KeyType>
@@ -188,6 +190,7 @@ namespace Graph {
     return tNode;
   }
   
+#if 0
   template <class TreeNodeType, class DataType, class KeyType>
   void Tree<TreeNodeType,DataType,KeyType>::rModifyAll(KeyType (*action)(TreeNodeType *, void *),
                                                        void *object,
@@ -213,10 +216,65 @@ namespace Graph {
       rModifyAll(action, object, current->right, ((current->key == current->right->key) ? ++instance : 0));
     }
   }
+#endif
+  
+  template <class TreeNodeType, class DataType, class KeyType>
+  void Tree<TreeNodeType,DataType,KeyType>::rModifyAll(KeyType (*action)(TreeNodeType *, void *),
+                                                       void *object,
+                                                       TreeNodeType *current,
+                                                       uint64_t instance) {
+    vector<TreeNodeType *> *L;
+    vector<TreeNodeType *> *nextL;
+    TreeNodeType *u;
+    KeyType newKey;
+    
+    L = new vector<TreeNodeType *>();
+    
+    if (current->data != NULL) {
+      L->push_back(current);
+    }
+    
+    
+    while (!L->empty()) {
+      
+      // Initialize new layer
+      nextL = new vector<TreeNodeType *>();
+      
+      while (!(L->empty())) {
+        u = L->back();
+        L->resize(L->size()-1);
+        
+        if (u->data == NULL) {
+          continue;
+        }
+        
+        newKey = (*action)(u, object);
+        
+        if (u->left->data != NULL) {
+          nextL->push_back(u->left);
+        }
+        
+        if (u->right->data != NULL) {
+          nextL->push_back(u->right);
+        }
+      }
+      
+      L = nextL;
+      
+    }
+    
+    delete L;
+    
+  }
+
   
   template <class TreeNodeType, class DataType, class KeyType>
   void Tree<TreeNodeType,DataType,KeyType>::modifyAll(KeyType (*action)(TreeNodeType *, void *), void *object) {
-    rModifyAll(action,object,treeRoot,0);
+    
+    if (this->treeRoot != &this->nullNode) {
+      rModifyAll(action,object,this->treeRoot,0);
+    }
+  
   }
   
   

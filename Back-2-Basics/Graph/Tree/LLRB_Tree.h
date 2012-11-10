@@ -61,8 +61,8 @@ namespace Graph {
     static LLRB_TreeNode<EntryType,KeyType> *moveViolationRight(LLRB_TreeNode<EntryType,KeyType> *);
     static LLRB_TreeNode<EntryType,KeyType> *moveViolationLeft(LLRB_TreeNode<EntryType,KeyType> *);
     
-    static LLRB_TreeNode<EntryType,KeyType> *removeMin(LLRB_TreeNode<EntryType,KeyType> *);
-    static LLRB_TreeNode<EntryType,KeyType> *removeMax(LLRB_TreeNode<EntryType,KeyType> *);
+    LLRB_TreeNode<EntryType,KeyType> *removeMin(LLRB_TreeNode<EntryType,KeyType> *);
+    LLRB_TreeNode<EntryType,KeyType> *removeMax(LLRB_TreeNode<EntryType,KeyType> *);
     LLRB_TreeNode<EntryType,KeyType> *remove(LLRB_TreeNode<EntryType,KeyType> *, KeyType);
     
   public:
@@ -71,7 +71,7 @@ namespace Graph {
     void insert(EntryType n, KeyType key);
     void removeMax();
     void removeMin();
-    EntryType remove(KeyType);
+    void remove(KeyType);
     void updateKey(KeyType, KeyType, uint64_t);
     void update(EntryType, KeyType, uint64_t);
     
@@ -258,8 +258,11 @@ namespace Graph {
       node = rotateRight(node);
     }
     
-    if (node->right == NULL) {
-      return NULL;
+    if (node->right == &this->nullNode) {
+      delete node->data;
+      delete node;
+      this->numNodes--;
+      return &this->nullNode;
     }
     
     if ((node->right->color != RED) &&
@@ -286,8 +289,11 @@ namespace Graph {
   template <class EntryType, class KeyType>
   LLRB_TreeNode<EntryType,KeyType> *LLRB_Tree<EntryType,KeyType>::removeMin(LLRB_TreeNode<EntryType,KeyType> *node) {
     
-    if (node->left == NULL) {
-      return NULL;
+    if (node->left == &this->nullNode) {
+      delete node->data;
+      delete node;
+      this->numNodes--;
+      return &this->nullNode;
     }
     
     if ((node->left->color != RED) &&
@@ -325,7 +331,10 @@ namespace Graph {
       }
       
       if ((cmp == 0) && ((node->right == &this->nullNode) || (node->right->left->color != RED))) {
-        return NULL;
+        delete node->data;
+        delete node;
+        this->numNodes--;
+        return &this->nullNode;
       }
       
       if ((node->right->color != RED) &&
@@ -347,16 +356,8 @@ namespace Graph {
   }
   
   template <class EntryType, class KeyType>
-  EntryType LLRB_Tree<EntryType,KeyType>::remove(KeyType key) {
-    LLRB_TreeNode<EntryType,KeyType> *victim = remove(this->treeRoot, key);
-    
-    if (victim != NULL) {
-      EntryType ret = victim->data;
-      this->numNodes--;
-      return ret;
-    }
-    
-    return NULL;
+  void LLRB_Tree<EntryType,KeyType>::remove(KeyType key) {
+    this->treeRoot = remove(this->treeRoot, key);
   }
   
   
