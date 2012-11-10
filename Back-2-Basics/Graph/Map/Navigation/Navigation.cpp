@@ -66,8 +66,9 @@ namespace Graph {
 
     openTable->insert(true, this->start);
     
-    while (open->getSize()) {
+    while (open->size()) {
       u = open->pop();
+      u->auxIndex = NULL;
       dirtyNodes->push_back(u);
       
       if (!openTable->get(u, &tmpBool) || (!tmpBool)) {
@@ -106,6 +107,7 @@ namespace Graph {
     
   }
   
+  /*
   vector<Path *> *HeuristicMap::getShortestPath() {
     
     if (shortestPathToTerminal != NULL) {
@@ -118,11 +120,15 @@ namespace Graph {
     return shortestPathToTerminal;
     
   }
+   */
   
   Path::Path(Coordinate *v, Coordinate *u, double length) {
     this->u = u;
     this->v = v;
     this->length = length;
+    
+    v->references++;
+    u->addEdge((Path *)this);
   }  
   
 }

@@ -38,10 +38,9 @@ namespace NeuralNetwork
   class Neuron;
   class Synapse;
   
-#define LEARNING_RULE_DEFAULT   0.3
+#define LEARNING_RULE_DEFAULT   1.0
 #define OK  0
-#define DATA_STRUCT_INIT_SIZE   16
-#define INERTIA_DEFAULT 0.1
+#define INERTIA_DEFAULT 0.3
   
 #define RANDOM_INFLUENCE ((rand() > rand()) ? 1.0 : -1.0)
   

@@ -125,16 +125,15 @@ namespace Graph {
         NodeType *v = current->data->getForward();
         double tmp = u->distanceFromStart + current->data->length;
         
-        if (v->distanceFromStart == 1.0/0.0) {
-          v->distanceFromStart = tmp;
-          v->previousEdge = current->data;
-          v->auxIndex = ((Collection::Heap<NodeType *,double> *)queue)->push(v, tmp);
-        }
-        
         if (tmp < v->distanceFromStart) {
           v->distanceFromStart = tmp;
           v->previousEdge = current->data;
-          ((Collection::Heap<NodeType *,double> *)queue)->update(*(v->auxIndex), tmp);
+          
+          if (v->auxIndex == NULL) {
+            v->auxIndex = ((Collection::Heap<NodeType *,double> *)queue)->push(v, tmp);
+          } else {
+            v->auxIndex = ((Collection::Heap<NodeType *,double> *)queue)->update(*(v->auxIndex), tmp);
+          }
         }
       }
       return current->key;
@@ -265,13 +264,15 @@ namespace Graph {
     
     this->start->auxIndex = queue->push(this->start,0.0);
     
-    while (queue->getSize()) {
-      u = queue->peekAtHeapEntry(0);
+    while (queue->size()) {
+      u = queue->at(0);
       if (u->distanceFromStart == 1.0/0.0) {
         break;
       }
       
       u = queue->pop();
+      u->auxIndex = NULL;
+      
       dirtyNodes->push_back(u);
       
       u->modifyAllAdjacent(dijkstrasGambit,queue);

@@ -34,10 +34,10 @@ using namespace std;
 #include "Genetic.h"
 #include "Metaheuristic.h"
 
-const uint64_t glbInputSize = 0x4;
-const uint64_t glbOutputSize = 0x4;
-const uint64_t glbIterations = 0x100;
-const uint64_t glbTestSize = 0x10000;
+const uint64_t glbInputSize = 0x40;
+const uint64_t glbOutputSize = 0x40;
+const uint64_t glbIterations = 0x1000;
+const uint64_t glbTestSize = 0x100;
 
 
 int testHashTable() {
@@ -170,12 +170,12 @@ int testHeap() {
     heap->push(value, value);
   }
   
-  if (heap->peek(0) != (tmp = heap->pop())) {
+  if (heap->at(0) != (tmp = heap->pop())) {
     cout << "Heap Error!\n";
   }
   
   for (int ix = 1; ix < glbTestSize; ix++) {
-    if (heap->peek(0) != (tmp1 = heap->pop())) {
+    if (heap->at(0) != (tmp1 = heap->pop())) {
       cout << "Index ";
       cout << ix;
       cout << " Error!\n";
@@ -368,8 +368,8 @@ int testNeuralNetwork() {
   
   layers->resize(2);
   
-  layers->at(0) = glbOutputSize;
-  layers->at(1) = glbOutputSize;
+  layers->at(0) = glbOutputSize/16;
+  layers->at(1) = glbOutputSize/16;
   
   cout << "\nTesting NeuralNetwork\n";
   
@@ -470,7 +470,6 @@ int testNavigation() {
   for (uint64_t ix = 0; ix < width; ix++) {
     for (uint64_t jx = 0; jx < length; jx++) {
       Coordinate *thisCoordinate = new Coordinate(ix,jx,0);
-      //navigation->add(thisCoordinate);
       
       locs[ix+(jx*length)] = thisCoordinate;
     }
@@ -569,6 +568,8 @@ int testNavigation() {
   navigation->setTerminal(locs[length*width-1]);
   
   if ((shortPath = navigation->getShortestPath()) != NULL) {
+    cout << "Path Hops ";
+    cout << shortPath->size();
     while ((!shortPath->empty()) && ((tmpPath = shortPath->back()) != NULL)) {
       u = tmpPath->getBackward();
       v = tmpPath->getForward();

@@ -141,7 +141,8 @@ namespace Graph {
           v->distanceFromStart = cost;
           
           if (!openTable->update(true, v, &tmpBool) && (!tmpBool)) {
-            open->removeHeapEntry(*(v->auxIndex));
+            open->remove(*(v->auxIndex));
+            v->auxIndex = NULL;
           }
           
           /* TODO */
