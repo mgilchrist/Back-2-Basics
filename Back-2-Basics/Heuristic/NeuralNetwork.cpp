@@ -30,8 +30,6 @@ using namespace std;
 namespace NeuralNetwork
 {
   
-#define MAX_LAYERS    7   // 3 for space 7 for oct math and 10 for m-theory
-  
   
   Synapse::Synapse(Neuron *input, Neuron *neuron) {
     this->u = neuron;

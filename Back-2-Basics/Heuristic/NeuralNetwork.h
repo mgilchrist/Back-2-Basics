@@ -38,9 +38,9 @@ namespace NeuralNetwork
   class Neuron;
   class Synapse;
   
-#define LEARNING_RULE_DEFAULT   0.1
+#define LEARNING_RULE_DEFAULT   0.01
 #define OK  0
-#define INERTIA_DEFAULT 0.5
+#define INERTIA_DEFAULT 0.8928 // (1/30)^-30 = .8928
   
 #define RANDOM_INFLUENCE ((rand() > rand()) ? 1.0 : 1.0)
   
@@ -139,7 +139,7 @@ namespace NeuralNetwork
       Neuron *pCurrentNeuron = ((Neuron *)neuron);
       
       if (pCurrentNeuron->discovered) {
-        correction = LEARNING_RULE_DEFAULT * pCurrentNeuron->delta * pCurrentNeuron->totalInputs;
+        correction = LEARNING_RULE_DEFAULT * pCurrentNeuron->delta * *(pCurrentNeuron->memory); // TODO
         correction += synapse->getMomentum();
         
         synapse->changeInfluence(correction);
