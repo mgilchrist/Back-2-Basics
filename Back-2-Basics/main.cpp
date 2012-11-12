@@ -366,10 +366,11 @@ int testNeuralNetwork() {
   std::vector<uint64_t> *layers = new std::vector<uint64_t>();
   uint64_t precision = (1 << 16);
   
-  layers->resize(2);
+  layers->resize(0);
   
-  layers->at(0) = glbOutputSize/16;
-  layers->at(1) = glbOutputSize/16;
+  for (uint64_t ix = 0; ix < 1; ix++) {
+    layers->push_back(log2(glbOutputSize));
+  }
   
   cout << "\nTesting NeuralNetwork\n";
   
@@ -380,11 +381,11 @@ int testNeuralNetwork() {
   thisInput->resize(glbInputSize);
   thisOutput->resize(glbOutputSize);
   thisExpect->resize(glbOutputSize);
-
+  
   
   for (int jx = 0; jx < glbInputSize; jx++) {
     thisInput->at(jx) = new double();
-    thisOutput->at(jx) = thisInput->at(jx);
+    thisOutput->at(jx) = new double();
   }
   
   for (uint64_t jx = 0; jx < glbOutputSize; jx++) {
@@ -399,41 +400,56 @@ int testNeuralNetwork() {
   
   do {
     /*for (uint64_t jx = 0; jx < thisInput->size(); jx++) {
-      *(thisInput->at(jx)) = (rand() % 256) / 256.0;
-    }*/
+     *(thisInput->at(jx)) = (rand() % 256) / 256.0;
+     }*/
     
     
     NNetwork->calcExpectation();
+    
+    if (iterations > (glbIterations-4)) {
+      for (int ix = 0; ix < glbOutputSize; ix++) {
+        cout << "{";
+        cout << (*thisOutput->at(ix));
+        cout << ":";
+        cout << (*thisExpect->at(ix));
+        cout << "},";
+      }
+      cout << "\n\n";
+    }
     
     for (int ix = 0; ix < glbOutputSize; ix++) {
       *(thisOutput->at(ix)) = *(thisInput->at(ix));
     }
     
+    for (int ix = 0; ix < glbOutputSize; ix++) {
+      errorRate += ((*thisOutput->at(ix) - *(thisExpect->at(ix))) *
+                    (*thisOutput->at(ix) - *(thisExpect->at(ix))));
+    }
+    
+    if (nonPracticeTests) {
+      errorRate = sqrt(errorRate);
+      cout << "Error Rate is ";
+      cout << errorRate;
+      cout << "\n";
+    }
+    
     NNetwork->doCorrection();
     
-    if (iterations > endPraticeTests) {
-      for (int ix = 0; ix < glbOutputSize; ix++) {
-        errorRate += ((*thisOutput->at(ix) - *(thisExpect->at(ix))) * (*thisOutput->at(ix) - *(thisExpect->at(ix)))) * 1000000.0;
-      }
-    }
     iterations++;
   } while (iterations < glbIterations);
   
+  
   for (int ix = 0; ix < glbOutputSize; ix++) {
-    cout << "{";
-    cout << (uint64_t)(*thisOutput->at(ix) * precision);
-    cout << ":";
-    cout << (uint64_t)(*thisExpect->at(ix) * precision);
-    cout << "},";
+    errorRate += ((*thisOutput->at(ix) - *(thisExpect->at(ix))) *
+                  (*thisOutput->at(ix) - *(thisExpect->at(ix))));
   }
   
   
   if (nonPracticeTests) {
-    errorRate /= (double)(nonPracticeTests * glbOutputSize);
     errorRate = sqrt(errorRate);
     cout << "Error Rate is ";
     cout << errorRate;
-    cout << "PPM\n";
+    cout << "\n";
   }
   
   

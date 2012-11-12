@@ -38,11 +38,11 @@ namespace NeuralNetwork
   class Neuron;
   class Synapse;
   
-#define LEARNING_RULE_DEFAULT   1.0
+#define LEARNING_RULE_DEFAULT   0.1
 #define OK  0
-#define INERTIA_DEFAULT 0.3
+#define INERTIA_DEFAULT 0.5
   
-#define RANDOM_INFLUENCE ((rand() > rand()) ? 1.0 : -1.0)
+#define RANDOM_INFLUENCE ((rand() > rand()) ? 1.0 : 1.0)
   
   enum SIG_FNCT_TYPE {
     NORMAL,
@@ -59,7 +59,8 @@ namespace NeuralNetwork
   
   class Synapse : public Pipe<Neuron,Synapse> {
     
-  private:
+  protected:
+    string dbgName;
     double influence;
     double lastCorrection;
     
@@ -79,9 +80,6 @@ namespace NeuralNetwork
   class Neuron : public Hub<Neuron,Synapse> {
     
   protected:
-    
-    
-    double inputLastCorrection = 0.0;
     
     uint64_t iteration = 0;
     const double inertia = INERTIA_DEFAULT;
@@ -114,17 +112,42 @@ namespace NeuralNetwork
       return current->key;
     }
     
+    static uint64_t calcDeltaEach(LLRB_TreeNode<Synapse *, uint64_t> *current, void *neuron) {
+      Synapse *synapse = current->data;
+      Neuron *input = current->data->getForward();
+      
+      if (input->discovered < input->references) {
+        input->delta += synapse->getInfluence() * ((Neuron *)neuron)->delta;
+        input->discovered++;
+      }
+      
+      if (input->discovered == input->references) {
+        double nCurrentOutput = *(input->memory);
+        
+        input->delta = (nCurrentOutput * (1.0 - nCurrentOutput) * input->delta);
+        
+        input->modifyAllAdjacent(calcDeltaEach, input);
+      }
+      
+      return current->key;
+    }
+    
     static uint64_t changeInputInfluenceEach(LLRB_TreeNode<Synapse *, uint64_t> *current, void *neuron) {
       double correction;
       Synapse *synapse = current->data;
-      Neuron *pCurrentNeuron = synapse->getForward();
+      Neuron *input = synapse->getForward();
+      Neuron *pCurrentNeuron = ((Neuron *)neuron);
       
       if (pCurrentNeuron->discovered) {
-        correction = LEARNING_RULE_DEFAULT * pCurrentNeuron->delta;
+        correction = LEARNING_RULE_DEFAULT * pCurrentNeuron->delta * pCurrentNeuron->totalInputs;
         correction += synapse->getMomentum();
         
         synapse->changeInfluence(correction);
-        pCurrentNeuron->discovered = 0;
+        
+        input->modifyAllAdjacent(Neuron::changeInputInfluenceEach, input);
+        
+        input->discovered = 0;
+        input->delta = 0.0;
       }
       
       return current->key;
@@ -134,17 +157,13 @@ namespace NeuralNetwork
     
     double delta = 0.0;
     double *memory = NULL;
-    double inputInfluenceDelta = 0.0;
-    double inputInfluence = 1.0;
-    uint64_t outputCount = 0;
     double *inputBias = NULL;
+    double totalInputs = 0.0;
     
     Neuron(LLRB_Tree<Harmony *, uint64_t> *, vector<Neuron *> *, double *, double *);
     
     double probeActivation(uint64_t iteration);
-    
     void addInputNeuron(NeuralNetwork *,Neuron *);
-    void changeInputInfluence();
     
     friend class NeuralNetwork;
     friend class Synapse;
@@ -171,9 +190,10 @@ namespace NeuralNetwork
       Neuron *pCurrentNeuron = current->data->expectation;
       
       if (pCurrentNeuron->discovered) {
-        pCurrentNeuron->changeInputInfluence();
-        pCurrentNeuron->modifyAllAdjacent(Neuron::changeInputInfluenceEach, 0);
+        pCurrentNeuron->modifyAllAdjacent(Neuron::changeInputInfluenceEach, pCurrentNeuron);
+        
         pCurrentNeuron->discovered = 0;
+        pCurrentNeuron->delta = 0.0;
       }
       
       return current->key;
@@ -181,31 +201,6 @@ namespace NeuralNetwork
     
     static uint64_t calcExpectationEach(LLRB_TreeNode<Harmony *, uint64_t> *current, void *iteration) {
       current->data->expectation->probeActivation((uint64_t)iteration);
-      return current->key;
-    }
-    
-    static uint64_t calcDeltaEach(LLRB_TreeNode<Synapse *, uint64_t> *current, void *neuron) {
-      Synapse *synapse = current->data;
-      Neuron *input = current->data->getForward();
-      
-      if (input->discovered < input->references) {
-        input->delta += synapse->getInfluence() * ((Neuron *)neuron)->delta;
-      }
-      
-      input->discovered++;
-      
-      if (input->discovered == input->references) {
-        input->modifyAllAdjacent(calcDeltaEach, input);
-        
-        Neuron *input = current->data->getForward();
-        
-        double nCurrentOutput = *(input->memory);
-        
-        input->delta = (nCurrentOutput *
-                        (1.0 - nCurrentOutput) *
-                        input->delta);
-      }
-      
       return current->key;
     }
     
@@ -218,11 +213,7 @@ namespace NeuralNetwork
                                (1.0 - expectation) *
                                (reality - expectation));
       
-      pCurrentNeuron->inputInfluenceDelta += ((pCurrentNeuron->inputInfluence *
-                                               pCurrentNeuron->delta) *
-                                              (expectation * (1.0 - expectation)));
-      
-      pCurrentNeuron->modifyAllAdjacent(calcDeltaEach, pCurrentNeuron);
+      pCurrentNeuron->modifyAllAdjacent(Neuron::calcDeltaEach, pCurrentNeuron);
       pCurrentNeuron->discovered = 1;
       
       return current->key;

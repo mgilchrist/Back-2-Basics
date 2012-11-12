@@ -32,7 +32,6 @@ namespace NeuralNetwork
   
 #define MAX_LAYERS    7   // 3 for space 7 for oct math and 10 for m-theory
   
-  static const double zeroInfluence = 0.0;
   
   Synapse::Synapse(Neuron *input, Neuron *neuron) {
     this->u = neuron;
@@ -45,10 +44,10 @@ namespace NeuralNetwork
     lastCorrection = 0.0;
   }
   
-  void Synapse::changeInfluence(double influence) {
-    this->influence += influence;
+  void Synapse::changeInfluence(double correction) {
+    this->influence += correction;
     //this->capacity = (this->influence < 0) ? -this->influence : this->influence;
-    lastCorrection = influence;
+    lastCorrection = correction;
   }
   
   void Synapse::multInfluence(double influence) {
@@ -58,7 +57,7 @@ namespace NeuralNetwork
   }
   
   double Synapse::getInfluence() {
-    return this->influence;
+    return influence;
   }
   
   double Synapse::getMomentum() {
@@ -74,11 +73,8 @@ namespace NeuralNetwork
       this->inputBias = inputData;
     } else {
       this->inputBias = new double();
-      *(this->inputBias) = 1.0;
+      *(this->inputBias) = 0.0;
     }
-    
-    inputInfluence = RANDOM_INFLUENCE;
-    inputLastCorrection = 0.0;
     
     if (expectation == NULL) {
       memory = new double();
@@ -98,7 +94,6 @@ namespace NeuralNetwork
     
     iteration = 0;
     delta = 0.0;
-    inputInfluenceDelta = 0.0;
     
   }
   
@@ -107,37 +102,31 @@ namespace NeuralNetwork
     if (this->iteration == iteration) {
       return *memory;
     }
-    
-    if (memory == NULL) {
-      cout << "Neuron with no memory\n";
-      return 0.0;
-    }
-    
-    *memory = *inputBias * inputInfluence;
-    
-    //*memory = inputInfluence;
-    
+     
+    *memory = *inputBias;
+        
     // Get impulse from relavent connected neurons
     modifyAllAdjacent(Neuron::probeActivationEach, this);
     
-    *memory = (1.0 / (1.0 + exp(double((-1.0) * *memory))));
+    totalInputs = *memory;
+    
+    *memory = (1.0 / (1.0 + exp(double((-1.0) * totalInputs))));
     
     this->iteration = iteration;
-    
-    delta = 0.0;
-    inputInfluenceDelta = 0.0;
     
     return *memory;
   }
   
+  /*
   void Neuron::changeInputInfluence() {
     double correction;
     
-    correction = LEARNING_RULE_DEFAULT * this->inputInfluenceDelta;
-    correction += this->inputLastCorrection * this->inertia;
+    correction = LEARNING_RULE_DEFAULT * inputInfluenceDelta * totalInputs;
+    correction += inputLastCorrection * inertia;
     inputLastCorrection = correction;
-    inputInfluence += this->inputInfluenceDelta;
+    inputInfluence += correction;
   }
+   */
   
   NeuralNetwork::NeuralNetwork() {
     glbBias = new double;
@@ -224,14 +213,14 @@ namespace NeuralNetwork
       currentLayer = this->layers->at(kx);
       
       for (int jx = 0; jx < currentLayer->size(); jx++) {
-        currentLayer->at(jx)->outputCount = 0;
+        currentLayer->at(jx)->references = 0;
       }
     }
     
     currentLayer = this->layers->at(this->layers->size()-1);
     
     for (uint64_t jx = 0; jx < currentLayer->size(); jx++) {
-      currentLayer->at(jx)->outputCount = 1;
+      currentLayer->at(jx)->references = 1;
     }
     
     for (uint64_t kx = 1; kx < this->layers->size(); kx++) {
@@ -284,21 +273,6 @@ namespace NeuralNetwork
       mergeeLayer->resize(mergeeLayer->size()-1);
       previousStack->push_back(tmpInput);
     }
-    
-    /*currentStack = new Collection::Stack<Neuron *>(this->layers->at(this->layers->size()-1));
-     
-     for (uint64_t jx = 0; jx < layers->at(layers->size()-1); jx++) {
-     currentNeuron = new Neuron(this, previousStack);
-     start = currentNeuron;  // Output Neuron
-     this->add(currentNeuron);
-     currentStack->push(currentNeuron);
-     }*/
-    
-    /*
-     this->layers->push(currentStack);
-     expectation = new std::vector<double>();
-     expectation->resize(layers->at(layers->size()-1));
-     */
     
   }
   
