@@ -28,9 +28,9 @@ namespace Graph {
   class Vector;
   
   typedef struct AStarStorage {
-    Collection::Heap<Coordinate *,double> *open;
-    Collection::HashTable<bool,Coordinate *> *openTable;
-    Collection::HashTable<double,Coordinate *> *closed;
+    Heap<Coordinate *,double> *open;
+    HashTable<bool,Coordinate *> *openTable;
+    HashTable<double,Coordinate *> *closed;
   } AStarStorage;
   
   class Path : public Via<Coordinate,Path>
@@ -118,9 +118,9 @@ namespace Graph {
       Path *uv = current->data;
       bool tmpBool;
       double tmpDouble;
-      Collection::Heap<Coordinate *,double> *open = ((AStarStorage *)storage)->open;
-      Collection::HashTable<bool,Coordinate *> *openTable = ((AStarStorage *)storage)->openTable;
-      Collection::HashTable<double,Coordinate *> *closed = ((AStarStorage *)storage)->closed;
+      Heap<Coordinate *,double> *open = ((AStarStorage *)storage)->open;
+      HashTable<bool,Coordinate *> *openTable = ((AStarStorage *)storage)->openTable;
+      HashTable<double,Coordinate *> *closed = ((AStarStorage *)storage)->closed;
       
       if (!uv->blocked) {
         Coordinate *u = uv->getBackward();
@@ -228,7 +228,7 @@ namespace Graph {
   private:
     
     
-    Collection::HashTable<HeuristicMap *,std::string> *maps;
+    HashTable<HeuristicMap *,std::string> *maps;
     Vector *origin;
     
     Coordinate *start;
@@ -237,7 +237,7 @@ namespace Graph {
   public:
     
     Navigation() {
-      maps = new Collection::HashTable<HeuristicMap *,std::string>();
+      maps = new HashTable<HeuristicMap *,std::string>();
       origin = new Vector();
       origin->X = 0.0;
       origin->Y = 0.0;
@@ -246,6 +246,10 @@ namespace Graph {
       origin->deltaX = 0.0;
       origin->deltaY = 0.0;
       origin->deltaZ = 1.0;
+    }
+    
+    static double calcDistance(double X, double Y, double Z, double tX, double tY, double tZ) {
+      return sqrt(pow(X-tX,2)+pow(Y-tY,2)+pow(Z-tZ,2));
     }
     
     void moveTo(uint64_t neighbor);

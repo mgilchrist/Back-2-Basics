@@ -30,6 +30,7 @@ using namespace std;
 namespace NeuralNetwork
 {
   
+  static double zero = 0.0;
   
   Synapse::Synapse(Neuron *input, Neuron *neuron) {
     this->u = neuron;
@@ -68,10 +69,10 @@ namespace NeuralNetwork
     this->capacity = 0.0;
     
     if (inputData != NULL) {
-      this->inputBias = inputData;
+      this->ptrInput = inputData;
     } else {
-      this->inputBias = new double();
-      *(this->inputBias) = 0.0;
+      this->ptrInput = new double();
+      *(this->ptrInput) = 0.0;
     }
     
     if (expectation == NULL) {
@@ -101,7 +102,7 @@ namespace NeuralNetwork
       return *memory;
     }
      
-    *memory = *inputBias;
+    *memory = *ptrInput;
         
     // Get impulse from relavent connected neurons
     modifyAllAdjacent(Neuron::probeActivationEach, this);
@@ -127,7 +128,6 @@ namespace NeuralNetwork
    */
   
   NeuralNetwork::NeuralNetwork() {
-    glbBias = new double;
   }
   
   NeuralNetwork::NeuralNetwork(std::vector<double *> *input,
@@ -137,6 +137,8 @@ namespace NeuralNetwork
     
     vector<Neuron *> *currentStack, *previousStack;
     Neuron *currentNeuron;
+    
+    bias = new Neuron(NULL,NULL,&networkBias,NULL);
     
     previousStack = new vector<Neuron *>();
     
@@ -149,6 +151,8 @@ namespace NeuralNetwork
       currentStack->push_back(currentNeuron);
     }
     
+    currentStack->push_back(bias);
+    
     for (int ix = 0; ix < layers->size(); ix++) {
       previousStack->resize(0);
       delete previousStack;
@@ -157,9 +161,10 @@ namespace NeuralNetwork
       currentStack->reserve(layers->at(ix));
       
       for (uint64_t jx = 0; jx < layers->at(ix); jx++) {
-        currentNeuron = new Neuron(NULL, previousStack, glbBias, NULL);
+        currentNeuron = new Neuron(NULL, previousStack, &zero, NULL);
         currentStack->push_back(currentNeuron);
       }
+      currentStack->push_back(bias);
     }
     
     previousStack->resize(0);
@@ -169,7 +174,7 @@ namespace NeuralNetwork
     currentStack->reserve(output->size());
     
     for (int ix = 0; ix < output->size(); ix++) {
-      currentNeuron = new Neuron(NULL, previousStack, glbBias, expectation->at(ix));
+      currentNeuron = new Neuron(NULL, previousStack, &zero, expectation->at(ix));
       Harmony *tmp = new Harmony;
       tmp->expectation = currentNeuron;
       tmp->reality = output->at(ix);
@@ -177,17 +182,17 @@ namespace NeuralNetwork
       currentStack->push_back(currentNeuron);
     }
     
-    currentIteration = 0;
-    
     previousStack->resize(0);
     currentStack->resize(0);
     delete previousStack;
     delete currentStack;
   }
   
-  void NeuralNetwork::calcExpectation() {
+  void NeuralNetwork::calcExpectation(uint64_t time) {
     
-    currentIteration++;
+    currentIteration = time;
+    
+    experiencedEpochs++;
     
     outputs.modifyAll(NeuralNetwork::calcExpectationEach, (void *)currentIteration);
   }
@@ -249,14 +254,14 @@ namespace NeuralNetwork
     
     while ((tmpInput = currentStack->back()) != NULL) {
       currentStack->resize(currentStack->size()-1);
-      outputTree->insert(tmpInput, (uint64_t)tmpInput->inputBias);
+      outputTree->insert(tmpInput, (uint64_t)tmpInput->ptrInput);
     }
     
     currentStack = network->layers->at(network->layers->size()-1);
     
     while ((tmpInput = currentStack->back()) != NULL) {
       currentStack->resize(currentStack->size()-1);
-      outputTree->insert(tmpInput, (uint64_t)tmpInput->inputBias);
+      outputTree->insert(tmpInput, (uint64_t)tmpInput->ptrInput);
     }
     
     previousStack = this->layers->at(this->layers->size()-1);
@@ -280,6 +285,30 @@ namespace NeuralNetwork
   
   NeuralNetwork *clone(double errorRate) {
     return NULL;
+  }
+  
+  vector<double *> *NeuralNetwork::getInputs() {
+    vector<double *> *ret = new vector<double *>();
+    
+    inputs.modifyAll(NeuralNetwork::addInputToVectorEach, ret);
+    
+    return ret;
+  }
+  
+  vector<HeuristicHarmony *> *NeuralNetwork::getHarmony() {
+    vector<HeuristicHarmony *> *ret = new vector<HeuristicHarmony *>();
+    
+    outputs.modifyAll(NeuralNetwork::addOutputToVectorEach, ret);
+    
+    return ret;
+  }
+  
+  void NeuralNetwork::removeOutput(double *output) {
+    outputs.remove((uint64_t)output);
+  }
+  
+  uint64_t NeuralNetwork::timeAlive() {
+    return experiencedEpochs;
   }
   
 }

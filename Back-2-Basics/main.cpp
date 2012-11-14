@@ -23,10 +23,12 @@
 using namespace std;
 
 #include "Array.h"
+using namespace Collection;
 #include "Heap.h"
 #include "HashTable.h"
 #include "SecureHashTable.h"
 #include "Graph.h"
+using namespace Graph;
 #include "LLRB_Tree.h"
 #include "Navigation.h"
 #include "Network.h"
@@ -34,16 +36,16 @@ using namespace std;
 #include "Genetic.h"
 #include "Metaheuristic.h"
 
-const uint64_t glbInputSize = 0x40;
-const uint64_t glbOutputSize = 0x40;
+const uint64_t glbInputSize = 0x80;
+const uint64_t glbOutputSize = 0x80;
 const uint64_t glbIterations = 0x1000;
 const uint64_t glbTestSize = 0x100;
 
 
 int testHashTable() {
-  Collection::HashTable<uint64_t,uint64_t> *hashTable;
+  HashTable<uint64_t,uint64_t> *hashTable;
   std::vector<uint64_t> verify;
-  hashTable = new Collection::HashTable<uint64_t,uint64_t>(glbTestSize);
+  hashTable = new HashTable<uint64_t,uint64_t>(glbTestSize);
   uint64_t *tmpInt = new uint64_t;
   uint64_t value;
   
@@ -100,9 +102,9 @@ int testHashTable() {
 }
 
 int testSecureHashTable() {
-  Collection::SecureHashTable<uint64_t,uint64_t> *hashTable;
+  SecureHashTable<uint64_t,uint64_t> *hashTable;
   std::vector<uint64_t> verify;
-  hashTable = new Collection::SecureHashTable<uint64_t,uint64_t>(glbTestSize);
+  hashTable = new SecureHashTable<uint64_t,uint64_t>(glbTestSize);
   uint64_t *tmpInt = new uint64_t;
   uint64_t value;
   
@@ -158,8 +160,8 @@ int testSecureHashTable() {
 }
 
 int testHeap() {
-  Collection::Heap<uint64_t,uint64_t> *heap;
-  heap = new Collection::Heap<uint64_t,uint64_t>();
+  Heap<uint64_t,uint64_t> *heap;
+  heap = new Heap<uint64_t,uint64_t>();
   
   uint64_t tmp, tmp1;
   
@@ -196,22 +198,22 @@ int testHeap() {
 }
 
 int testStack() {
-  Collection::Stack<uint64_t> *stack;
-  stack = new Collection::Stack<uint64_t>();
+  Stack<uint64_t> *stack;
+  stack = new Stack<uint64_t>();
   
   return 0;
 }
 
 int testLLRBTree() {
   LLRB_Tree<uint64_t,uint64_t> *rbTree;
-  Collection::ArrayList<uint64_t,uint64_t> *arrayList;
+  ArrayList<uint64_t,uint64_t> *arrayList;
   LLRB_TreeNode<uint64_t,uint64_t> *current;
   uint64_t tmp;
   
   cout << "\nTesting LLRB_Tree\n";
   
   rbTree = new LLRB_Tree<u_int64_t, uint64_t>();
-  arrayList = new Collection::ArrayList<uint64_t,uint64_t>(glbTestSize);
+  arrayList = new ArrayList<uint64_t,uint64_t>(glbTestSize);
   
   for (uint64_t ix = 0; ix < glbTestSize; ix++) {
     uint64_t value = random();
@@ -268,8 +270,8 @@ int testLLRBTree() {
  */
 
 int testArrayList() {
-  Collection::ArrayList<uint64_t,uint64_t> *arrayList, *arrayListClone;
-  arrayList = new Collection::ArrayList<uint64_t,uint64_t>();
+  ArrayList<uint64_t,uint64_t> *arrayList, *arrayListClone;
+  arrayList = new ArrayList<uint64_t,uint64_t>();
   uint64_t *verify = new uint64_t[arrayList->getSize()];
   uint64_t tmp;
   
@@ -277,7 +279,7 @@ int testArrayList() {
   
   for (int ix = 0; ix < arrayList->getSize(); ix++) {
     uint64_t value = random();
-    arrayList->setIndex(ix, new Collection::Comparable<uint64_t,uint64_t>(value, value));
+    arrayList->setIndex(ix, new Comparable<uint64_t,uint64_t>(value, value));
     verify[ix] = value;
   }
   
@@ -292,12 +294,12 @@ int testArrayList() {
   delete arrayList;
   delete verify;
   
-  arrayList = new Collection::ArrayList<uint64_t,uint64_t>(glbTestSize);
+  arrayList = new ArrayList<uint64_t,uint64_t>(glbTestSize);
   verify = new uint64_t[arrayList->getSize()];
   
   for (int ix = 0; ix < arrayList->getSize(); ix++) {
     uint64_t value = random();
-    arrayList->setIndex(ix, new Collection::Comparable<uint64_t,uint64_t>(value, value));
+    arrayList->setIndex(ix, new Comparable<uint64_t,uint64_t>(value, value));
     verify[ix] = value;
   }
   
@@ -312,11 +314,11 @@ int testArrayList() {
   delete arrayList;
   delete verify;
   
-  arrayList = new Collection::ArrayList<uint64_t,uint64_t>(glbTestSize);
+  arrayList = new ArrayList<uint64_t,uint64_t>(glbTestSize);
   
   for (int ix = 0; ix < arrayList->getSize(); ix++) {
     uint64_t value = random();
-    arrayList->setIndex(ix, new Collection::Comparable<uint64_t,uint64_t>(value, value));
+    arrayList->setIndex(ix, new Comparable<uint64_t,uint64_t>(value, value));
   }
   
   arrayListClone = arrayList->cloneSort();
@@ -361,8 +363,7 @@ int testNeuralNetwork() {
   uint64_t iterations = 0;
   std::vector<double *> *thisInput, *thisOutput, *thisExpect;
   double errorRate = 0.0;
-  uint64_t endPraticeTests = (100 * glbIterations / 90);
-  uint64_t nonPracticeTests = glbIterations - endPraticeTests;
+  double thisError;
   std::vector<uint64_t> *layers = new std::vector<uint64_t>();
   uint64_t precision = (1 << 16);
   
@@ -404,7 +405,7 @@ int testNeuralNetwork() {
      }*/
     
     
-    NNetwork->calcExpectation();
+    NNetwork->calcExpectation(iterations);
     
     if (iterations > (glbIterations-4)) {
       for (int ix = 0; ix < glbOutputSize; ix++) {
@@ -421,36 +422,25 @@ int testNeuralNetwork() {
       *(thisOutput->at(ix)) = *(thisInput->at(ix));
     }
     
-    for (int ix = 0; ix < glbOutputSize; ix++) {
-      errorRate += ((*thisOutput->at(ix) - *(thisExpect->at(ix))) *
-                    (*thisOutput->at(ix) - *(thisExpect->at(ix))));
-    }
     
-    if (nonPracticeTests) {
-      errorRate = sqrt(errorRate);
+    if (!(iterations % (uint64_t)(2*log2(glbIterations)))) {
+      errorRate = 0.0;
+      
+      for (int ix = 0; ix < glbOutputSize; ix++) {
+        thisError = (*thisOutput->at(ix) - *(thisExpect->at(ix))) / *thisOutput->at(ix);
+        errorRate += pow(thisError, 2);
+      }
+      
       cout << "Error Rate is ";
-      cout << errorRate;
+      cout << sqrt(errorRate/((double)(iterations+1)));
       cout << "\n";
     }
     
     NNetwork->doCorrection();
     
     iterations++;
+    
   } while (iterations < glbIterations);
-  
-  
-  for (int ix = 0; ix < glbOutputSize; ix++) {
-    errorRate += ((*thisOutput->at(ix) - *(thisExpect->at(ix))) *
-                  (*thisOutput->at(ix) - *(thisExpect->at(ix))));
-  }
-  
-  
-  if (nonPracticeTests) {
-    errorRate = sqrt(errorRate);
-    cout << "Error Rate is ";
-    cout << errorRate;
-    cout << "\n";
-  }
   
   
   //NNetwork->g
@@ -461,10 +451,6 @@ int testNeuralNetwork() {
   cout << "NeuralNetwork:Done\n";
   
   return 0;
-}
-
-double calcDistance(double X, double Y, double Z, double tX, double tY, double tZ) {
-  return sqrt(pow(X-tX,2)+pow(Y-tY,2)+pow(Z-tZ,2));
 }
 
 int testNavigation() {
@@ -503,7 +489,7 @@ int testNavigation() {
           if ((kx) || (lx)) {
             v = locs[(ix+kx)+((jx+lx)*width)];
             
-            distance = calcDistance(v->X, v->Y, v->Z, u->X, u->Y, u->Z);
+            distance = Navigation::calcDistance(v->X, v->Y, v->Z, u->X, u->Y, u->Z);
             navigation->addEdge(v, u, distance);
           }
         }
@@ -521,7 +507,7 @@ int testNavigation() {
           if ((kx != ix) || (lx)) {
             v = locs[(kx)+((jx+lx)*width)];
             
-            distance = calcDistance(v->X, v->Y, v->Z, u->X, u->Y, u->Z);
+            distance = Navigation::calcDistance(v->X, v->Y, v->Z, u->X, u->Y, u->Z);
             navigation->addEdge(v, u, distance);
           }
         }
@@ -537,7 +523,7 @@ int testNavigation() {
           if ((kx != ix) || (lx)) {
             v = locs[(kx)+((jx+lx)*width)];
             
-            distance = calcDistance(v->X, v->Y, v->Z, u->X, u->Y, u->Z);
+            distance = Navigation::calcDistance(v->X, v->Y, v->Z, u->X, u->Y, u->Z);
             navigation->addEdge(v, u, distance);
           }
         }
@@ -555,7 +541,7 @@ int testNavigation() {
           if ((kx) || (lx != jx)) {
             v = locs[(ix+kx)+((lx)*width)];
             
-            distance = calcDistance(v->X, v->Y, v->Z, u->X, u->Y, u->Z);
+            distance = Navigation::calcDistance(v->X, v->Y, v->Z, u->X, u->Y, u->Z);
             navigation->addEdge(v, u, distance);
           }
         }
@@ -571,7 +557,7 @@ int testNavigation() {
           if ((kx) || (lx != jx)) {
             v = locs[(ix+kx)+((lx)*width)];
             
-            distance = calcDistance(v->X, v->Y, v->Z, u->X, u->Y, u->Z);
+            distance = Navigation::calcDistance(v->X, v->Y, v->Z, u->X, u->Y, u->Z);
             navigation->addEdge(v, u, distance);
           }
         }

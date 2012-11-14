@@ -41,17 +41,17 @@ namespace Graph {
   }
   
   void HeuristicMap::aStar() {
-    Collection::Heap<Coordinate *,double> *open;
-    Collection::HashTable<bool,Coordinate *> *openTable;
-    Collection::HashTable<double,Coordinate *> *closed;
+    Heap<Coordinate *,double> *open;
+    HashTable<bool,Coordinate *> *openTable;
+    HashTable<double,Coordinate *> *closed;
     Coordinate *u;
     vector<Path *> *ret;
     vector <Coordinate *> *dirtyNodes;
     bool tmpBool;
     
-    open = new Collection::Heap<Coordinate *,double>();
-    openTable = new Collection::HashTable<bool,Coordinate *>();
-    closed = new Collection::HashTable<double,Coordinate *>();
+    open = new Heap<Coordinate *,double>();
+    openTable = new HashTable<bool,Coordinate *>();
+    closed = new HashTable<double,Coordinate *>();
     dirtyNodes = new vector<Coordinate *>();
     
     AStarStorage *aStarStorage = new AStarStorage;
@@ -129,6 +129,7 @@ namespace Graph {
     
     v->references++;
     u->addEdge((Path *)this);
+    
   }  
   
 }

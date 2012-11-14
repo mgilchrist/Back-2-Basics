@@ -26,22 +26,38 @@
 #include "Stack.h"
 #include <vector>
 
-template <class HeuristicType>
+
+typedef struct HeuristicHarmony {
+  double *output;
+  double *expectation;
+} HeuristicHarmony;
+
+template <class HeuristicType, class DataType>
 class Heuristic {
   
 private:
   
+  
+  
 public:
+  
   Heuristic() {
     
   }
   
-  Heuristic(std::vector<double *> *, std::vector<double *> *) {
+  Heuristic(std::vector<DataType *> *, std::vector<DataType *> *) {
     
   }
   
-  virtual void calcExpectation(void) =0;
+  virtual void calcExpectation(uint64_t) =0;
   virtual void doCorrection() =0;
+  
+  virtual vector<DataType *> *getInputs() =0;
+  virtual vector<HeuristicHarmony *> *getHarmony() =0;
+  
+  virtual void removeOutput(DataType *) =0;
+  
+  virtual uint64_t timeAlive() =0;
   
   virtual void simplify() =0;
   virtual void merge(HeuristicType *) =0;

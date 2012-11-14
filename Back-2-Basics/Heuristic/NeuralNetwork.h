@@ -38,11 +38,11 @@ namespace NeuralNetwork
   class Neuron;
   class Synapse;
   
-#define LEARNING_RULE_DEFAULT   0.01
+#define LEARNING_RULE_DEFAULT   0.1082
 #define OK  0
-#define INERTIA_DEFAULT 0.8928 // (1/30)^-30 = .8928
+#define INERTIA_DEFAULT 0.8928 // (1/30)^-30 = .8928; (1/90)^-90 = .95123
   
-#define RANDOM_INFLUENCE ((rand() > rand()) ? 1.0 : 1.0)
+#define RANDOM_INFLUENCE ((rand() > rand()) ? 1.0 : -1.0)
   
   enum SIG_FNCT_TYPE {
     NORMAL,
@@ -55,7 +55,7 @@ namespace NeuralNetwork
   } Harmony;
   
   const double irrelevant = 10e-14;
-  static unsigned long currentIteration;
+  static unsigned long currentIteration = -1;
   
   class Synapse : public Pipe<Neuron,Synapse> {
     
@@ -94,7 +94,8 @@ namespace NeuralNetwork
     
     static uint64_t pruneEdgesEach(LLRB_TreeNode<Synapse *, uint64_t> *current, void *neuron) {
       
-      if (current->data->capacity < irrelevant) {
+      if ((current->data->influence < irrelevant) &&
+          (current->data->influence > -irrelevant)) {
         ((Neuron *)neuron)->removeEdge(current->data);
       }
       
@@ -139,7 +140,7 @@ namespace NeuralNetwork
       Neuron *pCurrentNeuron = ((Neuron *)neuron);
       
       if (pCurrentNeuron->discovered) {
-        correction = LEARNING_RULE_DEFAULT * pCurrentNeuron->delta * *(pCurrentNeuron->memory); // TODO
+        correction = LEARNING_RULE_DEFAULT * pCurrentNeuron->delta * *(pCurrentNeuron->memory);
         correction += synapse->getMomentum();
         
         synapse->changeInfluence(correction);
@@ -157,7 +158,7 @@ namespace NeuralNetwork
     
     double delta = 0.0;
     double *memory = NULL;
-    double *inputBias = NULL;
+    double *ptrInput = NULL;
     double totalInputs = 0.0;
     
     Neuron(LLRB_Tree<Harmony *, uint64_t> *, vector<Neuron *> *, double *, double *);
@@ -170,21 +171,21 @@ namespace NeuralNetwork
   };
   
   
-  class NeuralNetwork : public Network<Neuron,Synapse> , public Heuristic<NeuralNetwork>
+  class NeuralNetwork : public Network<Neuron,Synapse> , public Heuristic<NeuralNetwork, double>
   {
   private:
     
     LLRB_Tree<Neuron *, uint64_t> inputs;
     LLRB_Tree<Harmony *, uint64_t> outputs;
+    Neuron *bias;
     vector<vector<Neuron *> *> *layers;
     bool layersDetermined = false;
-    double networkBias = 1.0;
+    double networkBias = -1.0;
     double learningRule = LEARNING_RULE_DEFAULT;
     vector<Synapse *> terminalEdges;
+    uint64_t experiencedEpochs = 0;
     
   protected:
-    
-    double *glbBias;
     
     static uint64_t changeInputInfluenceEach(LLRB_TreeNode<Harmony *, uint64_t> *current, void *nnetwork) {
       Neuron *pCurrentNeuron = current->data->expectation;
@@ -219,6 +220,20 @@ namespace NeuralNetwork
       return current->key;
     }
     
+    static uint64_t addInputToVectorEach(LLRB_TreeNode<Neuron *, uint64_t> *current, void *vect) {
+      
+      ((vector<double *> *)vect)->push_back(current->data->ptrInput);
+      
+      return current->key;
+    }
+    
+    static uint64_t addOutputToVectorEach(LLRB_TreeNode<Harmony *, uint64_t> *current, void *vect) {
+      
+      ((vector<double *> *)vect)->push_back(current->data->reality);
+      
+      return current->key;
+    }
+    
     static uint64_t addEach(LLRB_TreeNode<Neuron *, uint64_t> *current, void *network) {
       
       ((NeuralNetwork *)network)->inputs.insert(current->data, current->key);
@@ -234,8 +249,15 @@ namespace NeuralNetwork
                   std::vector<uint64_t> *layers);
     NeuralNetwork *clone();
     
-    void calcExpectation(void);
+    void calcExpectation(uint64_t);
     void doCorrection();
+    
+    vector<double *> *getInputs();
+    vector<HeuristicHarmony *> *getHarmony();
+    
+    void removeOutput(double *);
+    
+    uint64_t timeAlive();
     
     virtual void simplify();
     virtual void merge(NeuralNetwork *);

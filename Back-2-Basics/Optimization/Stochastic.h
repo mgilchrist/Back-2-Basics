@@ -24,6 +24,8 @@
 
 #include "LLRB_Tree.h"
 using namespace Graph;
+#include "Heap.h"
+using namespace Collection;
 #include "Optimization.h"
 
 
@@ -32,21 +34,22 @@ class Stoichastic : public Optimization<HeuristicType,DataType> {
   
 private:
   
-  LLRB_Tree<HeuristicType *, DataType> *candidates;
+  LLRB_Tree<HeuristicType *, uint64_t> *candidates;
+  LLRB_Tree<Heap<HeuristicType *, double>, uint64_t> *candidatesInArea;
   
 protected:
-  void doEpochEach(LLRB_TreeNode<HeuristicType *,DataType>, void *);
+  
+  void doEpochEach(LLRB_TreeNode<HeuristicType *,DataType> current, void *reserved) {
+    
+    current->data->calculateExpectation();
+  }
+  
   void doEpoch();
   
 public:
   Stoichastic();
 };
 
-template <class HeuristicType, class DataType>
-void Stoichastic<HeuristicType,DataType>::doEpochEach(LLRB_TreeNode<HeuristicType *,DataType> current, void *reserved) {
-  
-  current->data->calculateExpectation();
-}
 
 template <class HeuristicType, class DataType>
 void Stoichastic<HeuristicType,DataType>::doEpoch() {

@@ -24,20 +24,74 @@
 
 #include "Stochastic.h"
 
+static uint64_t currentTime = -1;
+
 template <class HeuristicType, class DataType>
 class Genetic : public Stoichastic<HeuristicType,DataType> {
   
 private:
   
+  
   double envToughness;
   uint64_t reproductionAgeMin;
   uint64_t reproductionAgeMax;
   
+protected:
+  
+  static double calcFitnessEach(LLRB_TreeNode<HeuristicType *,uint64_t> *current, void *world) {
+    current->data->calcExpectation(currentTime);
+    vector<HeuristicHarmony *> *harmony = current->data->getHarmony();
+    double fitness = 0, tmp;
+    
+    for (uint64_t ix = 0; ix < harmony->size(); ix++) {
+      tmp = pow((*(harmony->at(ix)->output) - *(harmony->at(ix)->expectation)) / *(harmony->at(ix)->output), 2);
+      ((Genetic *)world)->candidatesInArea->search(harmony->at(ix)->output)->push(current, tmp);
+      fitness += tmp;
+    }
+    
+    fitness /= harmony->size();
+    
+    return sqrt(fitness);
+  }
+  
+  static vector<uint64_t> *crossover(vector<uint64_t> *dad, vector<uint64_t> *mom,
+                                     double dFitness, double mFitness) {
+    vector<uint64_t> *ret;
+    double fitness, tmp;
+    double crossover;
+    
+    if ((dad->size() != mom->size()) || (dad == mom)) {
+      return new vector<uint64_t>(dad->begin(), dad->end());
+    }
+    
+    ret = new vector<uint64_t>();
+    ret->reserve(dad->size());
+    
+    fitness = (dFitness-mFitness) / dFitness;
+    
+    tmp = (rand() / RAND_MAX) * (rand() / RAND_MAX);
+    crossover = ((tmp / 2) + 0.5) + fitness;
+    
+    if (crossover <= 0.0) {
+      ret->assign(dad->begin(), dad->end());
+    } else if (crossover >= 1.0) {
+      ret->assign(mom->begin(), mom->end());
+    } else {
+      for (uint64_t ix = 0; ix < (uint64_t)(crossover*dad->size()); ix++) {
+        ret->push_back(dad->at(ix));
+      }
+      for (uint64_t ix = (uint64_t)(crossover*dad->size()); ix < mom->size(); ix++) {
+        ret->push_back(mom->at(ix));
+      }
+    }
+    
+    return ret;
+  }
+  
   void add();
   void calcFitness();
-  double calcFitnessEach(LLRB_TreeNode<HeuristicType *,DataType> *current, void *);
   void calcSurvival();
-  void reproduce();
+  HeuristicType *reproduce(HeuristicType *father, HeuristicType *mother);
   void get();
   
 public:
@@ -46,19 +100,7 @@ public:
   
 };
 
-template <class HeuristicType, class DataType>
-double Genetic<HeuristicType,DataType>::calcFitnessEach(LLRB_TreeNode<HeuristicType *,DataType> *current, void *reserved) {
-  double *thisExpectation = current->data->getExpectation();
-  double fitness = 0;
-  
-  for (uint64_t ix = 0; ix < this->spaceSize; ix++) {
-    fitness += pow((this->space[ix] - thisExpectation[ix]) / (double)this->space);
-  }
-  
-  fitness /= this->spaceSize;
-  
-  return sqrt(fitness);
-}
+
 
 template <class HeuristicType, class DataType>
 void Genetic<HeuristicType,DataType>::calcFitness() {
@@ -71,7 +113,7 @@ void Genetic<HeuristicType,DataType>::calcSurvival() {
 }
 
 template <class HeuristicType, class DataType>
-void Genetic<HeuristicType,DataType>::reproduce() {
+HeuristicType *Genetic<HeuristicType,DataType>::reproduce(HeuristicType *father, HeuristicType *mother) {
   
 }
 
@@ -82,7 +124,7 @@ void Genetic<HeuristicType,DataType>::get() {
 
 template <class HeuristicType, class DataType>
 Genetic<HeuristicType,DataType>::Genetic() {
-  
+  this->candidatesInArea = new LLRB_Tree<Heap<HeuristicType, double>, uint64_t>();
 }
 
 

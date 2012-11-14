@@ -23,7 +23,9 @@
 #define OpenSource_Map_h
 
 #include "Heap.h"
+using namespace Collection;
 #include "Graph.h"
+using namespace Graph;
 
 namespace Graph {
   
@@ -130,9 +132,9 @@ namespace Graph {
           v->previousEdge = current->data;
           
           if (v->auxIndex == NULL) {
-            v->auxIndex = ((Collection::Heap<NodeType *,double> *)queue)->push(v, tmp);
+            v->auxIndex = ((Heap<NodeType *,double> *)queue)->push(v, tmp);
           } else {
-            v->auxIndex = ((Collection::Heap<NodeType *,double> *)queue)->update(*(v->auxIndex), tmp);
+            v->auxIndex = ((Heap<NodeType *,double> *)queue)->update(*(v->auxIndex), tmp);
           }
         }
       }
@@ -255,7 +257,7 @@ namespace Graph {
   /* Dijkstra's (For non-negative graphs) */
   template <class NodeType, class EdgeType>
   void Map<NodeType,EdgeType>::dijkstras() {
-    Collection::Heap<NodeType *,double> *queue = new Collection::Heap<NodeType *,double>();
+    Heap<NodeType *,double> *queue = new Heap<NodeType *,double>();
     NodeType *u;
     vector<EdgeType *> *ret;
     vector<NodeType *> *dirtyNodes = new vector<NodeType *>();
