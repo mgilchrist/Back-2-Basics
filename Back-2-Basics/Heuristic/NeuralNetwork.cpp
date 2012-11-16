@@ -138,6 +138,7 @@ namespace NeuralNetwork
     vector<Neuron *> *currentStack, *previousStack;
     Neuron *currentNeuron;
     
+    hiddenInfo = layers;
     bias = new Neuron(NULL,NULL,&networkBias,NULL);
     
     previousStack = new vector<Neuron *>();
@@ -293,6 +294,10 @@ namespace NeuralNetwork
     inputs.modifyAll(NeuralNetwork::addInputToVectorEach, ret);
     
     return ret;
+  }
+  
+  vector<uint64_t> *NeuralNetwork::getHiddenInfo() {
+    return hiddenInfo;
   }
   
   vector<HeuristicHarmony *> *NeuralNetwork::getHarmony() {

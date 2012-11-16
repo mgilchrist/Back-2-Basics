@@ -178,6 +178,7 @@ namespace NeuralNetwork
     LLRB_Tree<Neuron *, uint64_t> inputs;
     LLRB_Tree<Harmony *, uint64_t> outputs;
     Neuron *bias;
+    vector<uint64_t> *hiddenInfo;
     vector<vector<Neuron *> *> *layers;
     bool layersDetermined = false;
     double networkBias = -1.0;
@@ -253,14 +254,15 @@ namespace NeuralNetwork
     void doCorrection();
     
     vector<double *> *getInputs();
+    vector<uint64_t> *getHiddenInfo();
     vector<HeuristicHarmony *> *getHarmony();
     
     void removeOutput(double *);
     
     uint64_t timeAlive();
     
-    virtual void simplify();
-    virtual void merge(NeuralNetwork *);
+    void simplify();
+    void merge(NeuralNetwork *);
     
   };
   

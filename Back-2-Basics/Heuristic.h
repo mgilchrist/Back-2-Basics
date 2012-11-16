@@ -45,14 +45,18 @@ public:
     
   }
   
-  Heuristic(std::vector<DataType *> *, std::vector<DataType *> *) {
-    
+  Heuristic(std::vector<double *> *input,
+            std::vector<double *> *output,
+            std::vector<double *> *expectation,
+            std::vector<uint64_t> *hiddenInfo) {
+    HeuristicType(input, output, expectation, hiddenInfo);
   }
   
   virtual void calcExpectation(uint64_t) =0;
   virtual void doCorrection() =0;
   
   virtual vector<DataType *> *getInputs() =0;
+  virtual vector<uint64_t> *getHiddenInfo() =0;
   virtual vector<HeuristicHarmony *> *getHarmony() =0;
   
   virtual void removeOutput(DataType *) =0;

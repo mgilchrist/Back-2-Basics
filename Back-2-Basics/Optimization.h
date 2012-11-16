@@ -31,8 +31,7 @@ class Optimization {
   
 private:
   
-  DataType *space;
-  uint64_t spaceSize;
+  LLRB_Tree<double *, uint64_t> space;
   
 public:
   Optimization();
@@ -45,13 +44,7 @@ public:
 
 template <class HeuristicType, class DataType>
 Optimization<HeuristicType,DataType>::Optimization() {
-  space = NULL;
-}
-
-template <class HeuristicType, class DataType>
-Optimization<HeuristicType,DataType>::Optimization(DataType *space, uint64_t spaceSize) {
-  this->space = space;
-  this->spaceSize = spaceSize;
+  
 }
 
 
