@@ -38,22 +38,18 @@ private:
   
 protected:
   
-  template <class EntryType>
-  static uint64_t addEach(LLRB_TreeNode<EntryType *,uint64_t> *current, void *vect) {
-    ((vector<double *> *)vect)->push_back(current->data);
-    
-    return current->key;
-  }
-  
   static double calcFitnessEach(LLRB_TreeNode<HeuristicType *,uint64_t> *current, void *world) {
     current->data->calcExpectation(currentTime);
     vector<HeuristicHarmony *> *harmony = current->data->getHarmony();
-    double fitness = 0, tmp;
+    double fitness = 0, err;
     
     for (uint64_t ix = 0; ix < harmony->size(); ix++) {
-      tmp = pow((*(harmony->at(ix)->output) - *(harmony->at(ix)->expectation)) / *(harmony->at(ix)->output), 2);
-      ((Genetic *)world)->candidatesInArea->search(harmony->at(ix)->output)->push(current, tmp);
-      fitness += tmp;
+      err = (*(harmony->at(ix)->output) - *(harmony->at(ix)->expectation)) / *(harmony->at(ix)->output);
+      err = pow(err, 2);
+      current->data->persistance += 1 / (1 + err);
+      
+      ((Genetic *)world)->candidatesInArea->search(harmony->at(ix)->output)->push(current, err);
+      fitness += err;
     }
     
     fitness /= harmony->size();
@@ -65,7 +61,7 @@ protected:
   static vector<EntryType *> *crossoverA(vector<EntryType *> *dad, vector<EntryType *> *mom) {
     vector<EntryType *> *ret;
     LLRB_Tree<EntryType *, uint64_t> treeRet;
-    uint64_t crossover;
+    uint64_t tmp, crossover, mCrossover;
     uint64_t retSize = max(dad->size(), mom->size());
     uint64_t treeSizeStart;
     
@@ -74,15 +70,16 @@ protected:
     }
     
     ret = new vector<double *>();
-    ret->reserve(dad->size());
+    ret->reserve(retSize);
     
-    crossover = random() % dad->size();
-    
+    tmp = min(random() % retSize, dad->size());
+    mCrossover = min(retSize-tmp, mom->size());
+    crossover = retSize-mCrossover;
     
     /* Each generation should progress, so the size should be greater of
      * two rents 
      */
-    for (uint64_t mCurrent = mom->size()-1; mCurrent >= (uint64_t)crossover; mCurrent++) {
+    for (uint64_t mCurrent = mom->size()-1; mCurrent >= (uint64_t)mom->size()-crossover; mCurrent++) {
       treeRet.insert(mom->at(mCurrent), (uint64_t)mom->at(mCurrent));
     }
     
@@ -109,7 +106,7 @@ protected:
       return ret;
     }
     
-    treeRet.modifyAll(addEach, ret);
+    treeRet.addAllTo(ret);
     
     return ret;
   }
@@ -117,14 +114,30 @@ protected:
   template <class EntryType>
   static vector<EntryType *> *crossoverB(vector<EntryType *> *dad, vector<EntryType *> *mom) {
     vector<EntryType *> *ret;
+    uint64_t tmp, crossover, mCrossover;
+    uint64_t retSize = max(dad->size(), mom->size());
     
+    ret = new vector<double *>();
+    ret->reserve(retSize);
+    
+    tmp = min(random() % retSize, dad->size());
+    mCrossover = min(retSize-tmp, mom->size());
+    crossover = retSize-mCrossover;
+    
+    for (uint64_t ix = 0; ix < crossover; ix++) {
+      ret->push_back(dad->at(ix));
+    }
+    
+    for (uint64_t ix = crossover; ix < retSize; ix++) {
+      ret->push_back(mom->at(ix));
+    }
     
     return ret;
   }
   
   void add();
-  void calcFitness();
-  void calcSurvival();
+  void evaluation();
+  void reckoning();
   HeuristicType *reproduce(HeuristicType *father, HeuristicType *mother);
   void get();
   
@@ -137,12 +150,12 @@ public:
 
 
 template <class HeuristicType, class DataType>
-void Genetic<HeuristicType,DataType>::calcFitness() {
+void Genetic<HeuristicType,DataType>::evaluation() {
   this->candidates->modifyAll(calcFitnessEach, 0);
 }
 
 template <class HeuristicType, class DataType>
-void Genetic<HeuristicType,DataType>::calcSurvival() {
+void Genetic<HeuristicType,DataType>::reckoning() {
   
 }
 
@@ -160,10 +173,10 @@ HeuristicType *Genetic<HeuristicType,DataType>::reproduce(HeuristicType *dad, He
   childExpectations = new vector<double *>();
   
   expectations = new double[childOutputs->size()];
-  
+  this->space.insert(expectations, (uint64_t)expectations);
+                 
   for (uint64_t ix = 0; ix < childOutputs->size(); ix++) {
     childExpectations->push_back(&expectations[ix]);
-    this->space.insert(&expectations[ix], (uint64_t)&expectations[ix]);
   }
   
   return new HeuristicType(childInputs,childOutputs,childExpectations,childHiddenInfo);

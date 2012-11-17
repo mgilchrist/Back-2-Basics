@@ -35,9 +35,9 @@ typedef struct HeuristicHarmony {
 template <class HeuristicType, class DataType>
 class Heuristic {
   
-private:
+public:
   
-  
+  double persistance = 0.0;
   
 public:
   
@@ -48,8 +48,10 @@ public:
   Heuristic(std::vector<double *> *input,
             std::vector<double *> *output,
             std::vector<double *> *expectation,
-            std::vector<uint64_t> *hiddenInfo) {
+            std::vector<uint64_t> *hiddenInfo,
+            double persistance) {
     HeuristicType(input, output, expectation, hiddenInfo);
+    this->persistance = persistance;
   }
   
   virtual void calcExpectation(uint64_t) =0;
