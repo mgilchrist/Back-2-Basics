@@ -39,7 +39,7 @@ using namespace Graph;
 const uint64_t glbInputSize = 0x80;
 const uint64_t glbOutputSize = 0x80;
 const uint64_t glbIterations = 0x1000;
-const uint64_t glbTestSize = 0x100;
+const uint64_t glbTestSize = 0x10000;
 
 
 int testHashTable() {
@@ -216,8 +216,12 @@ int testLLRBTree() {
   arrayList = new ArrayList<uint64_t,uint64_t>(glbTestSize);
   
   for (uint64_t ix = 0; ix < glbTestSize; ix++) {
-    uint64_t value = random();
-    rbTree->insert(value, value);
+    uint64_t value;
+    do {
+      value = random();
+      tmp = rbTree->size();
+      rbTree->insert(value, value);
+    } while (rbTree->size() == tmp);
     
 #if 0
     current = rbTree->firstNode(rbTree->getTreeRoot());

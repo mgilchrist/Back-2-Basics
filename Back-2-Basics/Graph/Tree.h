@@ -31,14 +31,30 @@ namespace Graph {
   class TreeNode
   {
   public:
-    TreeNodeType *left = NULL;
-    TreeNodeType *right = NULL;
+    TreeNodeType *leftNode = NULL;
+    TreeNodeType *rightNode = NULL;
     
   public:
     DataType data = NULL;
     KeyType key;
     
     TreeNode() {
+    }
+    
+    static inline void setLeft(TreeNodeType *node, TreeNodeType *child) {
+      node->leftNode = child;
+    }
+    
+    static inline void setRight(TreeNodeType *node, TreeNodeType *child) {
+      node->rightNode = child;
+    }
+    
+    static inline TreeNodeType *leftOf(TreeNodeType *node) {
+      return node->leftNode;
+    }
+    
+    static inline TreeNodeType *rightOf(TreeNodeType *node) {
+      return node->rightNode;
     }
   };
   
@@ -60,7 +76,7 @@ namespace Graph {
   public:
     Tree();
     
-    TreeNodeType nullNode;
+    TreeNodeType *nullNode;
     
     TreeNodeType *getNode(KeyType key, TreeNodeType *current);
     TreeNodeType *getTreeRoot();
@@ -78,11 +94,12 @@ namespace Graph {
   
   template <class TreeNodeType, class DataType, class KeyType>
   Tree<TreeNodeType,DataType,KeyType>::Tree() {
-    treeRoot = &nullNode;
-    nullNode.left = &nullNode;
-    nullNode.right = &nullNode;
-    nullNode.data = NULL;
-    nullNode.key = (uint64_t)-1;
+    nullNode = new TreeNodeType();
+    treeRoot = nullNode;
+    treeRoot->setLeft(treeRoot, nullNode);
+    treeRoot->setRight(treeRoot, nullNode);
+    treeRoot->data = NULL;
+    treeRoot->key = (uint64_t)-1;
   }
   
   template <class TreeNodeType, class DataType, class KeyType>
@@ -110,7 +127,7 @@ namespace Graph {
   TreeNodeType *Tree<TreeNodeType,DataType,KeyType>::getNodeMinGreaterThan(KeyType key, TreeNodeType *current) {
     TreeNodeType *tNode;
     
-    if (current == &nullNode) {
+    if (current == nullNode) {
       return current;
     }
     
@@ -119,12 +136,12 @@ namespace Graph {
     }
     
     if (key < current->key) {
-      tNode = getNodeMinGreaterThan(key, current->left);
+      tNode = getNodeMinGreaterThan(key, current->leftOf(current));
     } else {
-      tNode = getNodeMinGreaterThan(key, current->right);
+      tNode = getNodeMinGreaterThan(key, current->rightOf(current));
     }
     
-    if (tNode == &nullNode) {
+    if (tNode == nullNode) {
       return NULL;
     }
     
@@ -149,8 +166,8 @@ namespace Graph {
     TreeNodeType *tmp;
     TreeNodeType *lastGT = NULL;
     
-    if (tNode->right != &nullNode) {
-      return min(tNode->right);
+    if (tNode->rightOf(tNode) != nullNode) {
+      return min(tNode->rightOf(tNode));
     }
     
     if (treeRoot == tNode) {
@@ -160,19 +177,19 @@ namespace Graph {
     tmp = treeRoot;
     
     while (true) {
-      if (tmp->left->key == tNode->key) {
+      if (tmp->leftOf(tmp)->key == tNode->key) {
         return tmp;
       }
       
-      if (tmp->right->key == tNode->key) {
+      if (tmp->rightOf(tmp)->key == tNode->key) {
         break;
       }
       
       if (tmp->key > tNode->key) {
         lastGT = tmp;
-        tmp = tmp->left;
+        tmp = tmp->leftOf(tmp);
       } else {
-        tmp = tmp->right;
+        tmp = tmp->rightOf(tmp);
       }
       
     }
@@ -183,8 +200,8 @@ namespace Graph {
   template <class TreeNodeType, class DataType, class KeyType>
   TreeNodeType *Tree<TreeNodeType,DataType,KeyType>::min(TreeNodeType *tNode) {
     
-    while (tNode->left != &nullNode) {
-      tNode = tNode->left;
+    while (tNode->leftOf(tNode) != nullNode) {
+      tNode = tNode->leftOf(tNode);
     }
     
     return tNode;
@@ -250,12 +267,12 @@ namespace Graph {
         
         newKey = (*action)(u, object);
         
-        if (u->left->data != NULL) {
-          nextL->push_back(u->left);
+        if (u->leftOf(u)->data != NULL) {
+          nextL->push_back(u->leftOf(u));
         }
         
-        if (u->right->data != NULL) {
-          nextL->push_back(u->right);
+        if (u->rightOf(u)->data != NULL) {
+          nextL->push_back(u->rightOf(u));
         }
       }
       
@@ -271,7 +288,7 @@ namespace Graph {
   template <class TreeNodeType, class DataType, class KeyType>
   void Tree<TreeNodeType,DataType,KeyType>::modifyAll(KeyType (*action)(TreeNodeType *, void *), void *object) {
     
-    if (this->treeRoot != &this->nullNode) {
+    if (this->treeRoot != this->nullNode) {
       rModifyAll(action,object,this->treeRoot,0);
     }
   
