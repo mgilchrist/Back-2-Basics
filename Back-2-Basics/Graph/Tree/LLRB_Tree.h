@@ -103,6 +103,9 @@ namespace Graph {
     this->treeRoot = insert(this->treeRoot, data, key);
     this->treeRoot->color = BLACK;
     
+    this->nullNode->setLeft(this->nullNode, this->treeRoot);
+    this->nullNode->setRight(this->nullNode, this->treeRoot);
+    
   }
   
   
@@ -130,6 +133,7 @@ namespace Graph {
     
     if (key == node->key) {
       node->data = data;
+      return node;
     }
     
     if (key < node->key) {
@@ -320,7 +324,7 @@ namespace Graph {
         node->rightOf(node)->color = RED;
       }
       
-      if ((cmp == 0) && ((node->rightOf(node) == this->nullNode) || (node->leftOf(node->rightOf(node)) ->color != RED))) {
+      if ((cmp == 0) && ((node->rightOf(node) == this->nullNode) || (node->leftOf(node->rightOf(node))->color != RED))) {
         delete node;
         this->numNodes--;
         return this->nullNode;
@@ -347,6 +351,10 @@ namespace Graph {
   template <class EntryType, class KeyType, class TreeNodeType>
   void LLRB_Tree<EntryType,KeyType,TreeNodeType>::remove(KeyType key) {
     this->treeRoot = remove(this->treeRoot, key);
+    this->treeRoot->color = BLACK;
+    
+    this->nullNode->setLeft(this->nullNode, this->treeRoot);
+    this->nullNode->setRight(this->nullNode, this->treeRoot);
   }
   
   

@@ -38,9 +38,6 @@ namespace Graph {
     DataType data = NULL;
     KeyType key;
     
-    TreeNode() {
-    }
-    
     static inline void setLeft(TreeNodeType *node, TreeNodeType *child) {
       node->leftNode = child;
     }

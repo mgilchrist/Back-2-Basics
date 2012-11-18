@@ -39,7 +39,8 @@ using namespace Graph;
 const uint64_t glbInputSize = 0x80;
 const uint64_t glbOutputSize = 0x80;
 const uint64_t glbIterations = 0x1000;
-const uint64_t glbTestSize = 0x10000;
+const uint64_t glbTestSize = 0x1000000;
+const uint64_t glbSlowTestSize = 0x10000;
 
 
 int testHashTable() {
@@ -104,15 +105,15 @@ int testHashTable() {
 int testSecureHashTable() {
   SecureHashTable<uint64_t,uint64_t> *hashTable;
   std::vector<uint64_t> verify;
-  hashTable = new SecureHashTable<uint64_t,uint64_t>(glbTestSize);
+  hashTable = new SecureHashTable<uint64_t,uint64_t>(glbSlowTestSize);
   uint64_t *tmpInt = new uint64_t;
   uint64_t value;
   
-  verify.resize(glbTestSize);
+  verify.resize(glbSlowTestSize);
   
   cout << "\nTesting SecureHashTable.\n";
   
-  for (uint64_t ix = 0; ix < glbTestSize; ix++) {
+  for (uint64_t ix = 0; ix < glbSlowTestSize; ix++) {
     
     do {
       value = random();
@@ -124,7 +125,7 @@ int testSecureHashTable() {
     verify[ix] = value;
   }
   
-  for (uint64_t ix = 0; ix < glbTestSize; ix++) {
+  for (uint64_t ix = 0; ix < glbSlowTestSize; ix++) {
     
     if (hashTable->get(verify[ix],tmpInt) || (*tmpInt != verify[ix])) {
       hashTable->get(verify[ix], tmpInt);
@@ -138,7 +139,7 @@ int testSecureHashTable() {
     //}
   }
   
-  for (uint64_t ix = 0; ix < glbTestSize; ix++) {
+  for (uint64_t ix = 0; ix < glbSlowTestSize; ix++) {
     
     if (hashTable->remove(verify[ix],tmpInt) || (*tmpInt != verify[ix])) {
       cout << "Index ";
@@ -216,26 +217,29 @@ int testLLRBTree() {
   arrayList = new ArrayList<uint64_t,uint64_t>(glbTestSize);
   
   for (uint64_t ix = 0; ix < glbTestSize; ix++) {
-    uint64_t value;
     do {
-      value = random();
+      uint64_t value = random();
       tmp = rbTree->size();
       rbTree->insert(value, value);
     } while (rbTree->size() == tmp);
     
 #if 0
-    current = rbTree->firstNode(rbTree->getTreeRoot());
+    current = rbTree->min(rbTree->getTreeRoot());
     tmp = current->key;
     
-    for (uint64_t jx = 0; jx < ix; jx++) {
-      current = rbTree->nextNode(current);
+    for (uint64_t ix = 0; ix < rbTree->size()-1; ix++) {
+      current = rbTree->next(current);
       
       if (current->key < tmp) {
-        cout << "Index ";
-        cout << jx;
+        cout << "Index/Key:";
+        cout << ix;
+        cout << "/";
+        cout << tmp;
         cout << " not sorted!\n";
       }
+      
       tmp = current->key;
+      
     }
     
 #endif
