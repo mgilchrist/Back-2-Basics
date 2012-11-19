@@ -39,7 +39,7 @@ using namespace Graph;
 const uint64_t glbInputSize = 0x80;
 const uint64_t glbOutputSize = 0x80;
 const uint64_t glbIterations = 0x1000;
-const uint64_t glbTestSize = 0x1000000;
+const uint64_t glbTestSize = 0x100000;
 const uint64_t glbSlowTestSize = 0x10000;
 
 
@@ -436,11 +436,11 @@ int testNeuralNetwork() {
       
       for (int ix = 0; ix < glbOutputSize; ix++) {
         thisError = (*thisOutput->at(ix) - *(thisExpect->at(ix))) / *thisOutput->at(ix);
-        errorRate += pow(thisError, 2);
+        errorRate += thisError * thisError;
       }
       
       cout << "Error Rate is ";
-      cout << sqrt(errorRate/((double)(iterations+1)));
+      cout << sqrt(errorRate/((double)(glbOutputSize)));
       cout << "\n";
     }
     

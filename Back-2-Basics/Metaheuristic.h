@@ -115,7 +115,7 @@ Metaheuristic<HeuristicType,DataType>::Metaheuristic(std::vector<DataType> *inpu
   epoch = 0;
   
   
-  for (int ix = 0; ix < numCandidates; ix++) {
+  for (uint64_t ix = 0; ix < numCandidates; ix++) {
     
     thisTheory = candidates->at(ix);
     
@@ -130,7 +130,7 @@ Metaheuristic<HeuristicType,DataType>::Metaheuristic(std::vector<DataType> *inpu
 template <class HeuristicType, class DataType>
 void Metaheuristic<HeuristicType,DataType>::postResult(DataType result) {
   
-  for (int ix = 0; ix < theory->getSize(); ix++) {
+  for (uint64_t ix = 0; ix < theory->getSize(); ix++) {
     theory->atIndex(ix)->data->doCorrection();
   }
 }

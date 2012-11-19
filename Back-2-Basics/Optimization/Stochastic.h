@@ -29,13 +29,18 @@ using namespace Collection;
 #include "Optimization.h"
 
 
+typedef struct TotalCompetition {
+  double competition;
+  uint64_t numCompetitors;
+} TotalCompetition;
+
 template <class HeuristicType, class DataType>
 class Stoichastic : public Optimization<HeuristicType,DataType> {
   
 private:
   
   LLRB_Tree<HeuristicType *, uint64_t> *candidates;
-  LLRB_Tree<Heap<HeuristicType *, double>, uint64_t> *candidatesInArea;
+  LLRB_Tree<TotalCompetition *, uint64_t> *competitionInArea;
   
 protected:
   

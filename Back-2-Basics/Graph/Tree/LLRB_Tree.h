@@ -47,12 +47,14 @@ namespace Graph {
   {
     
   private:
-    /*
-    static inline void setLeft(TreeNodeType *, TreeNodeType *);
-    static inline void setRight(TreeNodeType *, TreeNodeType *);
     
-    static inline TreeNodeType *left(TreeNodeType *);
-    static inline TreeNodeType *right(TreeNodeType *);
+    const bool uniqueKeys;
+    /*
+     static inline void setLeft(TreeNodeType *, TreeNodeType *);
+     static inline void setRight(TreeNodeType *, TreeNodeType *);
+     
+     static inline TreeNodeType *left(TreeNodeType *);
+     static inline TreeNodeType *right(TreeNodeType *);
      */
     
     static TreeNodeType *repair(TreeNodeType *);
@@ -65,36 +67,27 @@ namespace Graph {
     static TreeNodeType *moveViolationRight(TreeNodeType *);
     static TreeNodeType *moveViolationLeft(TreeNodeType *);
     
-    TreeNodeType *removeMin(TreeNodeType *);
-    TreeNodeType *removeMax(TreeNodeType *);
-    TreeNodeType *remove(TreeNodeType *, KeyType);
+    TreeNodeType *removeMin(TreeNodeType *, EntryType);
+    TreeNodeType *removeMax(TreeNodeType *, EntryType);
+    TreeNodeType *remove(TreeNodeType *, EntryType, KeyType);
     
   public:
-    LLRB_Tree();
+    LLRB_Tree() : uniqueKeys(true) {
     
-    void insert(EntryType n, KeyType key);
-    void removeMax();
-    void removeMin();
-    void remove(KeyType);
-    void updateKey(KeyType, KeyType, uint64_t);
-    void update(EntryType, KeyType, uint64_t);
+    }
+    
+    LLRB_Tree(bool uniqueKeys) {
+      this->uniqueKeys = uniqueKeys;
+    }
+    
+    void insert(EntryType, KeyType);
+    void removeMax(EntryType);
+    void removeMin(EntryType);
+    void remove(EntryType, KeyType);
+    //void updateKey(KeyType, KeyType, uint64_t);
+    //void update(EntryType, KeyType, uint64_t);
     
   };
-  
-  template <class EntryType, class KeyType, class TreeNodeType>
-  LLRB_Tree<EntryType,KeyType,TreeNodeType>::LLRB_Tree() {
-    
-  }
-  
-  template <class EntryType, class KeyType, class TreeNodeType>
-  void LLRB_Tree<EntryType,KeyType,TreeNodeType>::updateKey(KeyType oldKey, KeyType newKey, uint64_t instance) {
-    // TODO
-  }
-  
-  template <class EntryType, class KeyType, class TreeNodeType>
-  void LLRB_Tree<EntryType,KeyType,TreeNodeType>::update(EntryType n, KeyType newKey, uint64_t instance) {
-    // TODO
-  }
   
   
   template <class EntryType, class KeyType, class TreeNodeType>
@@ -131,11 +124,14 @@ namespace Graph {
       recolor(node);
     }
     
-    if (key == node->key) {
+    if ((uniqueKeys) && (key == node->key)) {
       node->data = data;
       return node;
     }
     
+    /* Go right if equal to conserve time order .
+     * Also makes removal slightly easier.
+     */
     if (key < node->key) {
       node->setLeft(node, insert(node->leftOf(node), data, key));
     } else {
@@ -238,9 +234,9 @@ namespace Graph {
   }
   
   template <class EntryType, class KeyType, class TreeNodeType>
-  void LLRB_Tree<EntryType,KeyType,TreeNodeType>::removeMax() {
+  void LLRB_Tree<EntryType,KeyType,TreeNodeType>::removeMax(EntryType victimData) {
     
-    this->treeRoot = removeMax(this->treeRoot);
+    this->treeRoot = removeMax(this->treeRoot, victimData);
     
     this->treeRoot->color = BLACK;
     
@@ -248,33 +244,36 @@ namespace Graph {
   
   
   template <class EntryType, class KeyType, class TreeNodeType>
-  TreeNodeType *LLRB_Tree<EntryType,KeyType,TreeNodeType>::removeMax(TreeNodeType *node) {
+  TreeNodeType *LLRB_Tree<EntryType,KeyType,TreeNodeType>::removeMax(TreeNodeType *node, EntryType victimData) {
     
     if (node->leftOf(node)->color == RED) {
       node = rotateRight(node);
     }
     
     if (node->rightOf(node) == this->nullNode) {
-      delete node;
-      this->numNodes--;
+      if (uniqueKeys || (victimData == node->data)) {
+        delete node;
+        this->numNodes--;
+      }
       return this->nullNode;
+      
     }
     
     if ((node->rightOf(node)->color != RED) &&
-        (node->leftOf(node->rightOf(node)) ->color != RED)) {
+        (node->leftOf(node->rightOf(node))->color != RED)) {
       node = moveViolationRight(node);
     }
     
-    node->setLeft(node, removeMax(node->leftOf(node)));
+    node->setLeft(node, removeMax(node->leftOf(node),victimData));
     
     return repair(node);
     
   }
   
   template <class EntryType, class KeyType, class TreeNodeType>
-  void LLRB_Tree<EntryType,KeyType,TreeNodeType>::removeMin() {
+  void LLRB_Tree<EntryType,KeyType,TreeNodeType>::removeMin(EntryType victimData) {
     
-    this->treeRoot = removeMin(this->treeRoot);
+    this->treeRoot = removeMin(this->treeRoot, victimData);
     
     this->treeRoot->color = BLACK;
     
@@ -282,11 +281,14 @@ namespace Graph {
   
   
   template <class EntryType, class KeyType, class TreeNodeType>
-  TreeNodeType *LLRB_Tree<EntryType,KeyType,TreeNodeType>::removeMin(TreeNodeType *node) {
+  TreeNodeType *LLRB_Tree<EntryType,KeyType,TreeNodeType>::removeMin(TreeNodeType *node, EntryType victimData) {
     
     if (node->leftOf(node) == this->nullNode) {
-      delete node;
-      this->numNodes--;
+      
+      if (uniqueKeys || (victimData == node->data)) {
+        delete node;
+        this->numNodes--;
+      }
       return this->nullNode;
     }
     
@@ -300,14 +302,14 @@ namespace Graph {
       node = moveViolationLeft(node);
     }
     
-    node->setLeft(node, removeMin(node->leftOf(node)));
+    node->setLeft(node, removeMin(node->leftOf(node), victimData));
     
     return repair(node);
     
   }
   
   template <class EntryType, class KeyType, class TreeNodeType>
-  TreeNodeType *LLRB_Tree<EntryType,KeyType,TreeNodeType>::remove(TreeNodeType *node, KeyType key) {
+  TreeNodeType *LLRB_Tree<EntryType,KeyType,TreeNodeType>::remove(TreeNodeType *node, EntryType victimData, KeyType key) {
     
     char cmp = (key == node->key) ? 0 : (key < node->key) ? -1 : 1;
     
@@ -316,7 +318,7 @@ namespace Graph {
           (node->leftOf(node->leftOf(node))->color != RED)) {
         moveViolationLeft(node);
       }
-      node->setLeft(node, remove(node->leftOf(node), key));
+      node->setLeft(node, remove(node->leftOf(node), victimData, key));
     } else {
       if (node->leftOf(node)->color == RED) {
         node = rotateRight(node);
@@ -336,12 +338,14 @@ namespace Graph {
       }
       
       if (cmp == 0) {
-        TreeNodeType *tNode = this->min(node->rightOf(node));
-        node->key = tNode->key;
-        node->data = tNode->data;
-        node->setRight(node, removeMin(node->rightOf(node)));
+        if (uniqueKeys || (victimData == node->data)) {
+          TreeNodeType *tNode = this->min(node->rightOf(node));
+          node->key = tNode->key;
+          node->data = tNode->data;
+          node->setRight(node, removeMin(node->rightOf(node), victimData));
+        }
       } else {
-        node->setRight(node, remove(node->rightOf(node), key));
+        node->setRight(node, remove(node->rightOf(node), victimData, key));
       }
     }
     
@@ -349,12 +353,9 @@ namespace Graph {
   }
   
   template <class EntryType, class KeyType, class TreeNodeType>
-  void LLRB_Tree<EntryType,KeyType,TreeNodeType>::remove(KeyType key) {
-    this->treeRoot = remove(this->treeRoot, key);
+  void LLRB_Tree<EntryType,KeyType,TreeNodeType>::remove(EntryType data, KeyType key) {
+    this->treeRoot = remove(this->treeRoot, data, key);
     this->treeRoot->color = BLACK;
-    
-    this->nullNode->setLeft(this->nullNode, this->treeRoot);
-    this->nullNode->setRight(this->nullNode, this->treeRoot);
   }
   
   

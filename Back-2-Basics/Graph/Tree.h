@@ -68,7 +68,8 @@ namespace Graph {
     TreeNodeType *findOpening(KeyType, TreeNodeType *);
     TreeNodeType *getNodeMinGreaterThan(KeyType, TreeNodeType *);
     
-    static void rModifyAll(KeyType (*action)(TreeNodeType *, void *), void *, TreeNodeType *, uint64_t);
+    static void rSelect(bool (*action)(TreeNodeType *, void *), void *, TreeNodeType *, vector<TreeNodeType *> *updates);
+    static void rModifyAll(KeyType (*action)(TreeNodeType *, void *), void *, TreeNodeType *, vector<TreeNodeType *> *victims);
     
   public:
     Tree();
@@ -81,8 +82,14 @@ namespace Graph {
     TreeNodeType *next(TreeNodeType *tNode);
     TreeNodeType *min(TreeNodeType *);
     
+    void select(KeyType (*action)(TreeNodeType *, void *), void *);
     void modifyAll(KeyType (*action)(TreeNodeType *, void *), void *);
     uint64_t size() {return numNodes;}
+    
+    virtual void insert(DataType, KeyType) =0;
+    virtual void removeMax(DataType) =0;
+    virtual void removeMin(DataType) =0;
+    virtual void remove(DataType, KeyType) =0;
     
   };
   
@@ -233,10 +240,61 @@ namespace Graph {
 #endif
   
   template <class TreeNodeType, class DataType, class KeyType>
+  void Tree<TreeNodeType,DataType,KeyType>::rSelect(bool (*criteria)(TreeNodeType *, void *),
+                                                       void *object,
+                                                       TreeNodeType *current,
+                                                       vector<TreeNodeType *> *victims) {
+    vector<TreeNodeType *> *L;
+    vector<TreeNodeType *> *nextL;
+    TreeNodeType *u;
+    KeyType newKey;
+    
+    L = new vector<TreeNodeType *>();
+    
+    if (current->data != NULL) {
+      L->push_back(current);
+    }
+    
+    
+    while (!L->empty()) {
+      
+      // Initialize new layer
+      nextL = new vector<TreeNodeType *>();
+      
+      while (!(L->empty())) {
+        u = L->back();
+        L->resize(L->size()-1);
+        
+        if (u->data == NULL) {
+          continue;
+        }
+        
+        if (!(*criteria)(u, object)) {
+          victims->push_back(u);
+        }
+        
+        if (u->leftOf(u)->data != NULL) {
+          nextL->push_back(u->leftOf(u));
+        }
+        
+        if (u->rightOf(u)->data != NULL) {
+          nextL->push_back(u->rightOf(u));
+        }
+      }
+      
+      L = nextL;
+      
+    }
+    
+    delete L;
+    
+  }
+  
+  template <class TreeNodeType, class DataType, class KeyType>
   void Tree<TreeNodeType,DataType,KeyType>::rModifyAll(KeyType (*action)(TreeNodeType *, void *),
                                                        void *object,
                                                        TreeNodeType *current,
-                                                       uint64_t instance) {
+                                                       vector<TreeNodeType *> *updates) {
     vector<TreeNodeType *> *L;
     vector<TreeNodeType *> *nextL;
     TreeNodeType *u;
@@ -264,6 +322,10 @@ namespace Graph {
         
         newKey = (*action)(u, object);
         
+        if (u->key != newKey) {
+          updates->push_back(u);
+        }
+        
         if (u->leftOf(u)->data != NULL) {
           nextL->push_back(u->leftOf(u));
         }
@@ -281,12 +343,37 @@ namespace Graph {
     
   }
 
+  template <class TreeNodeType, class DataType, class KeyType>
+  void Tree<TreeNodeType,DataType,KeyType>::select(KeyType (*criteria)(TreeNodeType *, void *), void *object) {
+    
+    vector<TreeNodeType *> *victims = new vector<TreeNodeType *>();
+    
+    if (this->treeRoot != this->nullNode) {
+      rSelect(criteria,object,this->treeRoot,victims);
+    }
+    
+    while (!victims->empty()) {
+      delete victims->back()->data;
+      this->remove(victims->back());
+      victims->resize(victims->size()-1);
+    }
+    
+  }
   
   template <class TreeNodeType, class DataType, class KeyType>
   void Tree<TreeNodeType,DataType,KeyType>::modifyAll(KeyType (*action)(TreeNodeType *, void *), void *object) {
     
+    vector<TreeNodeType *> *updates = new vector<TreeNodeType *>();
+    
     if (this->treeRoot != this->nullNode) {
-      rModifyAll(action,object,this->treeRoot,0);
+      rModifyAll(action,object,this->treeRoot,updates);
+    }
+    
+    for (uint64_t ix = 0; ix < updates->size(); ix++) {
+      DataType data = updates->at(ix)->data;
+      KeyType key = updates->at(ix)->key;
+      remove(data, key);
+      insert(data, key);
     }
   
   }

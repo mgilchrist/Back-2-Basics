@@ -309,7 +309,7 @@ namespace NeuralNetwork
   }
   
   void NeuralNetwork::removeOutput(double *output) {
-    outputs.remove((uint64_t)output);
+    outputs.remove(NULL, (uint64_t)output);
   }
   
   uint64_t NeuralNetwork::timeAlive() {

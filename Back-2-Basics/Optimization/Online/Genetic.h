@@ -23,8 +23,11 @@
 #define OpenSource_Genetic_h
 
 #include "Stochastic.h"
+#include "Heuristic.h"
 
 static uint64_t currentTime = -1;
+static const double glbToughness = 0.1;
+static const double glbAreaCapacity = 1.414;
 
 template <class HeuristicType, class DataType>
 class Genetic : public Stoichastic<HeuristicType,DataType> {
@@ -33,28 +36,61 @@ private:
   
   
   double envToughness;
-  uint64_t reproductionAgeMin;
-  uint64_t reproductionAgeMax;
   
 protected:
   
+  
+  static double reckoningEach(LLRB_TreeNode<HeuristicType *,uint64_t> *current, void *world) {
+    Heuristic<HeuristicType,DataType> *candidate = current->data;
+    LLRB_Tree<LLRB_Tree<HeuristicType *, uint64_t>, uint64_t> *cia = ((Genetic *)world)->competitionInArea;
+    bool ret = false;
+    
+    for (uint64_t ix = 0; ix < candidate->outputs->size(); ix++) {
+      TotalCompetition *localComp;
+      double toughness = 0.0;
+      
+      localComp = cia->search(candidate->outputs->at(ix));
+      
+      toughness = max(localComp->competition-glbAreaCapacity,0.0);
+      toughness /= localComp->numCompetitors;
+      
+      candidate->persistance -= (toughness+glbToughness);
+    }
+    
+    if (candidate->persistance > 0.0) {
+      ret = true;
+    }
+    
+    return ret;
+  }
+  
   static double calcFitnessEach(LLRB_TreeNode<HeuristicType *,uint64_t> *current, void *world) {
-    current->data->calcExpectation(currentTime);
-    vector<HeuristicHarmony *> *harmony = current->data->getHarmony();
-    double fitness = 0, err;
+    Heuristic<HeuristicType,DataType> *candidate = current->data;
+    vector<HeuristicHarmony *> *harmony = candidate->getHarmony();
+    double fitness = 0, err, correctness;
+    
+    candidate->calcExpectation(currentTime);
     
     for (uint64_t ix = 0; ix < harmony->size(); ix++) {
       err = (*(harmony->at(ix)->output) - *(harmony->at(ix)->expectation)) / *(harmony->at(ix)->output);
-      err = pow(err, 2);
-      current->data->persistance += 1 / (1 + err);
-      
-      ((Genetic *)world)->candidatesInArea->search(harmony->at(ix)->output)->push(current, err);
+      err = err * err;
       fitness += err;
     }
     
-    fitness /= harmony->size();
+    fitness = sqrt(fitness/harmony->size());
     
-    return sqrt(fitness);
+    correctness = candidate->outputs->size() / (1.0 + fitness);
+    
+    for (uint64_t ix = 0; ix < harmony->size(); ix++) {
+      TotalCompetition *tmpArea = ((Genetic *)world)->candidatesInArea->search(harmony->at(ix)->output);
+      
+      tmpArea->competition -= current->key;
+      tmpArea->competition += correctness;
+    }
+    
+    candidate->persistance += correctness;
+    
+    return fitness;
   }
   
   template <class EntryType>
@@ -156,7 +192,7 @@ void Genetic<HeuristicType,DataType>::evaluation() {
 
 template <class HeuristicType, class DataType>
 void Genetic<HeuristicType,DataType>::reckoning() {
-  
+  this->candidates->modifyAll(reckoningEach, this->toughness);
 }
 
 template <class HeuristicType, class DataType>

@@ -26,7 +26,6 @@
 #include "Stack.h"
 #include <vector>
 
-
 typedef struct HeuristicHarmony {
   double *output;
   double *expectation;
@@ -38,6 +37,7 @@ class Heuristic {
 public:
   
   double persistance = 0.0;
+  double energy = 0.0;
   
 public:
   
@@ -52,6 +52,15 @@ public:
             double persistance) {
     HeuristicType(input, output, expectation, hiddenInfo);
     this->persistance = persistance;
+    
+    /* Estimate energy use */
+    energy = (double)input->size();
+    
+    for (uint64_t ix = 0; ix < hiddenInfo->size(); ix++) {
+      energy *= (double)hiddenInfo->at(ix);
+    }
+    
+    energy *= (double)output->size();
   }
   
   virtual void calcExpectation(uint64_t) =0;

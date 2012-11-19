@@ -259,7 +259,7 @@ namespace Graph {
   
   template <class NodeType, class EdgeType>
   void Node<NodeType,EdgeType>::removeEdge(EdgeType *edge) {
-    forwardEdges.remove((uint64_t)edge);
+    forwardEdges.remove(edge, (uint64_t)edge);
   }
   
   template <class NodeType, class EdgeType>
