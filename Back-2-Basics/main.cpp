@@ -608,6 +608,103 @@ int testNavigation() {
   return 0;
 }
 
+int testGenetic() {
+  Optimization::Genetic<NeuralNetwork::NeuralNetwork, double> *geneticExp;
+  uint64_t iterations = 0;
+  std::vector<double *> *thisInput, *thisOutput, *thisExpect;
+  double errorRate = 0.0;
+  double thisError;
+  std::vector<uint64_t> *layers = new std::vector<uint64_t>();
+  uint64_t precision = (1 << 16);
+  
+  layers->resize(0);
+  
+  for (uint64_t ix = 0; ix < 1; ix++) {
+    layers->push_back(log2(glbOutputSize));
+  }
+  
+  cout << "\nTesting NeuralNetwork\n";
+  
+  thisInput = new std::vector<double *>();
+  thisOutput = new std::vector<double *>();
+  thisExpect = new std::vector<double *>();
+  
+  thisInput->resize(glbInputSize);
+  thisOutput->resize(glbOutputSize);
+  thisExpect->resize(glbOutputSize);
+  
+  
+  for (int jx = 0; jx < glbInputSize; jx++) {
+    thisInput->at(jx) = new double();
+    thisOutput->at(jx) = new double();
+  }
+  
+  for (uint64_t jx = 0; jx < glbOutputSize; jx++) {
+    thisExpect->at(jx) = new double();
+  }
+  
+  geneticExp = new Optimization::Genetic<NeuralNetwork::NeuralNetwork, double>();
+  
+  geneticExp->addInput(thisInput);
+  geneticExp->addOutput(thisOutput);
+  
+  for (uint64_t jx = 0; jx < thisInput->size(); jx++) {
+    *(thisInput->at(jx)) = (random() % precision) / (precision * 1.0);
+  }
+  
+  do {
+    /*for (uint64_t jx = 0; jx < thisInput->size(); jx++) {
+     *(thisInput->at(jx)) = (rand() % 256) / 256.0;
+     }*/
+    
+    
+    geneticExp->optimizeAnwser();
+    
+    if (iterations > (glbIterations-4)) {
+      for (int ix = 0; ix < glbOutputSize; ix++) {
+        cout << "{";
+        cout << (*thisOutput->at(ix));
+        cout << ":";
+        cout << (*thisExpect->at(ix));
+        cout << "},";
+      }
+      cout << "\n\n";
+    }
+    
+    for (int ix = 0; ix < glbOutputSize; ix++) {
+      *(thisOutput->at(ix)) = *(thisInput->at(ix));
+    }
+    
+    
+    if (!(iterations % (uint64_t)(2*log2(glbIterations)))) {
+      errorRate = 0.0;
+      
+      for (int ix = 0; ix < glbOutputSize; ix++) {
+        thisError = (*thisOutput->at(ix) - *(thisExpect->at(ix))) / *thisOutput->at(ix);
+        errorRate += thisError * thisError;
+      }
+      
+      cout << "Error Rate is ";
+      cout << sqrt(errorRate/((double)(glbOutputSize)));
+      cout << "\n";
+    }
+    
+    iterations++;
+    
+  } while (iterations < glbIterations);
+  
+  
+  //NNetwork->g
+  //NNetwork->getMaximumFlow();
+  
+  delete thisInput;
+  
+  cout << "NeuralNetwork:Done\n";
+  
+  return 0;
+}
+
+
 int main(int argc, const char * argv[])
 {
   int ret = 0;

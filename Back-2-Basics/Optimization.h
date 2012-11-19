@@ -26,26 +26,97 @@
 #include "Heuristic.h"
 
 
-template <class HeuristicType, class DataType>
-class Optimization {
+namespace Optimization {
   
-private:
+  template <class HeuristicType, class DataType>
+  class Optimization {
+    
+  protected:
+    
+    virtual void doEpoch() =0;
+    
+  public:
+    
+    typedef struct Prediction {
+      DataType expectation;
+      double confidence;
+    } Prediction;
+    
+    typedef struct Trust {
+      DataType *actual;
+      Prediction prediction;
+    } Trust;
+    
+    LLRB_Tree<DataType *, uint64_t> question;
+    LLRB_Tree<Trust *, uint64_t> answer;
+    
+    
+  public:
+    
+    LLRB_Tree<HeuristicType *, uint64_t> *candidates;
+    
+    Optimization();
+    
+    void addInput(DataType *);
+    void addOutput(DataType *);
+    
+    void addInput(vector<DataType *> *);
+    void addOutput(vector<DataType *> *);
+    
+    
+    void optimizeAnwser();
+    
+  };
   
-  LLRB_Tree<double *, uint64_t> space;
+  template <class HeuristicType, class DataType>
+  Optimization<HeuristicType,DataType>::Optimization() {
+    
+  }
   
-public:
-  Optimization();
-  Optimization(DataType *, uint64_t);
+  template <class HeuristicType, class DataType>
+  void Optimization<HeuristicType,DataType>::addInput(DataType *input) {
+    question.insert(input, (uint64_t)input);
+  }
   
-  void add(HeuristicType *) =0;
-  HeuristicType *get() =0;
+  template <class HeuristicType, class DataType>
+  void Optimization<HeuristicType,DataType>::addOutput(DataType *output) {
+    Trust *trust = new Trust;
+    
+    trust->actual = output;
+    trust->prediction.expectation = 0.0;
+    trust->prediction.prediction = 0.0;
+    
+    answer.insert(trust, (uint64_t)output);
+  }
   
-};
-
-template <class HeuristicType, class DataType>
-Optimization<HeuristicType,DataType>::Optimization() {
+  template <class HeuristicType, class DataType>
+  void Optimization<HeuristicType,DataType>::addInput(vector<DataType *> *input) {
+    for (uint64_t ix = 0; ix < input->size(); ix++) {
+      question.insert(input->at(ix), (uint64_t)(input->at(ix)));
+    }
+  }
+  
+  template <class HeuristicType, class DataType>
+  void Optimization<HeuristicType,DataType>::addOutput(vector<DataType *> *output) {
+    Trust *trust;
+    
+    for (uint64_t ix = 0; ix < output->size(); ix++) {
+      trust = new Trust;
+      
+      trust->actual = output->at(ix);
+      trust->prediction.expectation = 0.0;
+      trust->prediction.confidence = 0.0;
+      
+      answer.insert(trust, (uint64_t)output->at(ix));
+    }
+  }
+  
+  template <class HeuristicType, class DataType>
+  void Optimization<HeuristicType,DataType>::optimizeAnwser() {
+    
+  }
+  
   
 }
-
 
 #endif

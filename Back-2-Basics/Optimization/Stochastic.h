@@ -28,37 +28,47 @@ using namespace Graph;
 using namespace Collection;
 #include "Optimization.h"
 
-
-typedef struct TotalCompetition {
-  double competition;
-  uint64_t numCompetitors;
-} TotalCompetition;
-
-template <class HeuristicType, class DataType>
-class Stoichastic : public Optimization<HeuristicType,DataType> {
+namespace Optimization {
   
-private:
   
-  LLRB_Tree<HeuristicType *, uint64_t> *candidates;
-  LLRB_Tree<TotalCompetition *, uint64_t> *competitionInArea;
   
-protected:
+  typedef struct TotalCompetition {
+    double competition;
+    uint64_t numCompetitors;
+  } TotalCompetition;
   
-  void doEpochEach(LLRB_TreeNode<HeuristicType *,DataType> current, void *reserved) {
+  template <class HeuristicType, class DataType>
+  class Stoichastic : public Optimization<HeuristicType,DataType> {
     
-    current->data->calculateExpectation();
+  private:
+    
+    LLRB_Tree<TotalCompetition *, uint64_t> *competitionInArea;
+    uint64_t iteration = 0;
+    
+  protected:
+    
+    static uint64_t doEpochEach(LLRB_TreeNode<HeuristicType *,uint64_t> *current, void *iteration) {
+      
+      current->data->calcExpectation(*(uint64_t *)iteration);
+      
+      return current->key;
+    }
+    
+    void doEpoch();
+    
+  public:
+    Stoichastic() {
+      competitionInArea = new LLRB_Tree<TotalCompetition *, uint64_t>();
+    }
+  };
+  
+  
+  template <class HeuristicType, class DataType>
+  void Stoichastic<HeuristicType,DataType>::doEpoch() {
+    iteration++;
+    this->candidates->modifyAll(doEpochEach, &iteration);
   }
   
-  void doEpoch();
-  
-public:
-  Stoichastic();
-};
-
-
-template <class HeuristicType, class DataType>
-void Stoichastic<HeuristicType,DataType>::doEpoch() {
-  candidates->modifyAll(doEpochEach);
 }
 
 #endif
