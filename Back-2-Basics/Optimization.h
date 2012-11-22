@@ -28,8 +28,28 @@
 
 namespace Optimization {
   
+  template <class DataType>
+  struct Prediction {
+    //LLRB_Tree<DataType, uint64_t> predictions;
+    DataType expectation;
+    double confidence;
+  };
+  
+  template <class DataType>
+  struct Trust {
+    DataType *actual;
+    Prediction<DataType> prediction;
+  };
+  
   template <class HeuristicType, class DataType>
   class Optimization {
+    
+  private:
+    typedef struct RandSection {
+      uint64_t begin;
+      uint64_t requests;
+      double probability;
+    } URandom;
     
   protected:
     
@@ -37,23 +57,15 @@ namespace Optimization {
     
   public:
     
-    typedef struct Prediction {
-      DataType expectation;
-      double confidence;
-    } Prediction;
-    
-    typedef struct Trust {
-      DataType *actual;
-      Prediction prediction;
-    } Trust;
-    
     LLRB_Tree<DataType *, uint64_t> question;
-    LLRB_Tree<Trust *, uint64_t> answer;
+    LLRB_Tree<Trust<DataType> *, uint64_t> answer;
     
     
   public:
     
     LLRB_Tree<HeuristicType *, uint64_t> *candidates;
+    
+    
     
     Optimization();
     
@@ -63,7 +75,7 @@ namespace Optimization {
     void addInput(vector<DataType *> *);
     void addOutput(vector<DataType *> *);
     
-    
+    virtual void initInternals() =0;
     void optimizeAnwser();
     
   };
@@ -80,7 +92,7 @@ namespace Optimization {
   
   template <class HeuristicType, class DataType>
   void Optimization<HeuristicType,DataType>::addOutput(DataType *output) {
-    Trust *trust = new Trust;
+    Trust<DataType> *trust = new Trust<DataType>;
     
     trust->actual = output;
     trust->prediction.expectation = 0.0;
@@ -98,10 +110,10 @@ namespace Optimization {
   
   template <class HeuristicType, class DataType>
   void Optimization<HeuristicType,DataType>::addOutput(vector<DataType *> *output) {
-    Trust *trust;
+    Trust<DataType> *trust;
     
     for (uint64_t ix = 0; ix < output->size(); ix++) {
-      trust = new Trust;
+      trust = new Trust<DataType>;
       
       trust->actual = output->at(ix);
       trust->prediction.expectation = 0.0;
@@ -113,7 +125,7 @@ namespace Optimization {
   
   template <class HeuristicType, class DataType>
   void Optimization<HeuristicType,DataType>::optimizeAnwser() {
-    
+    doEpoch();
   }
   
   

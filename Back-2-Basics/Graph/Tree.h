@@ -82,7 +82,8 @@ namespace Graph {
     TreeNodeType *next(TreeNodeType *tNode);
     TreeNodeType *min(TreeNodeType *);
     
-    void select(KeyType (*action)(TreeNodeType *, void *), void *);
+    void remove(KeyType (*action)(TreeNodeType *, void *), void *);
+    vector<DataType> *select(bool (*criteria)(TreeNodeType *, void *), void *);
     void modifyAll(KeyType (*action)(TreeNodeType *, void *), void *);
     uint64_t size() {return numNodes;}
     
@@ -247,7 +248,6 @@ namespace Graph {
     vector<TreeNodeType *> *L;
     vector<TreeNodeType *> *nextL;
     TreeNodeType *u;
-    KeyType newKey;
     
     L = new vector<TreeNodeType *>();
     
@@ -269,7 +269,7 @@ namespace Graph {
           continue;
         }
         
-        if (!(*criteria)(u, object)) {
+        if ((criteria == NULL) || (!(*criteria)(u, object))) {
           victims->push_back(u);
         }
         
@@ -343,8 +343,9 @@ namespace Graph {
     
   }
 
+  
   template <class TreeNodeType, class DataType, class KeyType>
-  void Tree<TreeNodeType,DataType,KeyType>::select(KeyType (*criteria)(TreeNodeType *, void *), void *object) {
+  void Tree<TreeNodeType,DataType,KeyType>::remove(KeyType (*criteria)(TreeNodeType *, void *), void *object) {
     
     vector<TreeNodeType *> *victims = new vector<TreeNodeType *>();
     
@@ -357,6 +358,29 @@ namespace Graph {
       this->remove(victims->back());
       victims->resize(victims->size()-1);
     }
+    
+    delete victims;
+    
+  }
+  
+  template <class TreeNodeType, class DataType, class KeyType>
+  vector<DataType> *Tree<TreeNodeType,DataType,KeyType>::select(bool (*criteria)(TreeNodeType *, void *), void *object) {
+    
+    vector<TreeNodeType *> *victims = new vector<TreeNodeType *>();
+    vector<DataType> *ret = new vector<DataType>();
+    
+    if (this->treeRoot != this->nullNode) {
+      rSelect(criteria,object,this->treeRoot,victims);
+    }
+    
+    for (uint64_t ix = 0; ix < victims->size(); ix++) {
+      ret->push_back(victims->at(ix)->data);
+    }
+    
+    victims->resize(0);
+    delete victims;
+    
+    return ret;
     
   }
   

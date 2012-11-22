@@ -623,7 +623,7 @@ int testGenetic() {
     layers->push_back(log2(glbOutputSize));
   }
   
-  cout << "\nTesting NeuralNetwork\n";
+  cout << "\nTesting Genetic\n";
   
   thisInput = new std::vector<double *>();
   thisOutput = new std::vector<double *>();
@@ -699,7 +699,7 @@ int testGenetic() {
   
   delete thisInput;
   
-  cout << "NeuralNetwork:Done\n";
+  cout << "Genetic\n";
   
   return 0;
 }
@@ -724,6 +724,7 @@ int main(int argc, const char * argv[])
   ret |= testLLRBTree();
   ret |= testStack();
   ret |= testNeuralNetwork();
+  ret |= testGenetic();
   //ret |= testMetaheuristic();
   ret |= testNavigation();
   
