@@ -38,31 +38,32 @@ namespace Optimization {
   protected:
     
     
-    static double reckoningEach(LLRB_TreeNode<HeuristicType *,uint64_t> *current, void *world) {
+    static bool reckoningEach(LLRB_TreeNode<HeuristicType *,uint64_t> *current, void *world) {
       Heuristic<HeuristicType,DataType> *candidate = current->data;
-      LLRB_Tree<LLRB_Tree<HeuristicType *, uint64_t>, uint64_t> *cia = ((Genetic *)world)->competitionInArea;
+      LLRB_Tree<Trust<DataType> *, uint64_t> *cia = &((Genetic *)world)->active;
+      vector<HeuristicHarmony *> *harmony = candidate->getHarmony();
       bool ret = false;
       
-      for (uint64_t ix = 0; ix < candidate->outputs->size(); ix++) {
-        TotalCompetition *localComp;
-        double toughness = 0.0;
+      for (uint64_t ix = 0; ix < harmony->size(); ix++) {
+        Trust<double> *localComp = cia->search(NULL, (uint64_t)harmony->at(ix));
+        double toughness = localComp->prediction->confidence;
         
-        localComp = cia->search(candidate->outputs->at(ix));
+        localComp = cia->search(NULL, (uint64_t)harmony->at(ix)->output);
         
-        toughness = max(localComp->competition-glbAreaCapacity,0.0);
-        toughness /= localComp->numCompetitors;
+        toughness = max((toughness * localComp->prediction->predictions.size())-glbAreaCapacity,0.0);
+        toughness /= localComp->prediction->predictions.size();
         
         candidate->persistance -= (toughness+glbToughness);
       }
       
-      if (candidate->persistance > 0.0) {
+      if (candidate->persistance < 0.0) {
         ret = true;
       }
       
       return ret;
     }
     
-    static double calcFitnessEach(LLRB_TreeNode<HeuristicType *,uint64_t> *current, void *world) {
+    static uint64_t calcFitnessEach(LLRB_TreeNode<HeuristicType *,uint64_t> *current, void *world) {
       Heuristic<HeuristicType,DataType> *candidate = current->data;
       vector<HeuristicHarmony *> *harmony = candidate->getHarmony();
       double fitness = 0, err, correctness;
@@ -77,101 +78,20 @@ namespace Optimization {
       
       fitness = sqrt(fitness/harmony->size());
       
-      correctness = candidate->outputs->size() / (1.0 + fitness);
-      
-      for (uint64_t ix = 0; ix < harmony->size(); ix++) {
-        TotalCompetition *tmpArea = ((Genetic *)world)->candidatesInArea->search(harmony->at(ix)->output);
-        
-        tmpArea->competition -= current->key;
-        tmpArea->competition += correctness;
-      }
+      correctness = harmony->size() / (1.0 + fitness);
       
       candidate->persistance += correctness;
       
-      return fitness;
+      return current->key;
     }
     
-    template <class EntryType>
-    static vector<EntryType *> *crossoverA(vector<EntryType *> *dad, vector<EntryType *> *mom) {
-      vector<EntryType *> *ret;
-      LLRB_Tree<EntryType *, uint64_t> treeRet;
-      uint64_t tmp, crossover, mCrossover;
-      uint64_t retSize = max(dad->size(), mom->size());
-      uint64_t treeSizeStart;
-      
-      if (dad == mom) {
-        return new vector<double *>(dad->begin(), dad->end());
-      }
-      
-      ret = new vector<double *>();
-      ret->reserve(retSize);
-      
-      tmp = min(random() % retSize, dad->size());
-      mCrossover = min(retSize-tmp, mom->size());
-      crossover = retSize-mCrossover;
-      
-      /* Each generation should progress, so the size should be greater of
-       * two rents
-       */
-      for (uint64_t mCurrent = mom->size()-1; mCurrent >= (uint64_t)mom->size()-crossover; mCurrent++) {
-        treeRet.insert(mom->at(mCurrent), (uint64_t)mom->at(mCurrent));
-      }
-      
-      treeSizeStart = treeRet.size();
-      
-      for (uint64_t dCurrent = 0; dCurrent < (dad->size()-1); dCurrent++) {
-        treeRet.insert(dad->at(dCurrent), (uint64_t)dad->at(dCurrent));
-        
-        if ((treeRet.size()-treeSizeStart) >= crossover) {
-          break;
-        }
-      }
-      
-      /* That last entry was needed. So one parent is subset of other
-       * Return larger of two.
-       */
-      if (treeRet.size() != retSize) {
-        if (retSize == dad->size()) {
-          ret->assign(dad->begin(), dad->end());
-        } else {
-          ret->assign(mom->begin(), mom->end());
-        }
-        
-        return ret;
-      }
-      
-      treeRet.addAllTo(ret);
-      
-      return ret;
-    }
-    
-    template <class EntryType>
-    static vector<EntryType *> *crossoverB(vector<EntryType *> *dad, vector<EntryType *> *mom) {
-      vector<EntryType *> *ret;
-      uint64_t tmp, crossover, mCrossover;
-      uint64_t retSize = max(dad->size(), mom->size());
-      
-      ret = new vector<double *>();
-      ret->reserve(retSize);
-      
-      tmp = min(random() % retSize, dad->size());
-      mCrossover = min(retSize-tmp, mom->size());
-      crossover = retSize-mCrossover;
-      
-      for (uint64_t ix = 0; ix < crossover; ix++) {
-        ret->push_back(dad->at(ix));
-      }
-      
-      for (uint64_t ix = crossover; ix < retSize; ix++) {
-        ret->push_back(mom->at(ix));
-      }
-      
-      return ret;
-    }
+    vector<DataType *> *crossoverA(vector<DataType *> *dad, vector<DataType *> *mom);
+    vector<uint64_t> *crossoverB(vector<uint64_t> *dad, vector<uint64_t> *mom);
     
     void add();
-    void evaluation();
-    void reckoning();
+    void doEvaluation();
+    void doReckoning();
+    void doGeneration();
     HeuristicType *reproduce(HeuristicType *father, HeuristicType *mother);
     void get();
     
@@ -182,15 +102,99 @@ namespace Optimization {
   };
   
   
+  template <class HeuristicType, class DataType>
+  void Genetic<HeuristicType,DataType>::doGeneration() {
+    doEvaluation();
+    doReckoning();
+  }
+  
   
   template <class HeuristicType, class DataType>
-  void Genetic<HeuristicType,DataType>::evaluation() {
-    this->candidates->modifyAll(calcFitnessEach, 0);
+  void Genetic<HeuristicType,DataType>::doEvaluation() {
+    this->candidates.modifyAll(calcFitnessEach, 0);
   }
   
   template <class HeuristicType, class DataType>
-  void Genetic<HeuristicType,DataType>::reckoning() {
-    this->candidates->modifyAll(reckoningEach, this->toughness);
+  void Genetic<HeuristicType,DataType>::doReckoning() {
+    this->candidates.selectRemove(reckoningEach, this);
+  }
+  
+  template <class HeuristicType, class DataType>
+  vector<DataType *> *Genetic<HeuristicType,DataType>::crossoverA(vector<DataType *> *dad, vector<DataType *> *mom) {
+    vector<DataType *> *ret;
+    LLRB_Tree<DataType *, uint64_t> treeRet;
+    uint64_t tmp, crossover, mCrossover;
+    uint64_t retSize = max(dad->size(), mom->size());
+    uint64_t treeSizeStart;
+    
+    if (dad == mom) {
+      return new vector<double *>(dad->begin(), dad->end());
+    }
+    
+    ret = new vector<DataType *>();
+    ret->reserve(retSize);
+    
+    tmp = min(random() % retSize, dad->size());
+    mCrossover = min(retSize-tmp, mom->size());
+    crossover = retSize-mCrossover;
+    
+    /* Each generation should progress, so the size should be greater of
+     * two rents
+     */
+    for (uint64_t mCurrent = mom->size()-1; mCurrent >= (uint64_t)mom->size()-crossover; mCurrent++) {
+      treeRet.insert(mom->at(mCurrent), (uint64_t)mom->at(mCurrent));
+    }
+    
+    treeSizeStart = treeRet.size();
+    
+    for (uint64_t dCurrent = 0; dCurrent < (dad->size()-1); dCurrent++) {
+      treeRet.insert(dad->at(dCurrent), (uint64_t)dad->at(dCurrent));
+      
+      if ((treeRet.size()-treeSizeStart) >= crossover) {
+        break;
+      }
+    }
+    
+    /* That last entry was needed. So one parent is subset of other
+     * Return larger of two.
+     */
+    if (treeRet.size() != retSize) {
+      if (retSize == dad->size()) {
+        ret->assign(dad->begin(), dad->end());
+      } else {
+        ret->assign(mom->begin(), mom->end());
+      }
+      
+      return ret;
+    }
+    
+    treeRet.addAllTo(ret);
+    
+    return ret;
+  }
+  
+  template <class HeuristicType, class DataType>
+  vector<uint64_t> *Genetic<HeuristicType,DataType>::crossoverB(vector<uint64_t> *dad, vector<uint64_t> *mom) {
+    vector<uint64_t> *ret;
+    uint64_t tmp, crossover, mCrossover;
+    uint64_t retSize = max(dad->size(), mom->size());
+    
+    ret = new vector<uint64_t>();
+    ret->reserve(retSize);
+    
+    tmp = min((uint64_t)(random() % retSize), (uint64_t)dad->size());
+    mCrossover = min((uint64_t)(retSize-tmp), (uint64_t)mom->size());
+    crossover = retSize-mCrossover;
+    
+    for (uint64_t ix = 0; ix < crossover; ix++) {
+      ret->push_back(dad->at(ix));
+    }
+    
+    for (uint64_t ix = crossover; ix < retSize; ix++) {
+      ret->push_back(mom->at(ix));
+    }
+    
+    return ret;
   }
   
   template <class HeuristicType, class DataType>

@@ -30,23 +30,26 @@ using namespace Collection;
 
 namespace Optimization {
   
-  typedef struct TotalCompetition {
+  double glbEnergyCnst = 0.0000001;
+  
+/*  typedef struct TotalCompetition {
     double competition = 0.0;
     uint64_t numCompetitors = 0;
   } TotalCompetition;
-  
+  */
   template <class HeuristicType, class DataType>
   class Stoichastic : public Optimization<HeuristicType,DataType> {
     
   private:
     
-    LLRB_Tree<TotalCompetition *, uint64_t> *competitionInArea;
-    LLRB_Tree<Trust<DataType> *, uint64_t> active;
     uint64_t iteration = 0;
     
   protected:
     
-    static uint64_t calcExpectation(LLRB_TreeNode<Trust<double> *,uint64_t> *current, void *iteration) {
+  //  LLRB_Tree<TotalCompetition *, uint64_t> *competitionInArea;
+    LLRB_Tree<Trust<DataType> *, uint64_t> active;
+    
+    static uint64_t calcConsensus(LLRB_TreeNode<Trust<double> *,uint64_t> *current, void *reserved) {
       
       vector<double *> *expectations = current->data->prediction->predictions.select(NULL, NULL);
       double sum = 0.0, average, diff = 1.0;
@@ -77,6 +80,7 @@ namespace Optimization {
     }
     
     void doEpoch();
+    virtual void doGeneration() =0;
     
     vector<DataType *> *pickRandoms(LLRB_Tree<DataType *, uint64_t> *, uint64_t);
     vector<Trust<DataType> *> *pickRandomTrusts(LLRB_Tree<Trust<DataType> *, uint64_t> *, uint64_t);
@@ -84,7 +88,7 @@ namespace Optimization {
     
   public:
     Stoichastic() {
-      competitionInArea = new LLRB_Tree<TotalCompetition *, uint64_t>();
+      //competitionInArea = new LLRB_Tree<TotalCompetition *, uint64_t>();
       
     }
     
@@ -95,9 +99,11 @@ namespace Optimization {
   template <class HeuristicType, class DataType>
   void Stoichastic<HeuristicType,DataType>::doEpoch() {
     iteration++;
+    
+    
     this->candidates.modifyAll(doEpochEach, &iteration);
     
-    active.modifyAll(calcExpectation, NULL);
+    active.modifyAll(calcConsensus, NULL);
   }
   
   template <class HeuristicType, class DataType>
@@ -187,6 +193,7 @@ namespace Optimization {
       tmp = random() % (uint64_t)powl(2, stack.size());
       Trust<DataType> *entry = stack[log2l(tmp)]->data;
       randoms.insert(entry, (uint64_t)entry);
+      stack.resize(0);
     } while (randoms.size() < requests);
     
     return randoms.select(NULL, NULL);
@@ -236,7 +243,9 @@ namespace Optimization {
     this->candidates.insert(tmp, (uint64_t)tmp);
     
     /* Estimate energy use */
-    tmp->energy = (double)inputEnv->size();
+    tmp->energy = glbEnergyCnst;
+    
+    tmp->energy *= (double)inputEnv->size();
     
     for (uint64_t ix = 0; ix < hiddenInfo->size(); ix++) {
       tmp->energy *= (double)hiddenInfo->at(ix);

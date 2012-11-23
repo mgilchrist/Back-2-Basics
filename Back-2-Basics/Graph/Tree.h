@@ -82,7 +82,7 @@ namespace Graph {
     TreeNodeType *next(TreeNodeType *tNode);
     TreeNodeType *min(TreeNodeType *);
     
-    void remove(KeyType (*action)(TreeNodeType *, void *), void *);
+    void selectRemove(bool (*action)(TreeNodeType *, void *), void *);
     vector<DataType> *select(bool (*criteria)(TreeNodeType *, void *), void *);
     void modifyAll(KeyType (*action)(TreeNodeType *, void *), void *);
     uint64_t size() {return numNodes;}
@@ -122,9 +122,9 @@ namespace Graph {
     }
     
     if (key < current->key) {
-      return getNode(key, current->left);
+      return getNode(key, current->leftNode);
     } else {
-      return getNode(key, current->right);
+      return getNode(key, current->rightNode);
     }
   }
   
@@ -345,7 +345,7 @@ namespace Graph {
 
   
   template <class TreeNodeType, class DataType, class KeyType>
-  void Tree<TreeNodeType,DataType,KeyType>::remove(KeyType (*criteria)(TreeNodeType *, void *), void *object) {
+  void Tree<TreeNodeType,DataType,KeyType>::selectRemove(bool (*criteria)(TreeNodeType *, void *), void *object) {
     
     vector<TreeNodeType *> *victims = new vector<TreeNodeType *>();
     
@@ -354,8 +354,8 @@ namespace Graph {
     }
     
     while (!victims->empty()) {
+      this->remove(victims->back()->data, victims->back()->key);
       delete victims->back()->data;
-      this->remove(victims->back());
       victims->resize(victims->size()-1);
     }
     
