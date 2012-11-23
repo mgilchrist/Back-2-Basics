@@ -30,11 +30,9 @@ using namespace Collection;
 
 namespace Optimization {
   
-  
-  
   typedef struct TotalCompetition {
-    double competition;
-    uint64_t numCompetitors;
+    double competition = 0.0;
+    uint64_t numCompetitors = 0;
   } TotalCompetition;
   
   template <class HeuristicType, class DataType>
@@ -43,9 +41,33 @@ namespace Optimization {
   private:
     
     LLRB_Tree<TotalCompetition *, uint64_t> *competitionInArea;
+    LLRB_Tree<Trust<DataType> *, uint64_t> active;
     uint64_t iteration = 0;
     
   protected:
+    
+    static uint64_t calcExpectation(LLRB_TreeNode<Trust<double> *,uint64_t> *current, void *iteration) {
+      
+      vector<double *> *expectations = current->data->prediction->predictions.select(NULL, NULL);
+      double sum = 0.0, average, diff = 1.0;
+      
+      for (uint64_t ix = 0; ix < expectations->size(); ix++) {
+        sum += *(expectations->at(ix));
+      }
+      
+      average = sum / expectations->size();
+      
+      for (uint64_t ix = 0; ix < expectations->size(); ix++) {
+        double tmp = *(expectations->at(ix))-average;
+        diff *= tmp * tmp;
+      }
+      
+      current->data->prediction->expectation = average;
+      current->data->prediction->confidence = ((average * 0.05) /
+                                               sqrt(diff/expectations->size()));
+      
+      return current->key;
+    }
     
     static uint64_t doEpochEach(LLRB_TreeNode<HeuristicType *,uint64_t> *current, void *iteration) {
       
@@ -55,7 +77,6 @@ namespace Optimization {
     }
     
     void doEpoch();
-    void initInternals();
     
     vector<DataType *> *pickRandoms(LLRB_Tree<DataType *, uint64_t> *, uint64_t);
     vector<Trust<DataType> *> *pickRandomTrusts(LLRB_Tree<Trust<DataType> *, uint64_t> *, uint64_t);
@@ -64,20 +85,25 @@ namespace Optimization {
   public:
     Stoichastic() {
       competitionInArea = new LLRB_Tree<TotalCompetition *, uint64_t>();
+      
     }
+    
+    void initInternals();
   };
   
   
   template <class HeuristicType, class DataType>
   void Stoichastic<HeuristicType,DataType>::doEpoch() {
     iteration++;
-    this->candidates->modifyAll(doEpochEach, &iteration);
+    this->candidates.modifyAll(doEpochEach, &iteration);
+    
+    active.modifyAll(calcExpectation, NULL);
   }
   
   template <class HeuristicType, class DataType>
   vector<DataType *> *Stoichastic<HeuristicType,DataType>::pickRandoms(LLRB_Tree<DataType *, uint64_t> *tree, uint64_t requests) {
     
-    LLRB_TreeNode<DataType *, uint64_t> *curr, *next;
+    LLRB_TreeNode<DataType *, uint64_t> *curr;
     LLRB_Tree<DataType *, uint64_t> randoms;
     vector<LLRB_TreeNode<DataType *, uint64_t> *> stack;
     uint64_t tmp;
@@ -85,33 +111,30 @@ namespace Optimization {
     double pivot;
     
     curr = tree->getTreeRoot();
-    next = tree->getTreeRoot();
     
-    while (next != this->question.nullNode) {
+    while (curr != this->question.nullNode) {
       leftDepth++;
-      next = curr->leftOf(curr);
+      curr = curr->leftOf(curr);
     }
     
     curr = tree->getTreeRoot();
-    next = tree->getTreeRoot();
     
-    while (next != this->question.nullNode) {
+    while (curr != this->question.nullNode) {
       rightDepth++;
-      next = curr->rightOf(curr);
+      curr = curr->rightOf(curr);
     }
     
     pivot = (double)leftDepth / ((double)(leftDepth+rightDepth));
     
     curr = tree->getTreeRoot();
-    next = tree->getTreeRoot();
     
     do {
-      while (next != this->question.nullNode) {
+      while (curr != this->question.nullNode) {
         stack.push_back(curr);
         if ((rand() / (double)RAND_MAX) < pivot) {
-          next = curr->leftOf(curr);
+          curr = curr->leftOf(curr);
         } else {
-          next = curr->rightOf(curr);
+          curr = curr->rightOf(curr);
         }
       }
       
@@ -126,7 +149,7 @@ namespace Optimization {
   template <class HeuristicType, class DataType>
   vector<Trust<DataType> *> *Stoichastic<HeuristicType,DataType>::pickRandomTrusts(LLRB_Tree<Trust<DataType> *, uint64_t> *tree, uint64_t requests) {
     
-    LLRB_TreeNode<Trust<DataType> *, uint64_t> *curr, *next;
+    LLRB_TreeNode<Trust<DataType> *, uint64_t> *curr;
     LLRB_Tree<Trust<DataType> *, uint64_t> randoms;
     vector<LLRB_TreeNode<Trust<DataType> *, uint64_t> *> stack;
     uint64_t tmp;
@@ -134,33 +157,30 @@ namespace Optimization {
     double pivot;
     
     curr = tree->getTreeRoot();
-    next = tree->getTreeRoot();
     
-    while (next != this->answer.nullNode) {
+    while (curr != this->answer.nullNode) {
       leftDepth++;
-      next = curr->leftOf(curr);
+      curr = curr->leftOf(curr);
     }
     
     curr = tree->getTreeRoot();
-    next = tree->getTreeRoot();
     
-    while (next != this->answer.nullNode) {
+    while (curr != this->answer.nullNode) {
       rightDepth++;
-      next = curr->rightOf(curr);
+      curr = curr->rightOf(curr);
     }
     
     pivot = (double)leftDepth / ((double)(leftDepth+rightDepth));
     
     curr = tree->getTreeRoot();
-    next = tree->getTreeRoot();
     
     do {
-      while (next != this->answer.nullNode) {
+      while (curr != this->answer.nullNode) {
         stack.push_back(curr);
         if ((rand() / (double)RAND_MAX) < pivot) {
-          next = curr->leftOf(curr);
+          curr = curr->leftOf(curr);
         } else {
-          next = curr->rightOf(curr);
+          curr = curr->rightOf(curr);
         }
       }
       
@@ -178,6 +198,7 @@ namespace Optimization {
     vector<Trust<DataType> *> *trusts;
     vector<uint64_t> *hiddenInfo = new vector<uint64_t>();
     double *spawnExpect;
+    HeuristicType *tmp;
     
     uint64_t tmpSize;
     
@@ -198,22 +219,42 @@ namespace Optimization {
     for (uint64_t ix = 0; ix < trusts->size(); ix++) {
       outputEnv->push_back(trusts->at(ix)->actual);
       expectation->push_back(&spawnExpect[ix]);
+      
+      if (trusts->at(ix)->prediction == NULL) {
+        trusts->at(ix)->prediction = new Prediction<DataType>();
+      }
+      trusts->at(ix)->prediction->predictions.insert(&spawnExpect[ix],
+                                                      (uint64_t)&spawnExpect[ix]);
+        
+      active.insert(trusts->at(ix), (uint64_t)trusts->at(ix));
     }
     
     hiddenInfo->push_back(rand() % (inputEnv->size() + outputEnv->size()));
     
+    tmp = new HeuristicType(inputEnv, outputEnv, expectation, hiddenInfo);
     
-    return new HeuristicType(inputEnv, outputEnv, expectation, hiddenInfo);
+    this->candidates.insert(tmp, (uint64_t)tmp);
+    
+    /* Estimate energy use */
+    tmp->energy = (double)inputEnv->size();
+    
+    for (uint64_t ix = 0; ix < hiddenInfo->size(); ix++) {
+      tmp->energy *= (double)hiddenInfo->at(ix);
+    }
+    
+    tmp->energy *= (double)outputEnv->size();
+    
+    return tmp;
   }
   
   template <class HeuristicType, class DataType>
   void Stoichastic<HeuristicType,DataType>::initInternals() {
-    uint8_t firstGenSize = log2(this->question.size() + this->answer.size()) + 1.0;
+    uint8_t firstGenSize = log2(this->question.size() + this->answer.size()) + 1;
     
     for (uint64_t ix = 0; ix < firstGenSize; ix++) {
-      HeuristicType *tmp = spawn();
-      this->candidates->insert(tmp, (uint64_t)tmp);
+      spawn();
     }
+    
   }
   
 

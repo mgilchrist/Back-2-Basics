@@ -30,7 +30,7 @@ namespace Optimization {
   
   template <class DataType>
   struct Prediction {
-    //LLRB_Tree<DataType, uint64_t> predictions;
+    LLRB_Tree<DataType *, uint64_t> predictions;
     DataType expectation;
     double confidence;
   };
@@ -38,7 +38,7 @@ namespace Optimization {
   template <class DataType>
   struct Trust {
     DataType *actual;
-    Prediction<DataType> prediction;
+    Prediction<DataType> *prediction = NULL;
   };
   
   template <class HeuristicType, class DataType>
@@ -63,7 +63,7 @@ namespace Optimization {
     
   public:
     
-    LLRB_Tree<HeuristicType *, uint64_t> *candidates;
+    LLRB_Tree<HeuristicType *, uint64_t> candidates;
     
     
     
@@ -116,8 +116,6 @@ namespace Optimization {
       trust = new Trust<DataType>;
       
       trust->actual = output->at(ix);
-      trust->prediction.expectation = 0.0;
-      trust->prediction.confidence = 0.0;
       
       answer.insert(trust, (uint64_t)output->at(ix));
     }

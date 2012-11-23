@@ -36,8 +36,8 @@ using namespace Graph;
 #include "Genetic.h"
 #include "Metaheuristic.h"
 
-const uint64_t glbInputSize = 0x80;
-const uint64_t glbOutputSize = 0x80;
+const uint64_t glbInputSize = 0x40;
+const uint64_t glbOutputSize = 0x40;
 const uint64_t glbIterations = 0x1000;
 const uint64_t glbTestSize = 0x100000;
 const uint64_t glbSlowTestSize = 0x10000;
@@ -611,7 +611,8 @@ int testNavigation() {
 int testGenetic() {
   Optimization::Genetic<NeuralNetwork::NeuralNetwork, double> *geneticExp;
   uint64_t iterations = 0;
-  std::vector<double *> *thisInput, *thisOutput, *thisExpect;
+  std::vector<double *> *thisInput, *thisOutput;
+  std::vector<Optimization::Trust<double> *> *thisTrust;
   double errorRate = 0.0;
   double thisError;
   std::vector<uint64_t> *layers = new std::vector<uint64_t>();
@@ -627,11 +628,9 @@ int testGenetic() {
   
   thisInput = new std::vector<double *>();
   thisOutput = new std::vector<double *>();
-  thisExpect = new std::vector<double *>();
   
   thisInput->resize(glbInputSize);
   thisOutput->resize(glbOutputSize);
-  thisExpect->resize(glbOutputSize);
   
   
   for (int jx = 0; jx < glbInputSize; jx++) {
@@ -639,14 +638,12 @@ int testGenetic() {
     thisOutput->at(jx) = new double();
   }
   
-  for (uint64_t jx = 0; jx < glbOutputSize; jx++) {
-    thisExpect->at(jx) = new double();
-  }
-  
   geneticExp = new Optimization::Genetic<NeuralNetwork::NeuralNetwork, double>();
   
   geneticExp->addInput(thisInput);
   geneticExp->addOutput(thisOutput);
+  
+  geneticExp->initInternals();
   
   for (uint64_t jx = 0; jx < thisInput->size(); jx++) {
     *(thisInput->at(jx)) = (random() % precision) / (precision * 1.0);
@@ -660,12 +657,20 @@ int testGenetic() {
     
     geneticExp->optimizeAnwser();
     
+    thisTrust = geneticExp->answer.select(NULL,NULL);
+    
     if (iterations > (glbIterations-4)) {
       for (int ix = 0; ix < glbOutputSize; ix++) {
         cout << "{";
-        cout << (*thisOutput->at(ix));
+        cout << (*thisTrust->at(ix)->actual);
         cout << ":";
-        cout << (*thisExpect->at(ix));
+        if (thisTrust->at(ix)->prediction == NULL) {
+          cout << "NONE:NONE";
+        } else {
+          cout << (thisTrust->at(ix)->prediction->expectation);
+          cout << ":";
+          cout << (thisTrust->at(ix)->prediction->confidence);
+        }
         cout << "},";
       }
       cout << "\n\n";
@@ -680,7 +685,11 @@ int testGenetic() {
       errorRate = 0.0;
       
       for (int ix = 0; ix < glbOutputSize; ix++) {
-        thisError = (*thisOutput->at(ix) - *(thisExpect->at(ix))) / *thisOutput->at(ix);
+        if (thisTrust->at(ix)->prediction == NULL) {
+          continue;
+        }
+        
+        thisError = (*thisTrust->at(ix)->actual - (thisTrust->at(ix)->prediction->expectation)) / *thisTrust->at(ix)->actual;
         errorRate += thisError * thisError;
       }
       
@@ -694,12 +703,9 @@ int testGenetic() {
   } while (iterations < glbIterations);
   
   
-  //NNetwork->g
-  //NNetwork->getMaximumFlow();
-  
   delete thisInput;
   
-  cout << "Genetic\n";
+  cout << "Genetic:Done\n";
   
   return 0;
 }
