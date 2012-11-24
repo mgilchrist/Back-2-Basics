@@ -132,9 +132,9 @@ namespace Optimization {
     
     pivot = (double)leftDepth / ((double)(leftDepth+rightDepth));
     
-    curr = tree->getTreeRoot();
-    
     do {
+      curr = tree->getTreeRoot();
+      
       while (curr != this->question.nullNode) {
         stack.push_back(curr);
         if ((rand() / (double)RAND_MAX) < pivot) {
@@ -178,9 +178,9 @@ namespace Optimization {
     
     pivot = (double)leftDepth / ((double)(leftDepth+rightDepth));
     
-    curr = tree->getTreeRoot();
-    
     do {
+      curr = tree->getTreeRoot();
+      
       while (curr != this->answer.nullNode) {
         stack.push_back(curr);
         if ((rand() / (double)RAND_MAX) < pivot) {
