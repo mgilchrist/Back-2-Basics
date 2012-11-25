@@ -27,10 +27,11 @@
 #include <vector>
 
 
-typedef struct HeuristicHarmony {
-  double *output;
-  double *expectation;
-} HeuristicHarmony;
+struct Harmony {
+  void *logicElement = NULL;
+  double *reality = NULL;
+  double *expectation = NULL;
+};
 
 template <class HeuristicType, class DataType>
 class Heuristic {
@@ -69,7 +70,7 @@ public:
   
   virtual vector<DataType *> *getInputs() =0;
   virtual vector<uint64_t> *getHiddenInfo() =0;
-  virtual vector<HeuristicHarmony *> *getHarmony() =0;
+  virtual vector<Harmony *> *getHarmony() =0;
   
   virtual void removeOutput(DataType *) =0;
   

@@ -53,6 +53,8 @@ namespace Optimization {
     
   protected:
     
+    double accuracy_rate = 0.5;
+    
     virtual void doEpoch() =0;
     
   public:

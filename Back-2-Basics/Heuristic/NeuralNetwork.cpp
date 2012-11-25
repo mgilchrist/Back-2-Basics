@@ -138,7 +138,12 @@ namespace NeuralNetwork
     vector<Neuron *> *currentStack, *previousStack;
     Neuron *currentNeuron;
     
-    hiddenInfo = layers;
+    hiddenInfo = new vector<uint64_t>();
+    
+    for (uint64_t ix = 0; ix < layers->size(); ix++) {
+      hiddenInfo->push_back(layers->at(ix));
+    }
+    
     bias = new Neuron(NULL,NULL,&networkBias,NULL);
     
     previousStack = new vector<Neuron *>();
@@ -177,7 +182,8 @@ namespace NeuralNetwork
     for (int ix = 0; ix < output->size(); ix++) {
       currentNeuron = new Neuron(NULL, previousStack, &zero, expectation->at(ix));
       Harmony *tmp = new Harmony;
-      tmp->expectation = currentNeuron;
+      tmp->logicElement = currentNeuron;
+      tmp->expectation = expectation->at(ix);
       tmp->reality = output->at(ix);
       outputs.insert(tmp, (uint64_t)(output->at(ix)));
       currentStack->push_back(currentNeuron);
@@ -300,12 +306,8 @@ namespace NeuralNetwork
     return hiddenInfo;
   }
   
-  vector<HeuristicHarmony *> *NeuralNetwork::getHarmony() {
-    vector<HeuristicHarmony *> *ret = new vector<HeuristicHarmony *>();
-    
-    outputs.modifyAll(NeuralNetwork::addOutputToVectorEach, ret);
-    
-    return ret;
+  vector<Harmony *> *NeuralNetwork::getHarmony() {    
+    return outputs.select(NULL, NULL);
   }
   
   void NeuralNetwork::removeOutput(double *output) {

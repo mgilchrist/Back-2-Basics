@@ -74,11 +74,13 @@ namespace Graph {
   public:
     Tree();
     
+    ~Tree();
+    
     TreeNodeType *nullNode;
     
     TreeNodeType *getNode(KeyType key, TreeNodeType *current);
     TreeNodeType *getTreeRoot();
-    DataType search(TreeNodeType *root, KeyType key);
+    DataType search(KeyType key);
     TreeNodeType *next(TreeNodeType *tNode);
     TreeNodeType *min(TreeNodeType *);
     
@@ -108,14 +110,21 @@ namespace Graph {
   }
   
   template <class TreeNodeType, class DataType, class KeyType>
+  Tree<TreeNodeType,DataType,KeyType>::~Tree() {
+    delete select(NULL, NULL);
+  }
+  
+  template <class TreeNodeType, class DataType, class KeyType>
   TreeNodeType *Tree<TreeNodeType,DataType,KeyType>::getTreeRoot() {
-    
     return this->treeRoot;
-    
   }
   
   template <class TreeNodeType, class DataType, class KeyType>
   TreeNodeType *Tree<TreeNodeType,DataType,KeyType>::getNode(KeyType key, TreeNodeType *current) {
+    
+    if (current == nullNode) {
+      return nullNode;
+    }
     
     if (current->key == key) {
       return current;
@@ -160,7 +169,7 @@ namespace Graph {
   }
   
   template <class TreeNodeType, class DataType, class KeyType>
-  DataType Tree<TreeNodeType,DataType,KeyType>::search(TreeNodeType *treeRoot, KeyType key) {
+  DataType Tree<TreeNodeType,DataType,KeyType>::search(KeyType key) {
     
     return getNode(key,treeRoot)->data;
   }
@@ -212,34 +221,6 @@ namespace Graph {
     return tNode;
   }
   
-#if 0
-  template <class TreeNodeType, class DataType, class KeyType>
-  void Tree<TreeNodeType,DataType,KeyType>::rModifyAll(KeyType (*action)(TreeNodeType *, void *),
-                                                       void *object,
-                                                       TreeNodeType *current,
-                                                       uint64_t instance) {
-    
-    if (current->data == NULL) {
-      return;
-    }
-    
-    KeyType newKey;
-    
-    newKey = action(current, object);
-    
-    // TODO
-    //updateKey(current->key, newKey, instance);
-    
-    if (current->left != NULL) {
-      rModifyAll(action, object, current->left, ((current->key == current->left->key) ? ++instance : 0));
-    }
-    
-    if (current->right != NULL) {
-      rModifyAll(action, object, current->right, ((current->key == current->right->key) ? ++instance : 0));
-    }
-  }
-#endif
-  
   template <class TreeNodeType, class DataType, class KeyType>
   void Tree<TreeNodeType,DataType,KeyType>::rSelect(bool (*criteria)(TreeNodeType *, void *),
                                                        void *object,
@@ -251,7 +232,7 @@ namespace Graph {
     
     L = new vector<TreeNodeType *>();
     
-    if (current->data != NULL) {
+    if (current->data != (DataType)NULL) {
       L->push_back(current);
     }
     
@@ -265,7 +246,7 @@ namespace Graph {
         u = L->back();
         L->resize(L->size()-1);
         
-        if (u->data == NULL) {
+        if (u->data == (DataType)NULL) {
           continue;
         }
         
@@ -273,11 +254,11 @@ namespace Graph {
           victims->push_back(u);
         }
         
-        if (u->leftOf(u)->data != NULL) {
+        if (u->leftOf(u)->data != (DataType)NULL) {
           nextL->push_back(u->leftOf(u));
         }
         
-        if (u->rightOf(u)->data != NULL) {
+        if (u->rightOf(u)->data != (DataType)NULL) {
           nextL->push_back(u->rightOf(u));
         }
       }
@@ -355,7 +336,6 @@ namespace Graph {
     
     while (!victims->empty()) {
       this->remove(victims->back()->data, victims->back()->key);
-      delete victims->back()->data;
       victims->resize(victims->size()-1);
     }
     

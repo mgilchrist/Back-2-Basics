@@ -40,15 +40,13 @@ namespace Optimization {
     
     static bool reckoningEach(LLRB_TreeNode<HeuristicType *,uint64_t> *current, void *world) {
       Heuristic<HeuristicType,DataType> *candidate = current->data;
-      LLRB_Tree<Trust<DataType> *, uint64_t> *cia = &((Genetic *)world)->active;
-      vector<HeuristicHarmony *> *harmony = candidate->getHarmony();
+      LLRB_Tree<Trust<DataType> *, uint64_t> *cia = &(((Genetic *)world)->active);
+      vector<Harmony *> *harmony = candidate->getHarmony();
       bool ret = false;
       
       for (uint64_t ix = 0; ix < harmony->size(); ix++) {
-        Trust<double> *localComp = cia->search(NULL, (uint64_t)harmony->at(ix));
+        Trust<double> *localComp = cia->search((uint64_t)harmony->at(ix)->reality);
         double toughness = localComp->prediction->confidence;
-        
-        localComp = cia->search(NULL, (uint64_t)harmony->at(ix)->output);
         
         toughness = max((toughness * localComp->prediction->predictions.size())-glbAreaCapacity,0.0);
         toughness /= localComp->prediction->predictions.size();
@@ -65,13 +63,15 @@ namespace Optimization {
     
     static uint64_t calcFitnessEach(LLRB_TreeNode<HeuristicType *,uint64_t> *current, void *world) {
       Heuristic<HeuristicType,DataType> *candidate = current->data;
-      vector<HeuristicHarmony *> *harmony = candidate->getHarmony();
+      vector<Harmony *> *harmony = candidate->getHarmony();
       double fitness = 0, err, correctness;
       
       candidate->calcExpectation(currentTime);
       
       for (uint64_t ix = 0; ix < harmony->size(); ix++) {
-        err = (*(harmony->at(ix)->output) - *(harmony->at(ix)->expectation)) / *(harmony->at(ix)->output);
+        double output = *(harmony->at(ix)->reality);
+        double expectation = *(harmony->at(ix)->expectation);
+        err = (output - expectation) / (output);
         err = err * err;
         fitness += err;
       }
@@ -104,8 +104,23 @@ namespace Optimization {
   
   template <class HeuristicType, class DataType>
   void Genetic<HeuristicType,DataType>::doGeneration() {
+    vector<HeuristicType *> *mates;
+    
     doEvaluation();
     doReckoning();
+    
+    mates = this->candidates.select(NULL, NULL);
+    
+    for (uint64_t ix = 0; ix < mates->size(); ix++) {
+      if (((double)rand() / (double)RAND_MAX) < this->accuracy_rate) {
+        continue;
+      }
+      
+      HeuristicType *child = reproduce(mates->at(rand() % mates->size()), mates->at(rand() % mates->size()));
+      
+      this->candidates.insert(child, (uint64_t)child);
+      
+    }
   }
   
   
@@ -134,8 +149,8 @@ namespace Optimization {
     ret = new vector<DataType *>();
     ret->reserve(retSize);
     
-    tmp = min(random() % retSize, dad->size());
-    mCrossover = min(retSize-tmp, mom->size());
+    tmp = min((uint64_t)(random() % retSize), (uint64_t)dad->size());
+    mCrossover = min((uint64_t)(retSize-tmp), (uint64_t)mom->size());
     crossover = retSize-mCrossover;
     
     /* Each generation should progress, so the size should be greater of
@@ -168,9 +183,7 @@ namespace Optimization {
       return ret;
     }
     
-    treeRet.addAllTo(ret);
-    
-    return ret;
+    return treeRet.select(NULL,NULL);
   }
   
   template <class HeuristicType, class DataType>
@@ -200,21 +213,45 @@ namespace Optimization {
   template <class HeuristicType, class DataType>
   HeuristicType *Genetic<HeuristicType,DataType>::reproduce(HeuristicType *dad, HeuristicType *mom) {
     vector<double *> *childInputs;
-    vector<double *> *childOutputs;
+    vector<double *> *childOutputs, *dOuts, *mOuts;
     vector<double *> *childExpectations;
     vector<uint64_t> *childHiddenInfo;
     double *expectations;
     
     childInputs = crossoverA(dad->getInputs(), mom->getInputs());
-    childOutputs = crossoverA(dad->getOutputs(), mom->getOutputs());
+    vector<Harmony *> *dadOutput = dad->getHarmony();
+    vector<Harmony *> *momOutput = mom->getHarmony();
+    
+    dOuts = new vector<double *>();
+    mOuts = new vector<double *>();
+    
+    dOuts->reserve(dadOutput->size());
+    mOuts->reserve(momOutput->size());
+
+    for (uint64_t ix = 0; ix < dadOutput->size(); ix++) {
+      dOuts->push_back(dadOutput->at(ix)->reality);
+    }
+    
+    for (uint64_t ix = 0; ix < momOutput->size(); ix++) {
+      mOuts->push_back(momOutput->at(ix)->reality);
+    }
+    
+    childOutputs = crossoverA(dOuts, mOuts);
     childHiddenInfo = crossoverB(dad->getHiddenInfo(), mom->getHiddenInfo());
     childExpectations = new vector<double *>();
     
-    expectations = new double[childOutputs->size()];
-    this->space.insert(expectations, (uint64_t)expectations);
+    expectations = new double[childOutputs->size()];    
+    childExpectations->reserve(childOutputs->size());
     
     for (uint64_t ix = 0; ix < childOutputs->size(); ix++) {
       childExpectations->push_back(&expectations[ix]);
+      Trust<DataType> *tmpTrust = this->answer.search((uint64_t)childOutputs->at(ix));
+      
+      if (tmpTrust->prediction == NULL) {
+        tmpTrust->prediction = new Prediction<DataType>();
+      }
+      tmpTrust->prediction->predictions.insert(&expectations[ix], (uint64_t)&expectations[ix]);
+      this->active.insert(tmpTrust, (uint64_t)childOutputs->at(ix));
     }
     
     return new HeuristicType(childInputs,childOutputs,childExpectations,childHiddenInfo);

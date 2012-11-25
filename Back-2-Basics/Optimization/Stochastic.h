@@ -102,6 +102,7 @@ namespace Optimization {
     
     
     this->candidates.modifyAll(doEpochEach, &iteration);
+    doGeneration();
     
     active.modifyAll(calcConsensus, NULL);
   }
@@ -147,6 +148,7 @@ namespace Optimization {
       tmp = random() % (uint64_t)powl(2, stack.size());
       DataType *entry = stack[log2l(tmp)]->data;
       randoms.insert(entry, (uint64_t)entry);
+      stack.resize(0);
     } while (randoms.size() < requests);
     
     return randoms.select(NULL, NULL);
@@ -233,7 +235,7 @@ namespace Optimization {
       trusts->at(ix)->prediction->predictions.insert(&spawnExpect[ix],
                                                       (uint64_t)&spawnExpect[ix]);
         
-      active.insert(trusts->at(ix), (uint64_t)trusts->at(ix));
+      active.insert(trusts->at(ix), (uint64_t)trusts->at(ix)->actual);
     }
     
     hiddenInfo->push_back(rand() % (inputEnv->size() + outputEnv->size()));
@@ -252,6 +254,15 @@ namespace Optimization {
     }
     
     tmp->energy *= (double)outputEnv->size();
+    
+    inputEnv->resize(0);
+    outputEnv->resize(0);
+    expectation->resize(0);
+    
+    delete inputEnv;
+    delete outputEnv;
+    delete expectation;
+    delete hiddenInfo;
     
     return tmp;
   }

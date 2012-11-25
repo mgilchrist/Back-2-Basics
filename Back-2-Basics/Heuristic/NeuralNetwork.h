@@ -49,11 +49,6 @@ namespace NeuralNetwork
     PULSE
   };
   
-  typedef struct Harmony {
-    Neuron *expectation;
-    double *reality;
-  } Harmony;
-  
   const double irrelevant = 10e-14;
   static unsigned long currentIteration = -1;
   
@@ -87,7 +82,7 @@ namespace NeuralNetwork
     SIG_FNCT_TYPE sigmoidFunctionType = NORMAL;
     
     static uint64_t addInputsEach(LLRB_TreeNode<Harmony *, uint64_t> *current, void *neuron) {
-      new Synapse((Neuron *)neuron, current->data->expectation);
+      new Synapse((Neuron *)neuron, (Neuron *)(current->data->logicElement));
       
       return current->key;
     }
@@ -189,7 +184,7 @@ namespace NeuralNetwork
   protected:
     
     static uint64_t changeInputInfluenceEach(LLRB_TreeNode<Harmony *, uint64_t> *current, void *nnetwork) {
-      Neuron *pCurrentNeuron = current->data->expectation;
+      Neuron *pCurrentNeuron = (Neuron *)(current->data->logicElement);
       
       if (pCurrentNeuron->discovered) {
         pCurrentNeuron->modifyAllAdjacent(Neuron::changeInputInfluenceEach, pCurrentNeuron);
@@ -202,12 +197,12 @@ namespace NeuralNetwork
     }
     
     static uint64_t calcExpectationEach(LLRB_TreeNode<Harmony *, uint64_t> *current, void *iteration) {
-      current->data->expectation->probeActivation((uint64_t)iteration);
+      ((Neuron *)(current->data->logicElement))->probeActivation((uint64_t)iteration);
       return current->key;
     }
     
     static uint64_t doCorrectionEach(LLRB_TreeNode<Harmony *, uint64_t> *current, void *reserved) {
-      Neuron *pCurrentNeuron = current->data->expectation;
+      Neuron *pCurrentNeuron = (Neuron *)(current->data->logicElement);
       double reality = *(current->data->reality);
       double expectation = *(pCurrentNeuron->memory);
       
@@ -224,13 +219,6 @@ namespace NeuralNetwork
     static uint64_t addInputToVectorEach(LLRB_TreeNode<Neuron *, uint64_t> *current, void *vect) {
       
       ((vector<double *> *)vect)->push_back(current->data->ptrInput);
-      
-      return current->key;
-    }
-    
-    static uint64_t addOutputToVectorEach(LLRB_TreeNode<Harmony *, uint64_t> *current, void *vect) {
-      
-      ((vector<double *> *)vect)->push_back(current->data->reality);
       
       return current->key;
     }
@@ -255,7 +243,7 @@ namespace NeuralNetwork
     
     vector<double *> *getInputs();
     vector<uint64_t> *getHiddenInfo();
-    vector<HeuristicHarmony *> *getHarmony();
+    vector<Harmony *> *getHarmony();
     
     void removeOutput(double *);
     

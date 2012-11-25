@@ -73,7 +73,7 @@ namespace Graph {
     
   public:
     LLRB_Tree() : uniqueKeys(true) {
-    
+      
     }
     
     LLRB_Tree(bool uniqueKeys) {
@@ -313,6 +313,10 @@ namespace Graph {
     
     char cmp = (key == node->key) ? 0 : (key < node->key) ? -1 : 1;
     
+    if (node == this->nullNode) {
+      return this->nullNode;
+    }
+    
     if (cmp == -1) {
       if ((node->leftOf(node)->color != RED) &&
           (node->leftOf(node->leftOf(node))->color != RED)) {
@@ -327,9 +331,11 @@ namespace Graph {
       }
       
       if ((cmp == 0) && ((node->rightOf(node) == this->nullNode) || (node->leftOf(node->rightOf(node))->color != RED))) {
-        delete node;
-        this->numNodes--;
-        return this->nullNode;
+        if (uniqueKeys || (victimData == node->data)) {
+          delete node;
+          this->numNodes--;
+          return this->nullNode;
+        }
       }
       
       if ((node->rightOf(node)->color != RED) &&
@@ -337,13 +343,11 @@ namespace Graph {
         node = moveViolationRight(node);
       }
       
-      if (cmp == 0) {
-        if (uniqueKeys || (victimData == node->data)) {
-          TreeNodeType *tNode = this->min(node->rightOf(node));
-          node->key = tNode->key;
-          node->data = tNode->data;
-          node->setRight(node, removeMin(node->rightOf(node), victimData));
-        }
+      if ((cmp == 0) && (uniqueKeys || (victimData == node->data))) {
+        TreeNodeType *tNode = this->min(node->rightOf(node));
+        node->key = tNode->key;
+        node->data = tNode->data;
+        node->setRight(node, removeMin(node->rightOf(node), victimData));
       } else {
         node->setRight(node, remove(node->rightOf(node), victimData, key));
       }
