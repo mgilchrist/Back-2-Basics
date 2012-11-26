@@ -53,7 +53,7 @@ namespace Optimization {
     
   protected:
     
-    double accuracy_rate = 0.5;
+    double accuracy_rate = 0.00;
     
     virtual void doEpoch() =0;
     

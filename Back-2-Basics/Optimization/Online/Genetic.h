@@ -131,7 +131,7 @@ namespace Optimization {
   
   template <class HeuristicType, class DataType>
   void Genetic<HeuristicType,DataType>::doReckoning() {
-    this->candidates.selectRemove(reckoningEach, this);
+    this->candidates.removal(reckoningEach, this);
   }
   
   template <class HeuristicType, class DataType>
@@ -156,7 +156,7 @@ namespace Optimization {
     /* Each generation should progress, so the size should be greater of
      * two rents
      */
-    for (uint64_t mCurrent = mom->size()-1; mCurrent >= (uint64_t)mom->size()-crossover; mCurrent++) {
+    for (uint64_t mCurrent = mom->size()-1; mCurrent >= (uint64_t)mom->size()-crossover; mCurrent--) {
       treeRet.insert(mom->at(mCurrent), (uint64_t)mom->at(mCurrent));
     }
     
@@ -214,11 +214,15 @@ namespace Optimization {
   HeuristicType *Genetic<HeuristicType,DataType>::reproduce(HeuristicType *dad, HeuristicType *mom) {
     vector<double *> *childInputs;
     vector<double *> *childOutputs, *dOuts, *mOuts;
+    vector<Trust<DataType> *> *childTrusts;
     vector<double *> *childExpectations;
     vector<uint64_t> *childHiddenInfo;
+    HeuristicType *tmpHeuristic;
+    uint64_t tmpNum;
     double *expectations;
     
     childInputs = crossoverA(dad->getInputs(), mom->getInputs());
+    
     vector<Harmony *> *dadOutput = dad->getHarmony();
     vector<Harmony *> *momOutput = mom->getHarmony();
     
@@ -240,21 +244,59 @@ namespace Optimization {
     childHiddenInfo = crossoverB(dad->getHiddenInfo(), mom->getHiddenInfo());
     childExpectations = new vector<double *>();
     
-    expectations = new double[childOutputs->size()];    
-    childExpectations->reserve(childOutputs->size());
+    childTrusts = new vector<Trust<DataType> *>();
     
     for (uint64_t ix = 0; ix < childOutputs->size(); ix++) {
-      childExpectations->push_back(&expectations[ix]);
       Trust<DataType> *tmpTrust = this->answer.search((uint64_t)childOutputs->at(ix));
-      
+      childTrusts->push_back(tmpTrust);
+    }
+    
+    /* Mutate */
+    tmpNum = rand() % childTrusts->size();
+    childTrusts = this->pickRandomTrusts(&(this->answer), childTrusts, tmpNum);
+    
+    tmpNum = rand() % childInputs->size();
+    childInputs = this->pickRandoms(&(this->question), childInputs, tmpNum);
+    
+    if (childHiddenInfo->size() > 1) {
+      childHiddenInfo->pop_back();
+      if (rand()%2) {
+        childHiddenInfo->push_back(rand() % (childInputs->size() + childTrusts->size()));
+      }
+      if (rand()%2) {
+        childHiddenInfo->push_back(rand() % (childInputs->size() + childTrusts->size()));
+      }
+    }
+    
+    expectations = new double[childTrusts->size()];
+    childExpectations->reserve(childTrusts->size());
+    
+    childOutputs->resize(0);
+    
+    for (uint64_t ix = 0; ix < childTrusts->size(); ix++) {
+      Trust<DataType> *tmpTrust = childTrusts->at(ix);
+      childOutputs->push_back(tmpTrust->actual);
+      childExpectations->push_back(&expectations[ix]);
       if (tmpTrust->prediction == NULL) {
         tmpTrust->prediction = new Prediction<DataType>();
       }
       tmpTrust->prediction->predictions.insert(&expectations[ix], (uint64_t)&expectations[ix]);
-      this->active.insert(tmpTrust, (uint64_t)childOutputs->at(ix));
+      this->active.insert(tmpTrust, (uint64_t)tmpTrust->actual);
     }
+    tmpHeuristic = new HeuristicType(childInputs,childOutputs,childExpectations,childHiddenInfo);
     
-    return new HeuristicType(childInputs,childOutputs,childExpectations,childHiddenInfo);
+    childInputs->resize(0);
+    childOutputs->resize(0);
+    childExpectations->resize(0);
+    childTrusts->resize(0);
+    
+    delete childInputs;
+    delete childOutputs;
+    delete childExpectations;
+    delete childHiddenInfo;
+    delete childTrusts;
+    
+    return tmpHeuristic;
   }
   
   template <class HeuristicType, class DataType>
