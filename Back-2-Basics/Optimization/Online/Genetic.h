@@ -29,7 +29,7 @@ namespace Optimization {
   
   
   static uint64_t currentTime = -1;
-  static const double glbToughness = 0.1;
+  static const double glbToughness = 0.0;
   static const double glbAreaCapacity = 1.414;
   
   template <class HeuristicType, class DataType>
@@ -45,11 +45,8 @@ namespace Optimization {
       bool ret = false;
       
       for (uint64_t ix = 0; ix < harmony->size(); ix++) {
-        Trust<double> *localComp = cia->search((uint64_t)harmony->at(ix)->reality);
+        Trust<double> *localComp = cia->search(cia->treeRoot, (uint64_t)harmony->at(ix)->reality);
         double toughness = localComp->prediction->confidence;
-        
-        toughness = max((toughness * localComp->prediction->predictions.size())-glbAreaCapacity,0.0);
-        toughness /= localComp->prediction->predictions.size();
         
         candidate->persistance -= (toughness+glbToughness);
       }
@@ -130,6 +127,10 @@ namespace Optimization {
       
       this->candidates.insert(child, (uint64_t)child);
       
+    }
+    
+    while (this->candidates.size() < ((uint64_t)log2(this->question.size()+this->answer.size()))) {
+      this->spawn();
     }
     
     doMeditation();
@@ -251,15 +252,15 @@ namespace Optimization {
     childTrusts = new vector<Trust<DataType> *>();
     
     for (uint64_t ix = 0; ix < childOutputs->size(); ix++) {
-      Trust<DataType> *tmpTrust = this->answer.search((uint64_t)childOutputs->at(ix));
+      Trust<DataType> *tmpTrust = this->answer.search(this->answer.treeRoot, (uint64_t)childOutputs->at(ix));
       childTrusts->push_back(tmpTrust);
     }
     
     /* Mutate */
-    tmpNum = rand() % childTrusts->size();
+    tmpNum = rand() % ((uint64_t)(log2(childTrusts->size())) + 1);
     childTrusts = this->pickRandomTrusts(&(this->answer), childTrusts, tmpNum);
     
-    tmpNum = rand() % childInputs->size();
+    tmpNum = rand() % ((uint64_t)(log2(childInputs->size())) + 1);
     childInputs = this->pickRandoms(&(this->question), childInputs, tmpNum);
     
     if (childHiddenInfo->size() > 1) {
@@ -280,7 +281,7 @@ namespace Optimization {
     for (uint64_t ix = 0; ix < childTrusts->size(); ix++) {
       Trust<DataType> *tmpTrust = childTrusts->at(ix);
       childOutputs->push_back(tmpTrust->actual);
-      expectations[ix] = 0.5;
+      expectations[ix] = 0.0;
       childExpectations->push_back(&expectations[ix]);
       if (tmpTrust->prediction == NULL) {
         tmpTrust->prediction = new Prediction<DataType>();
@@ -289,6 +290,7 @@ namespace Optimization {
       this->active.insert(tmpTrust, (uint64_t)tmpTrust->actual);
     }
     tmpHeuristic = new HeuristicType(childInputs,childOutputs,childExpectations,childHiddenInfo);
+    tmpHeuristic->persistance = dad->persistance + mom->persistance;
     
     childInputs->resize(0);
     childOutputs->resize(0);

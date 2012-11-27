@@ -30,7 +30,7 @@ using namespace Collection;
 
 namespace Optimization {
   
-  double glbEnergyCnst = 0.0000001;
+  double glbEnergyCnst = 0.001;
   
   /*  typedef struct TotalCompetition {
    double competition = 0.0;
@@ -63,16 +63,17 @@ namespace Optimization {
       double minDiff = average * 0.05;
       
       for (uint64_t ix = 0; ix < expectations->size(); ix++) {
-        double tmp = min(*(expectations->at(ix))-average, minDiff);
+        double tmp = max(*(expectations->at(ix))-average, minDiff);
         diff += tmp * tmp;
       }
       
       current->data->prediction->expectation = average;
       
       if (expectations->size() < 2) {
-        current->data->prediction->confidence = 0.5;
+        current->data->prediction->confidence = 0.0;
       } else {
-        current->data->prediction->confidence = (average * 0.05) / ((sqrt(diff)) / sqrt(double(expectations->size()-1)));
+        current->data->prediction->confidence = (1.0) / (1.0 + ((sqrt(diff)) / sqrt(double(expectations->size()-1))));
+        //current->data->prediction->confidence = (average * 0.05) / ((sqrt(diff)) / sqrt(double(expectations->size()-1)));
       }
         
       return current->key;
@@ -124,16 +125,16 @@ namespace Optimization {
     uint8_t leftDepth = 0, rightDepth = 0;
     double pivot;
     
-    curr = tree->getTreeRoot();
+    curr = tree->treeRoot;
     
-    while (curr != this->question.nullNode) {
+    while (curr != NULL) {
       leftDepth++;
       curr = curr->leftOf(curr);
     }
     
-    curr = tree->getTreeRoot();
+    curr = tree->treeRoot;
     
-    while (curr != this->question.nullNode) {
+    while (curr != NULL) {
       rightDepth++;
       curr = curr->rightOf(curr);
     }
@@ -150,9 +151,9 @@ namespace Optimization {
     }
     
     for (uint64_t ix = 0; ix < requests; ix++) {
-      curr = tree->getTreeRoot();
+      curr = tree->treeRoot;
       
-      while (curr != this->question.nullNode) {
+      while (curr != NULL) {
         stack.push_back(curr);
         if ((rand() / (double)RAND_MAX) < pivot) {
           curr = curr->leftOf(curr);
@@ -180,16 +181,16 @@ namespace Optimization {
     uint8_t leftDepth = 0, rightDepth = 0;
     double pivot;
     
-    curr = tree->getTreeRoot();
+    curr = tree->treeRoot;
     
-    while (curr != this->answer.nullNode) {
+    while (curr != NULL) {
       leftDepth++;
       curr = curr->leftOf(curr);
     }
     
-    curr = tree->getTreeRoot();
+    curr = tree->treeRoot;
     
-    while (curr != this->answer.nullNode) {
+    while (curr != NULL) {
       rightDepth++;
       curr = curr->rightOf(curr);
     }
@@ -207,9 +208,9 @@ namespace Optimization {
     }
     
     for (uint64_t ix = 0; ix < requests; ix++) {
-      curr = tree->getTreeRoot();
+      curr = tree->treeRoot;
       
-      while (curr != this->answer.nullNode) {
+      while (curr != NULL) {
         stack.push_back(curr);
         if ((rand() / (double)RAND_MAX) < pivot) {
           curr = curr->leftOf(curr);
@@ -258,7 +259,7 @@ namespace Optimization {
       if (trusts->at(ix)->prediction == NULL) {
         trusts->at(ix)->prediction = new Prediction<DataType>();
       }
-      spawnExpect[ix] = 0.5;
+      spawnExpect[ix] = 0.0;
       trusts->at(ix)->prediction->predictions.insert(&spawnExpect[ix],
                                                      (uint64_t)&spawnExpect[ix]);
       
@@ -285,6 +286,8 @@ namespace Optimization {
     inputEnv->resize(0);
     outputEnv->resize(0);
     expectation->resize(0);
+    
+    tmp->persistance = 30;
     
     delete inputEnv;
     delete outputEnv;

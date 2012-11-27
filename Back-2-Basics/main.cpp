@@ -38,7 +38,7 @@ using namespace Graph;
 
 const uint64_t glbInputSize = 0x40;
 const uint64_t glbOutputSize = 0x40;
-const uint64_t glbIterations = 0x10;
+const uint64_t glbIterations = 0x1000;
 const uint64_t glbTestSize = 0x100000;
 const uint64_t glbSlowTestSize = 0x10000;
 
@@ -245,7 +245,7 @@ int testLLRBTree() {
 #endif
   }
   
-  current = rbTree->min(rbTree->getTreeRoot());
+  current = rbTree->min(rbTree->treeRoot);
   tmp = current->key;
   
   for (uint64_t ix = 0; ix < rbTree->size()-1; ix++) {
@@ -702,6 +702,8 @@ int testGenetic() {
       cout << errorRate/((double)(glbOutputSize));
       cout << "\n";
     }
+    
+    geneticExp->accuracy_rate = 1.0 - thisError;
     
     iterations++;
     

@@ -38,7 +38,7 @@ class Heuristic {
   
 public:
   
-  double persistance = 1.0;
+  double persistance = 0.0;
   double energy = 0.0;
   
 public:

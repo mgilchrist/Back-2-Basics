@@ -53,11 +53,11 @@ namespace Optimization {
     
   protected:
     
-    double accuracy_rate = 0.00;
-    
     virtual void doEpoch() =0;
     
   public:
+    
+    double accuracy_rate = 0.0;
     
     LLRB_Tree<DataType *, uint64_t> question;
     LLRB_Tree<Trust<DataType> *, uint64_t> answer;
