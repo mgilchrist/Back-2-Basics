@@ -314,7 +314,7 @@ namespace Graph {
     char cmp = (key == node->key) ? 0 : (key < node->key) ? -1 : 1;
     
     if (node == this->nullNode) {
-      return this->nullNode;
+      return node;
     }
     
     if (cmp == -1) {
@@ -339,7 +339,7 @@ namespace Graph {
       }
       
       if ((node->rightOf(node)->color != RED) &&
-          (node->leftOf(node->rightOf(node))->color)) {
+          (node->leftOf(node->rightOf(node))->color) != RED) {
         node = moveViolationRight(node);
       }
       

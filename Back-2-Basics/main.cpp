@@ -38,7 +38,7 @@ using namespace Graph;
 
 const uint64_t glbInputSize = 0x40;
 const uint64_t glbOutputSize = 0x40;
-const uint64_t glbIterations = 0x1000;
+const uint64_t glbIterations = 0x10;
 const uint64_t glbTestSize = 0x100000;
 const uint64_t glbSlowTestSize = 0x10000;
 
@@ -645,8 +645,13 @@ int testGenetic() {
   
   geneticExp->initInternals();
   
+  
   for (uint64_t jx = 0; jx < thisInput->size(); jx++) {
     *(thisInput->at(jx)) = (random() % precision) / (precision * 1.0);
+  }
+  
+  for (int ix = 0; ix < glbOutputSize; ix++) {
+    *(thisOutput->at(ix)) = *(thisInput->at(ix));
   }
   
   do {
@@ -689,12 +694,12 @@ int testGenetic() {
           continue;
         }
         
-        thisError = (*thisTrust->at(ix)->actual - (thisTrust->at(ix)->prediction->expectation)) / *thisTrust->at(ix)->actual;
-        errorRate += thisError * thisError;
+        thisError = (*thisTrust->at(ix)->actual - (thisTrust->at(ix)->prediction->expectation));
+        errorRate += thisError;
       }
       
       cout << "Error Rate is ";
-      cout << sqrt(errorRate/((double)(glbOutputSize)));
+      cout << errorRate/((double)(glbOutputSize));
       cout << "\n";
     }
     
@@ -722,17 +727,17 @@ int main(int argc, const char * argv[])
   cout << "This is free software, and you are welcome to redistribute it\n";
   cout << "under certain conditions; type `show c' for details.\n";
   
-  ret |= testHashTable();
-  ret |= testSecureHashTable();
-  ret |= testArrayList();
-  ret |= testHeap();
+  //ret |= testHashTable();
+  //ret |= testSecureHashTable();
+  //ret |= testArrayList();
+  //ret |= testHeap();
   //ret |= testRBTree();
   ret |= testLLRBTree();
-  ret |= testStack();
-  ret |= testNeuralNetwork();
+  //ret |= testStack();
+  //ret |= testNeuralNetwork();
   ret |= testGenetic();
   //ret |= testMetaheuristic();
-  ret |= testNavigation();
+  //ret |= testNavigation();
   
   cout << "Finished Testing:";
   cout << ret;

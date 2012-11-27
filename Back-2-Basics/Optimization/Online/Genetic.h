@@ -85,12 +85,21 @@ namespace Optimization {
       return current->key;
     }
     
+    static uint64_t meditateEach(LLRB_TreeNode<HeuristicType *,uint64_t> *current, void *world) {
+      Heuristic<HeuristicType,DataType> *candidate = current->data;
+      
+      candidate->doCorrection();
+      
+      return current->key;
+    }
+    
     vector<DataType *> *crossoverA(vector<DataType *> *dad, vector<DataType *> *mom);
     vector<uint64_t> *crossoverB(vector<uint64_t> *dad, vector<uint64_t> *mom);
     
     void add();
     void doEvaluation();
     void doReckoning();
+    void doMeditation();
     void doGeneration();
     HeuristicType *reproduce(HeuristicType *father, HeuristicType *mother);
     void get();
@@ -112,7 +121,8 @@ namespace Optimization {
     mates = this->candidates.select(NULL, NULL);
     
     for (uint64_t ix = 0; ix < mates->size(); ix++) {
-      if (((double)rand() / (double)RAND_MAX) < this->accuracy_rate) {
+      if ((((double)rand() / (double)RAND_MAX) < this->accuracy_rate) ||
+          (((double)rand() / (double)RAND_MAX) > 0.619)){
         continue;
       }
       
@@ -121,6 +131,8 @@ namespace Optimization {
       this->candidates.insert(child, (uint64_t)child);
       
     }
+    
+    doMeditation();
   }
   
   
@@ -132,6 +144,11 @@ namespace Optimization {
   template <class HeuristicType, class DataType>
   void Genetic<HeuristicType,DataType>::doReckoning() {
     this->candidates.removal(reckoningEach, this);
+  }
+  
+  template <class HeuristicType, class DataType>
+  void Genetic<HeuristicType,DataType>::doMeditation() {
+    this->candidates.modifyAll(meditateEach, 0);
   }
   
   template <class HeuristicType, class DataType>
@@ -156,31 +173,18 @@ namespace Optimization {
     /* Each generation should progress, so the size should be greater of
      * two rents
      */
-    for (uint64_t mCurrent = mom->size()-1; mCurrent >= (uint64_t)mom->size()-crossover; mCurrent--) {
-      treeRet.insert(mom->at(mCurrent), (uint64_t)mom->at(mCurrent));
+    for (uint64_t mCurrent = 1; mCurrent <= mCrossover; mCurrent++) {
+      treeRet.insert(mom->at(mom->size()-mCurrent), (uint64_t)mom->at(mom->size()-mCurrent));
     }
     
     treeSizeStart = treeRet.size();
     
-    for (uint64_t dCurrent = 0; dCurrent < (dad->size()-1); dCurrent++) {
+    for (uint64_t dCurrent = 0; dCurrent < dad->size(); dCurrent++) {
       treeRet.insert(dad->at(dCurrent), (uint64_t)dad->at(dCurrent));
       
       if ((treeRet.size()-treeSizeStart) >= crossover) {
         break;
       }
-    }
-    
-    /* That last entry was needed. So one parent is subset of other
-     * Return larger of two.
-     */
-    if (treeRet.size() != retSize) {
-      if (retSize == dad->size()) {
-        ret->assign(dad->begin(), dad->end());
-      } else {
-        ret->assign(mom->begin(), mom->end());
-      }
-      
-      return ret;
     }
     
     return treeRet.select(NULL,NULL);
@@ -231,7 +235,7 @@ namespace Optimization {
     
     dOuts->reserve(dadOutput->size());
     mOuts->reserve(momOutput->size());
-
+    
     for (uint64_t ix = 0; ix < dadOutput->size(); ix++) {
       dOuts->push_back(dadOutput->at(ix)->reality);
     }
@@ -276,6 +280,7 @@ namespace Optimization {
     for (uint64_t ix = 0; ix < childTrusts->size(); ix++) {
       Trust<DataType> *tmpTrust = childTrusts->at(ix);
       childOutputs->push_back(tmpTrust->actual);
+      expectations[ix] = 0.5;
       childExpectations->push_back(&expectations[ix]);
       if (tmpTrust->prediction == NULL) {
         tmpTrust->prediction = new Prediction<DataType>();

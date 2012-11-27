@@ -32,7 +32,7 @@ namespace Optimization {
   struct Prediction {
     LLRB_Tree<DataType *, uint64_t> predictions;
     DataType expectation;
-    double confidence;
+    double confidence = 0.0;
   };
   
   template <class DataType>

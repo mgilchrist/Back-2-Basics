@@ -52,23 +52,29 @@ namespace Optimization {
     static uint64_t calcConsensus(LLRB_TreeNode<Trust<double> *,uint64_t> *current, void *reserved) {
       
       vector<double *> *expectations = current->data->prediction->predictions.select(NULL, NULL);
-      double sum = 0.0, average, diff = 1.0;
+      double sum = 0.0, average, diff = 0.0;
       
       for (uint64_t ix = 0; ix < expectations->size(); ix++) {
         sum += *(expectations->at(ix));
       }
       
-      average = sum / expectations->size();
+      average = max(sum / (double)expectations->size(), 2.328306e-10);
+      
+      double minDiff = average * 0.05;
       
       for (uint64_t ix = 0; ix < expectations->size(); ix++) {
-        double tmp = *(expectations->at(ix))-average;
-        diff *= tmp * tmp;
+        double tmp = min(*(expectations->at(ix))-average, minDiff);
+        diff += tmp * tmp;
       }
       
       current->data->prediction->expectation = average;
-      current->data->prediction->confidence = ((average * 0.05) /
-                                               sqrt(diff/(double)(expectations->size())));
       
+      if (expectations->size() < 2) {
+        current->data->prediction->confidence = 0.5;
+      } else {
+        current->data->prediction->confidence = (average * 0.05) / ((sqrt(diff)) / sqrt(double(expectations->size()-1)));
+      }
+        
       return current->key;
     }
     
@@ -101,9 +107,11 @@ namespace Optimization {
     
     
     this->candidates.modifyAll(doEpochEach, &iteration);
+    active.modifyAll(calcConsensus, NULL);
+    
     doGeneration();
     
-    active.modifyAll(calcConsensus, NULL);
+    
   }
   
   template <class HeuristicType, class DataType>
@@ -137,13 +145,11 @@ namespace Optimization {
         randoms.insert(originals->at(ix), (uint64_t)originals->at(ix));
       }
       
-      requests += originals->size();
-      
       originals->resize(0);
       delete originals;
     }
     
-    do {
+    for (uint64_t ix = 0; ix < requests; ix++) {
       curr = tree->getTreeRoot();
       
       while (curr != this->question.nullNode) {
@@ -159,7 +165,7 @@ namespace Optimization {
       DataType *entry = stack[log2l(tmp)]->data;
       randoms.insert(entry, (uint64_t)entry);
       stack.resize(0);
-    } while (randoms.size() < requests);
+    }
     
     return randoms.select(NULL, NULL);
   }
@@ -195,14 +201,12 @@ namespace Optimization {
         randoms.insert(originals->at(ix), (uint64_t)originals->at(ix));
       }
       
-      requests += originals->size();
-      
       originals->resize(0);
       delete originals;
       
     }
     
-    do {
+    for (uint64_t ix = 0; ix < requests; ix++) {
       curr = tree->getTreeRoot();
       
       while (curr != this->answer.nullNode) {
@@ -218,7 +222,7 @@ namespace Optimization {
       Trust<DataType> *entry = stack[log2l(tmp)]->data;
       randoms.insert(entry, (uint64_t)entry);
       stack.resize(0);
-    } while (randoms.size() < requests);
+    }
     
     return randoms.select(NULL, NULL);
   }
@@ -254,6 +258,7 @@ namespace Optimization {
       if (trusts->at(ix)->prediction == NULL) {
         trusts->at(ix)->prediction = new Prediction<DataType>();
       }
+      spawnExpect[ix] = 0.5;
       trusts->at(ix)->prediction->predictions.insert(&spawnExpect[ix],
                                                      (uint64_t)&spawnExpect[ix]);
       
