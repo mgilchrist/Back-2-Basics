@@ -30,7 +30,7 @@ using namespace Collection;
 
 namespace Optimization {
   
-  double glbEnergyCnst = 0.001;
+  double glbEnergyCnst = 0.01;
   
   /*  typedef struct TotalCompetition {
    double competition = 0.0;
@@ -60,10 +60,8 @@ namespace Optimization {
       
       average = max(sum / (double)expectations->size(), 2.328306e-10);
       
-      double minDiff = average * 0.05;
-      
       for (uint64_t ix = 0; ix < expectations->size(); ix++) {
-        double tmp = max(*(expectations->at(ix))-average, minDiff);
+        double tmp = *(expectations->at(ix))-average;
         diff += tmp * tmp;
       }
       
@@ -239,10 +237,12 @@ namespace Optimization {
     uint64_t tmpSize;
     
     tmpSize = rand() % (uint64_t)log2(this->question.size());
-    inputEnv = pickRandoms(&this->question, NULL, tmpSize+1);
+    inputEnv = this->question.select(NULL,NULL);
+    //pickRandoms(&this->question, NULL, tmpSize+1);
     
     tmpSize = rand() % (uint64_t)log2(this->question.size());
-    trusts = pickRandomTrusts(&this->answer, NULL, tmpSize+1);
+    trusts = this->answer.select(NULL,NULL);
+    //pickRandomTrusts(&this->answer, NULL, tmpSize+1);
     
     spawnExpect = new double[trusts->size()];
     
@@ -287,8 +287,6 @@ namespace Optimization {
     outputEnv->resize(0);
     expectation->resize(0);
     
-    tmp->persistance = 30;
-    
     delete inputEnv;
     delete outputEnv;
     delete expectation;
@@ -299,7 +297,7 @@ namespace Optimization {
   
   template <class HeuristicType, class DataType>
   void Stoichastic<HeuristicType,DataType>::initInternals() {
-    uint8_t firstGenSize = log2(this->question.size() + this->answer.size()) + 1;
+    uint64_t firstGenSize = log2(this->question.size());
     
     for (uint64_t ix = 0; ix < firstGenSize; ix++) {
       spawn();

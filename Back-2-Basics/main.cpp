@@ -36,9 +36,9 @@ using namespace Graph;
 #include "Genetic.h"
 #include "Metaheuristic.h"
 
-const uint64_t glbInputSize = 0x40;
-const uint64_t glbOutputSize = 0x40;
-const uint64_t glbIterations = 0x1000;
+const uint64_t glbInputSize = 0x10;
+const uint64_t glbOutputSize = 0x10;
+const uint64_t glbIterations = 0x100;
 const uint64_t glbTestSize = 0x100000;
 const uint64_t glbSlowTestSize = 0x10000;
 
@@ -681,8 +681,9 @@ int testGenetic() {
       cout << "\n\n";
     }
     
-    for (int ix = 0; ix < glbOutputSize; ix++) {
-      *(thisOutput->at(ix)) = *(thisInput->at(ix));
+    *(thisOutput->at(glbOutputSize-1)) = *(thisInput->at(0));
+    for (int ix = 1; ix < glbOutputSize; ix++) {
+      *(thisOutput->at(ix-1)) = *(thisInput->at(ix));
     }
     
     
@@ -695,15 +696,17 @@ int testGenetic() {
         }
         
         thisError = (*thisTrust->at(ix)->actual - (thisTrust->at(ix)->prediction->expectation));
-        errorRate += thisError;
+        errorRate += thisError * thisError;
       }
       
+      errorRate = sqrt(errorRate/((double)(glbOutputSize)));
+      
       cout << "Error Rate is ";
-      cout << errorRate/((double)(glbOutputSize));
+      cout << errorRate;
       cout << "\n";
     }
     
-    geneticExp->accuracy_rate = 1.0 - thisError;
+    geneticExp->accuracy_rate = 1.0 - errorRate;
     
     iterations++;
     

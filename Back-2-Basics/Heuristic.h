@@ -38,7 +38,7 @@ class Heuristic {
   
 public:
   
-  double persistance = 0.0;
+  double persistance = 1000.0;
   double energy = 0.0;
   
 public:
@@ -76,7 +76,9 @@ public:
   
   virtual uint64_t timeAlive() =0;
   
-  virtual void simplify() =0;
+  virtual void optimalPrune() =0;
+  virtual void probablisticPrune() =0;
+  
   virtual void merge(HeuristicType *) =0;
 };
 

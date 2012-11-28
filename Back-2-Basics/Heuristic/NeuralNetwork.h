@@ -87,7 +87,17 @@ namespace NeuralNetwork
       return current->key;
     }
     
-    static uint64_t pruneEdgesEach(LLRB_TreeNode<Synapse *, uint64_t> *current, void *neuron) {
+    static uint64_t optimalPruneEach(LLRB_TreeNode<Synapse *, uint64_t> *current, void *neuron) {
+      
+      if ((current->data->influence < irrelevant) &&
+          (current->data->influence > -irrelevant)) {
+        ((Neuron *)neuron)->removeEdge(current->data);
+      }
+      
+      return current->key;
+    }
+    
+    static uint64_t probablisticPruneEach(LLRB_TreeNode<Synapse *, uint64_t> *current, void *neuron) {
       
       if ((current->data->influence < irrelevant) &&
           (current->data->influence > -irrelevant)) {
@@ -249,7 +259,9 @@ namespace NeuralNetwork
     
     uint64_t timeAlive();
     
-    void simplify();
+    void optimalPrune();
+    void probablisticPrune();
+    
     void merge(NeuralNetwork *);
     
   };

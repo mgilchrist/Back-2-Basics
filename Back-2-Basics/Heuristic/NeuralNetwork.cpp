@@ -212,7 +212,7 @@ namespace NeuralNetwork
     
   }
   
-  void NeuralNetwork::simplify() {
+  void NeuralNetwork::optimalPrune() {
     vector<Neuron *> *currentLayer;
     Neuron *pCurrentNeuron;
     
@@ -240,12 +240,45 @@ namespace NeuralNetwork
         pCurrentNeuron = currentLayer->at(jx);
         
         /* Get rid of irrelevant synapses */
-        pCurrentNeuron->modifyAllAdjacent(Neuron::pruneEdgesEach, 0);
+        pCurrentNeuron->modifyAllAdjacent(Neuron::optimalPruneEach, 0);
       }
     }
     
   }
   
+  void NeuralNetwork::probablisticPrune() {
+    vector<Neuron *> *currentLayer;
+    Neuron *pCurrentNeuron;
+    
+    /* Eliminate synapses that never carry significant charge */
+    /* Count output synapses */
+    
+    for (uint64_t kx = 0; kx < this->layers->size()-1; kx++) {
+      currentLayer = this->layers->at(kx);
+      
+      for (int jx = 0; jx < currentLayer->size(); jx++) {
+        currentLayer->at(jx)->references = 0;
+      }
+    }
+    
+    currentLayer = this->layers->at(this->layers->size()-1);
+    
+    for (uint64_t jx = 0; jx < currentLayer->size(); jx++) {
+      currentLayer->at(jx)->references = 1;
+    }
+    
+    for (uint64_t kx = 1; kx < this->layers->size(); kx++) {
+      currentLayer = this->layers->at(this->layers->size()-kx);
+      
+      for (uint64_t jx = 0; jx < currentLayer->size(); jx++) {
+        pCurrentNeuron = currentLayer->at(jx);
+        
+        /* Get rid of irrelevant synapses */
+        pCurrentNeuron->modifyAllAdjacent(Neuron::probablisticPruneEach, 0);
+      }
+    }
+    
+  }
   
   void NeuralNetwork::merge(NeuralNetwork *network) {
     
