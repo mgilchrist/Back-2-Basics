@@ -213,69 +213,29 @@ namespace NeuralNetwork
   }
   
   void NeuralNetwork::optimalPrune() {
-    vector<Neuron *> *currentLayer;
-    Neuron *pCurrentNeuron;
+    vector<Harmony *> *outputLayer;
     
     /* Eliminate synapses that never carry significant charge */
     /* Count output synapses */
     
-    for (uint64_t kx = 0; kx < this->layers->size()-1; kx++) {
-      currentLayer = this->layers->at(kx);
-      
-      for (int jx = 0; jx < currentLayer->size(); jx++) {
-        currentLayer->at(jx)->references = 0;
-      }
-    }
+    outputLayer = this->outputs.select(NULL, NULL);
     
-    currentLayer = this->layers->at(this->layers->size()-1);
-    
-    for (uint64_t jx = 0; jx < currentLayer->size(); jx++) {
-      currentLayer->at(jx)->references = 1;
-    }
-    
-    for (uint64_t kx = 1; kx < this->layers->size(); kx++) {
-      currentLayer = this->layers->at(this->layers->size()-kx);
-      
-      for (uint64_t jx = 0; jx < currentLayer->size(); jx++) {
-        pCurrentNeuron = currentLayer->at(jx);
-        
-        /* Get rid of irrelevant synapses */
-        pCurrentNeuron->modifyAllAdjacent(Neuron::optimalPruneEach, 0);
-      }
+    for (uint64_t kx = 0; kx < outputLayer->size(); kx++) {
+      ((Neuron *)(outputLayer->at(kx)->logicElement))->forwardEdges.modifyAll(Neuron::optimalPruneEach, (Neuron *)(outputLayer->at(kx)->logicElement));
     }
     
   }
   
   void NeuralNetwork::probablisticPrune() {
-    vector<Neuron *> *currentLayer;
-    Neuron *pCurrentNeuron;
+    vector<Harmony *> *outputLayer;
     
     /* Eliminate synapses that never carry significant charge */
     /* Count output synapses */
     
-    for (uint64_t kx = 0; kx < this->layers->size()-1; kx++) {
-      currentLayer = this->layers->at(kx);
-      
-      for (int jx = 0; jx < currentLayer->size(); jx++) {
-        currentLayer->at(jx)->references = 0;
-      }
-    }
+    outputLayer = this->outputs.select(NULL, NULL);
     
-    currentLayer = this->layers->at(this->layers->size()-1);
-    
-    for (uint64_t jx = 0; jx < currentLayer->size(); jx++) {
-      currentLayer->at(jx)->references = 1;
-    }
-    
-    for (uint64_t kx = 1; kx < this->layers->size(); kx++) {
-      currentLayer = this->layers->at(this->layers->size()-kx);
-      
-      for (uint64_t jx = 0; jx < currentLayer->size(); jx++) {
-        pCurrentNeuron = currentLayer->at(jx);
-        
-        /* Get rid of irrelevant synapses */
-        pCurrentNeuron->modifyAllAdjacent(Neuron::probablisticPruneEach, 0);
-      }
+    for (uint64_t kx = 0; kx < outputLayer->size(); kx++) {
+      ((Neuron *)(outputLayer->at(kx)->logicElement))->forwardEdges.modifyAll(Neuron::probablisticPruneEach, (Neuron *)(outputLayer->at(kx)->logicElement));
     }
     
   }

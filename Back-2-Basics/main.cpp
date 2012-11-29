@@ -701,8 +701,11 @@ int testGenetic() {
       
       errorRate = sqrt(errorRate/((double)(glbOutputSize)));
       
-      cout << "Error Rate is ";
+      cout << "Error Rate: ";
       cout << errorRate;
+      cout << "\n";
+      cout << "Size: ";
+      cout << geneticExp->candidates.size();
       cout << "\n";
     }
     

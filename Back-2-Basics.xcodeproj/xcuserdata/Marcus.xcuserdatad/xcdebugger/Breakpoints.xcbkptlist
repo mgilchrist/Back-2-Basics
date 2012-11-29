@@ -8,11 +8,11 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "Back-2-Basics/Optimization/Online/Genetic.h"
-         timestampString = "375783357.680359"
+         timestampString = "375860568.507097"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "147"
-         endingLineNumber = "147"
+         startingLineNumber = "154"
+         endingLineNumber = "154"
          landmarkName = "doGeneration()"
          landmarkType = "7">
       </FileBreakpoint>
@@ -21,11 +21,11 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "Back-2-Basics/Optimization/Online/Genetic.h"
-         timestampString = "375698685.569976"
+         timestampString = "375851514.305251"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "80"
-         endingLineNumber = "80"
+         startingLineNumber = "87"
+         endingLineNumber = "87"
          landmarkName = "calcFitnessEach(LLRB_TreeNode&lt;HeuristicType *,uint64_t&gt; *current, void *world)"
          landmarkType = "7">
       </FileBreakpoint>
@@ -34,11 +34,11 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "Back-2-Basics/Optimization/Online/Genetic.h"
-         timestampString = "375698685.569976"
+         timestampString = "375851514.305251"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "51"
-         endingLineNumber = "51"
+         startingLineNumber = "58"
+         endingLineNumber = "58"
          landmarkName = "reckoningEach(LLRB_TreeNode&lt;HeuristicType *,uint64_t&gt; *current, void *world)"
          landmarkType = "7">
       </FileBreakpoint>
@@ -73,11 +73,11 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "Back-2-Basics/Optimization/Online/Genetic.h"
-         timestampString = "375783357.680359"
+         timestampString = "375860568.507097"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "158"
-         endingLineNumber = "158"
+         startingLineNumber = "165"
+         endingLineNumber = "165"
          landmarkName = "doReckoning()"
          landmarkType = "7">
       </FileBreakpoint>
@@ -92,6 +92,32 @@
          startingLineNumber = "68"
          endingLineNumber = "68"
          landmarkName = "calcConsensus(LLRB_TreeNode&lt;Trust&lt;double&gt; *,uint64_t&gt; *current, void *reserved)"
+         landmarkType = "7">
+      </FileBreakpoint>
+      <FileBreakpoint
+         shouldBeEnabled = "No"
+         ignoreCount = "0"
+         continueAfterRunningActions = "No"
+         filePath = "Back-2-Basics/Heuristic/NeuralNetwork.cpp"
+         timestampString = "375856866.410886"
+         startingColumnNumber = "9223372036854775807"
+         endingColumnNumber = "9223372036854775807"
+         startingLineNumber = "224"
+         endingLineNumber = "224"
+         landmarkName = "NeuralNetwork::optimalPrune()"
+         landmarkType = "5">
+      </FileBreakpoint>
+      <FileBreakpoint
+         shouldBeEnabled = "No"
+         ignoreCount = "0"
+         continueAfterRunningActions = "No"
+         filePath = "Back-2-Basics/Optimization/Online/Genetic.h"
+         timestampString = "375860568.507097"
+         startingColumnNumber = "9223372036854775807"
+         endingColumnNumber = "9223372036854775807"
+         startingLineNumber = "136"
+         endingLineNumber = "136"
+         landmarkName = "doGeneration()"
          landmarkType = "7">
       </FileBreakpoint>
    </FileBreakpoints>

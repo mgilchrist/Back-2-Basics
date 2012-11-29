@@ -30,7 +30,7 @@ namespace Optimization {
   
   static uint64_t currentTime = -1;
   static const double glbToughness = 0.0;
-  static const double glbAreaCapacity = 1.414;
+  static const double glbAreaCapacity = 12.0;
   
   template <class HeuristicType, class DataType>
   class Genetic : public Stoichastic<HeuristicType,DataType> {
@@ -46,7 +46,14 @@ namespace Optimization {
       
       for (uint64_t ix = 0; ix < harmony->size(); ix++) {
         Trust<double> *localComp = cia->search(cia->treeRoot, (uint64_t)harmony->at(ix)->reality);
-        double toughness = localComp->prediction->confidence;
+        double toughness = localComp->prediction->confidence * localComp->prediction->predictions.size();
+        toughness -= glbAreaCapacity;
+        
+        if (toughness > 0.0) {
+          toughness /= localComp->prediction->predictions.size();
+        } else {
+          toughness = 0.0;
+        }
         
         candidate->persistance -= (toughness+glbToughness);//+candidate->energy);
       }
@@ -120,19 +127,19 @@ namespace Optimization {
       HeuristicType *dad = mates->at(rand() % mates->size());
       HeuristicType *mom = mates->at(rand() % mates->size());
       
-      double repoRate = 1.0 / (1.0 + dad->energy + mom->energy);
+      double repoRate = 1.0 / (20.0 + dad->energy + mom->energy);
+      double rVal = rand() / (double)RAND_MAX;
       
-      if ((((double)rand() / (double)RAND_MAX) < this->accuracy_rate) ||
-          (((double)rand() / (double)RAND_MAX) < repoRate)){
-        continue;
+      repoRate *= 1.0 - this->accuracy_rate;
+      
+      if (rVal < repoRate) {
+        HeuristicType *child = reproduce(dad, mom);
+        
+        dad->optimalPrune();
+        mom->optimalPrune();
+        
+        this->candidates.insert(child, (uint64_t)child);
       }
-      
-      HeuristicType *child = reproduce(dad, mom);
-      
-      //dad->optimalPrune();
-      //mom->optimalPrune();
-      
-      this->candidates.insert(child, (uint64_t)child);
       
     }
     
@@ -273,7 +280,7 @@ namespace Optimization {
       this->active.insert(tmpTrust, (uint64_t)tmpTrust->actual);
     }
     tmpHeuristic = new HeuristicType(childInputs,childOutputs,childExpectations,childHiddenInfo);
-    tmpHeuristic->persistance = this->accuracy_rate * (dad->persistance + mom->persistance) / 2;
+    tmpHeuristic->persistance = (dad->persistance + mom->persistance) / 2;
     
     childInputs->resize(0);
     childOutputs->resize(0);

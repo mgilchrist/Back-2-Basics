@@ -30,7 +30,7 @@ using namespace Collection;
 
 namespace Optimization {
   
-  double glbEnergyCnst = 0.01;
+  double glbEnergyCnst = 1.0 / 1024.0;
   
   /*  typedef struct TotalCompetition {
    double competition = 0.0;
@@ -282,6 +282,8 @@ namespace Optimization {
     }
     
     tmp->energy *= (double)outputEnv->size();
+    
+    tmp->persistance = outputEnv->size() * 8.0;
     
     inputEnv->resize(0);
     outputEnv->resize(0);

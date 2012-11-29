@@ -49,7 +49,7 @@ namespace NeuralNetwork
     PULSE
   };
   
-  const double irrelevant = 10e-14;
+  const double irrelevant = 1.0 / double(0x10000);
   static unsigned long currentIteration = -1;
   
   class Synapse : public Pipe<Neuron,Synapse> {
@@ -89,20 +89,27 @@ namespace NeuralNetwork
     
     static uint64_t optimalPruneEach(LLRB_TreeNode<Synapse *, uint64_t> *current, void *neuron) {
       
-      if ((current->data->influence < irrelevant) &&
-          (current->data->influence > -irrelevant)) {
+      double tVal = sqrt(pow(current->data->lastCorrection,2) + pow(current->data->lastCorrection,2));
+      
+      if (tVal < irrelevant) {
         ((Neuron *)neuron)->removeEdge(current->data);
       }
+      
+      current->data->getForward()->forwardEdges.modifyAll(Neuron::optimalPruneEach, current->data->getForward());
       
       return current->key;
     }
     
     static uint64_t probablisticPruneEach(LLRB_TreeNode<Synapse *, uint64_t> *current, void *neuron) {
       
-      if ((current->data->influence < irrelevant) &&
-          (current->data->influence > -irrelevant)) {
+      double tVal = sqrt(pow(current->data->lastCorrection,2) + pow(current->data->lastCorrection,2));
+      double cutoff = pow(rand() / RAND_MAX, 2);
+      
+      if (tVal < cutoff)  {
         ((Neuron *)neuron)->removeEdge(current->data);
       }
+      
+      current->data->getForward()->forwardEdges.modifyAll(Neuron::probablisticPruneEach, current->data->getForward());
       
       return current->key;
     }

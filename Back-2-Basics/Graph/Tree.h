@@ -35,7 +35,7 @@ namespace Graph {
     TreeNodeType *rightNode = NULL;
     
   public:
-    DataType data = NULL;
+    DataType data;
     KeyType key;
     
     static inline void setLeft(TreeNodeType *node, TreeNodeType *child) {
@@ -95,8 +95,8 @@ namespace Graph {
     uint64_t size() {return numNodes;}
     
     virtual void insert(DataType, KeyType) =0;
-    virtual void removeMax(DataType) =0;
-    virtual void removeMin(DataType) =0;
+    virtual void removeMax() =0;
+    virtual void removeMin() =0;
     virtual void remove(DataType, KeyType) =0;
     
   };
