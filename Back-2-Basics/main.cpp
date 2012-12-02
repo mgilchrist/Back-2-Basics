@@ -36,8 +36,8 @@ using namespace Graph;
 #include "Genetic.h"
 #include "Metaheuristic.h"
 
-const uint64_t glbInputSize = 0x10;
-const uint64_t glbOutputSize = 0x10;
+const uint64_t glbInputSize = 0x40;
+const uint64_t glbOutputSize = 0x40;
 const uint64_t glbIterations = 0x100;
 const uint64_t glbTestSize = 0x100000;
 const uint64_t glbSlowTestSize = 0x10000;
@@ -207,24 +207,26 @@ int testStack() {
 
 int testLLRBTree() {
   LLRB_Tree<uint64_t,uint64_t> *rbTree;
-  ArrayList<uint64_t,uint64_t> *arrayList;
+  vector<uint64_t> *arrayList;
   LLRB_TreeNode<uint64_t,uint64_t> *current;
   uint64_t tmp;
   
   cout << "\nTesting LLRB_Tree\n";
   
   rbTree = new LLRB_Tree<u_int64_t, uint64_t>();
-  arrayList = new ArrayList<uint64_t,uint64_t>(glbTestSize);
+  arrayList = new vector<uint64_t>();
   
   for (uint64_t ix = 0; ix < glbTestSize; ix++) {
+    uint64_t value;
     do {
-      uint64_t value = random();
+      value = random();
       tmp = rbTree->size();
       rbTree->insert(value, value);
     } while (rbTree->size() == tmp);
     
+    arrayList->push_back(value);
 #if 0
-    current = rbTree->min(rbTree->getTreeRoot());
+    current = rbTree->min(rbTree->treeRoot);
     tmp = current->key;
     
     for (uint64_t ix = 0; ix < rbTree->size()-1; ix++) {
@@ -243,6 +245,28 @@ int testLLRBTree() {
     }
     
 #endif
+  }
+  
+  current = rbTree->min(rbTree->treeRoot);
+  tmp = current->key;
+  
+  for (uint64_t ix = 0; ix < rbTree->size()-1; ix++) {
+    current = rbTree->next(current);
+    
+    if (current->key < tmp) {
+      cout << "Index/Key:";
+      cout << ix;
+      cout << "/";
+      cout << tmp;
+      cout << " not sorted!\n";
+    }
+    
+    tmp = current->key;
+    
+  }
+  
+  for (uint64_t ix = 0; ix < arrayList->size(); ix+=log2(arrayList->size())) {
+    rbTree->remove(arrayList->at(ix), arrayList->at(ix));
   }
   
   current = rbTree->min(rbTree->treeRoot);
@@ -646,19 +670,19 @@ int testGenetic() {
   geneticExp->initInternals();
   
   
-  for (uint64_t jx = 0; jx < thisInput->size(); jx++) {
-    *(thisInput->at(jx)) = (random() % precision) / (precision * 1.0);
-  }
-  
   for (int ix = 0; ix < glbOutputSize; ix++) {
-    *(thisOutput->at(ix)) = *(thisInput->at(ix));
+    *(thisOutput->at(ix)) = (random() % precision) / (precision * 1.0);
   }
   
   do {
-    /*for (uint64_t jx = 0; jx < thisInput->size(); jx++) {
-     *(thisInput->at(jx)) = (rand() % 256) / 256.0;
-     }*/
+    for (uint64_t jx = 0; jx < thisInput->size(); jx++) {
+     *(thisInput->at(jx)) = (random() % precision) / (precision * 1.0);
+    }
     
+    *(thisOutput->at(glbOutputSize-1)) = *(thisInput->at(0));
+    for (int ix = 1; ix < glbOutputSize; ix++) {
+      *(thisOutput->at(ix-1)) = *(thisInput->at(ix));
+    }
     
     geneticExp->optimizeAnwser();
     
@@ -679,11 +703,6 @@ int testGenetic() {
         cout << "},";
       }
       cout << "\n\n";
-    }
-    
-    *(thisOutput->at(glbOutputSize-1)) = *(thisInput->at(0));
-    for (int ix = 1; ix < glbOutputSize; ix++) {
-      *(thisOutput->at(ix-1)) = *(thisInput->at(ix));
     }
     
     

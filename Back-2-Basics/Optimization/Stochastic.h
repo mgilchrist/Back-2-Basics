@@ -30,7 +30,8 @@ using namespace Collection;
 
 namespace Optimization {
   
-  double glbEnergyCnst = 1.0 / 1024.0;
+  static double glbEnergyCnst = 1.0 / 1024.0;
+  static double glbAreaCapacity = 1.0;
   
   /*  typedef struct TotalCompetition {
    double competition = 0.0;
@@ -127,14 +128,14 @@ namespace Optimization {
     
     while (curr != NULL) {
       leftDepth++;
-      curr = curr->leftOf(curr);
+      curr = randoms.leftOf(curr);
     }
     
     curr = tree->treeRoot;
     
     while (curr != NULL) {
       rightDepth++;
-      curr = curr->rightOf(curr);
+      curr = randoms.rightOf(curr);
     }
     
     pivot = (double)leftDepth / ((double)(leftDepth+rightDepth));
@@ -154,9 +155,9 @@ namespace Optimization {
       while (curr != NULL) {
         stack.push_back(curr);
         if ((rand() / (double)RAND_MAX) < pivot) {
-          curr = curr->leftOf(curr);
+          curr = randoms.leftOf(curr);
         } else {
-          curr = curr->rightOf(curr);
+          curr = randoms.rightOf(curr);
         }
       }
       
@@ -183,14 +184,14 @@ namespace Optimization {
     
     while (curr != NULL) {
       leftDepth++;
-      curr = curr->leftOf(curr);
+      curr = randoms.leftOf(curr);
     }
     
     curr = tree->treeRoot;
     
     while (curr != NULL) {
       rightDepth++;
-      curr = curr->rightOf(curr);
+      curr = randoms.rightOf(curr);
     }
     
     pivot = (double)leftDepth / ((double)(leftDepth+rightDepth));
@@ -211,9 +212,9 @@ namespace Optimization {
       while (curr != NULL) {
         stack.push_back(curr);
         if ((rand() / (double)RAND_MAX) < pivot) {
-          curr = curr->leftOf(curr);
+          curr = randoms.leftOf(curr);
         } else {
-          curr = curr->rightOf(curr);
+          curr = randoms.rightOf(curr);
         }
       }
       
@@ -231,20 +232,15 @@ namespace Optimization {
     vector<DataType *> *inputEnv, *outputEnv, *expectation;
     vector<Trust<DataType> *> *trusts;
     vector<uint64_t> *hiddenInfo = new vector<uint64_t>();
-    double *spawnExpect;
     HeuristicType *tmp;
     
     uint64_t tmpSize;
     
     tmpSize = rand() % (uint64_t)log2(this->question.size());
-    inputEnv = this->question.select(NULL,NULL);
-    //pickRandoms(&this->question, NULL, tmpSize+1);
+    inputEnv = pickRandoms(&this->question, NULL, tmpSize+1);
     
     tmpSize = rand() % (uint64_t)log2(this->question.size());
-    trusts = this->answer.select(NULL,NULL);
-    //pickRandomTrusts(&this->answer, NULL, tmpSize+1);
-    
-    spawnExpect = new double[trusts->size()];
+    trusts = pickRandomTrusts(&this->answer, NULL, tmpSize+1);
     
     outputEnv = new vector<DataType *>();
     expectation = new vector<DataType *>();
@@ -253,17 +249,17 @@ namespace Optimization {
     expectation->reserve(trusts->size());
     
     for (uint64_t ix = 0; ix < trusts->size(); ix++) {
+      double *spawnExpect = new double(0.0);
       outputEnv->push_back(trusts->at(ix)->actual);
-      expectation->push_back(&spawnExpect[ix]);
+      expectation->push_back(spawnExpect);
       
       if (trusts->at(ix)->prediction == NULL) {
         trusts->at(ix)->prediction = new Prediction<DataType>();
       }
-      spawnExpect[ix] = 0.0;
-      trusts->at(ix)->prediction->predictions.insert(&spawnExpect[ix],
-                                                     (uint64_t)&spawnExpect[ix]);
+      trusts->at(ix)->prediction->predictions.insert(spawnExpect,
+                                                     (uint64_t)spawnExpect);
       
-      active.insert(trusts->at(ix), (uint64_t)trusts->at(ix)->actual);
+      active.insert(trusts->at(ix), (uint64_t)(trusts->at(ix)->actual));
     }
     
     hiddenInfo->push_back(rand() % (inputEnv->size() + outputEnv->size()));

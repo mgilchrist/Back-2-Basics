@@ -30,7 +30,6 @@ namespace Optimization {
   
   static uint64_t currentTime = -1;
   static const double glbToughness = 0.0;
-  static const double glbAreaCapacity = 12.0;
   
   template <class HeuristicType, class DataType>
   class Genetic : public Stoichastic<HeuristicType,DataType> {
@@ -45,7 +44,7 @@ namespace Optimization {
       bool ret = false;
       
       for (uint64_t ix = 0; ix < harmony->size(); ix++) {
-        Trust<double> *localComp = cia->search(cia->treeRoot, (uint64_t)harmony->at(ix)->reality);
+        Trust<double> *localComp = cia->search((uint64_t)harmony->at(ix)->reality);
         double toughness = localComp->prediction->confidence * localComp->prediction->predictions.size();
         toughness -= glbAreaCapacity;
         
@@ -59,6 +58,16 @@ namespace Optimization {
       }
       
       if (candidate->persistance < 0.0) {
+        for (uint64_t ix = 0; ix < harmony->size(); ix++) {
+          Trust<double> *localComp = cia->search((uint64_t)harmony->at(ix)->reality);
+          localComp->prediction->predictions.remove(harmony->at(ix)->expectation, (uint64_t)harmony->at(ix)->expectation);
+          
+          if (!localComp->prediction->predictions.size()) {
+            cia->remove(localComp, (uint64_t)harmony->at(ix)->reality);
+            delete localComp->prediction;
+          }
+        }
+        
         ret = true;
       }
       
@@ -127,7 +136,7 @@ namespace Optimization {
       HeuristicType *dad = mates->at(rand() % mates->size());
       HeuristicType *mom = mates->at(rand() % mates->size());
       
-      double repoRate = 1.0 / (20.0 + dad->energy + mom->energy);
+      double repoRate = 1.0 / (100.0 + dad->energy + mom->energy);
       double rVal = rand() / (double)RAND_MAX;
       
       repoRate *= 1.0 - this->accuracy_rate;
@@ -140,16 +149,11 @@ namespace Optimization {
         
         this->candidates.insert(child, (uint64_t)child);
       }
-      
     }
     
-    //for (uint64_t ix = 0; ix < log2(this->question.size()); ix++) {
-    //  this->spawn();
-    //}
-    
-    //while (this->candidates.size() < log2(this->question.size())) {
-    //  this->spawn();
-    //}
+    if ((rand() / (double)RAND_MAX) < (1.0/100.0)) {
+      this->spawn();
+    }
     
     doMeditation();
   }
@@ -218,7 +222,6 @@ namespace Optimization {
     vector<uint64_t> *childHiddenInfo;
     HeuristicType *tmpHeuristic;
     uint64_t tmpNum;
-    double *expectations;
     
     childInputs = crossover(dad->getInputs(), mom->getInputs());
     
@@ -246,7 +249,7 @@ namespace Optimization {
     childTrusts = new vector<Trust<DataType> *>();
     
     for (uint64_t ix = 0; ix < childOutputs->size(); ix++) {
-      Trust<DataType> *tmpTrust = this->answer.search(this->answer.treeRoot, (uint64_t)childOutputs->at(ix));
+      Trust<DataType> *tmpTrust = this->answer.search((uint64_t)childOutputs->at(ix));
       childTrusts->push_back(tmpTrust);
     }
     
@@ -263,20 +266,19 @@ namespace Optimization {
       childHiddenInfo->push_back(random()%(childInputs->size()+childTrusts->size()));
     }
     
-    expectations = new double[childTrusts->size()];
     childExpectations->reserve(childTrusts->size());
     
     childOutputs->resize(0);
     
     for (uint64_t ix = 0; ix < childTrusts->size(); ix++) {
+      double *expectation = new double(0.0);
       Trust<DataType> *tmpTrust = childTrusts->at(ix);
       childOutputs->push_back(tmpTrust->actual);
-      expectations[ix] = 0.0;
-      childExpectations->push_back(&expectations[ix]);
+      childExpectations->push_back(expectation);
       if (tmpTrust->prediction == NULL) {
         tmpTrust->prediction = new Prediction<DataType>();
       }
-      tmpTrust->prediction->predictions.insert(&expectations[ix], (uint64_t)&expectations[ix]);
+      tmpTrust->prediction->predictions.insert(expectation, (uint64_t)expectation);
       this->active.insert(tmpTrust, (uint64_t)tmpTrust->actual);
     }
     tmpHeuristic = new HeuristicType(childInputs,childOutputs,childExpectations,childHiddenInfo);
