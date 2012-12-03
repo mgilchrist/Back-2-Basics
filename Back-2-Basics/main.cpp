@@ -250,6 +250,9 @@ int testLLRBTree() {
   current = rbTree->min(rbTree->treeRoot);
   tmp = current->key;
   
+  cout << rbTree->size();
+  cout << ":size\n";
+  
   for (uint64_t ix = 0; ix < rbTree->size()-1; ix++) {
     current = rbTree->next(current);
     
@@ -266,11 +269,39 @@ int testLLRBTree() {
   }
   
   for (uint64_t ix = 0; ix < arrayList->size(); ix+=log2(arrayList->size())) {
-    rbTree->remove(arrayList->at(ix), arrayList->at(ix));
+    
+    uint64_t curr = arrayList->at(ix);
+    
+    rbTree->remove(curr,curr);
+#if 0
+    current = rbTree->min(rbTree->treeRoot);
+    tmp = current->key;
+    
+    for (uint64_t jx = 0; jx < rbTree->size()-1; jx++) {
+      current = rbTree->next(current);
+      
+      if (current->key < tmp) {
+        cout << "Removal/Index/Key:";
+        cout << ix;
+        cout << "/";
+        cout << jx;
+        cout << "/";
+        cout << tmp;
+        cout << " not sorted!\n";
+      }
+      
+      tmp = current->key;
+      
+    }
+    
+#endif
   }
   
   current = rbTree->min(rbTree->treeRoot);
   tmp = current->key;
+  
+  cout << rbTree->size();
+  cout << ":size\n";
   
   for (uint64_t ix = 0; ix < rbTree->size()-1; ix++) {
     current = rbTree->next(current);

@@ -77,7 +77,7 @@ namespace Graph {
     
   public:
     Tree() {
-      nullNode = new TreeNodeType(NULL,NULL);
+      nullNode = new TreeNodeType(NULL,-1);
       treeRoot = nullNode;
       
       nullNode->leftNode = nullNode;
@@ -136,7 +136,7 @@ namespace Graph {
     
     ret = search(treeRoot, key);
     
-    if (ret == nullNode) {
+    if (ret == NULL) {
       return NULL;
     }
     
@@ -155,7 +155,7 @@ namespace Graph {
         node = rightOf(node);
       }
     }
-    return node;
+    return NULL;
   }
   
   template <class TreeNodeType, class DataType, class KeyType>
@@ -175,11 +175,11 @@ namespace Graph {
     tmp = treeRoot;
     
     while (tmp != nullNode) {
-      if (leftOf(tmp)->key == tNode->key) {
+      if ((leftOf(tmp)->key == tNode->key) && (leftOf(tmp) != nullNode)) {
         return tmp;
       }
       
-      if (rightOf(tmp)->key == tNode->key) {
+      if ((rightOf(tmp)->key == tNode->key) && (rightOf(tmp) != nullNode)) {
         break;
       }
       
@@ -190,6 +190,10 @@ namespace Graph {
         tmp = rightOf(tmp);
       }
       
+    }
+    
+    if (lastGT == nullNode) {
+      return NULL;
     }
     
     return lastGT;
@@ -220,7 +224,7 @@ namespace Graph {
       L->push_back(current);
     }
     
-    DEBUG_PRIINT(0,"\nSelect\n");
+    //DEBUG_PRIINT(0,"\nSelect\n");
     
     
     while (!L->empty()) {
@@ -249,7 +253,7 @@ namespace Graph {
         }
       }
       
-      DEBUG_PRIINT(0,"\n");
+      //DEBUG_PRIINT(0,"\n");
       
       L = nextL;
       
