@@ -126,14 +126,14 @@ namespace Optimization {
     
     curr = tree->treeRoot;
     
-    while (curr != NULL) {
+    while (curr != randoms.leftOf(curr)) {
       leftDepth++;
       curr = randoms.leftOf(curr);
     }
     
     curr = tree->treeRoot;
     
-    while (curr != NULL) {
+    while (curr != randoms.leftOf(curr)) {
       rightDepth++;
       curr = randoms.rightOf(curr);
     }
@@ -152,7 +152,7 @@ namespace Optimization {
     for (uint64_t ix = 0; ix < requests; ix++) {
       curr = tree->treeRoot;
       
-      while (curr != NULL) {
+      while (curr != randoms.leftOf(curr)) {
         stack.push_back(curr);
         if ((rand() / (double)RAND_MAX) < pivot) {
           curr = randoms.leftOf(curr);
@@ -182,14 +182,14 @@ namespace Optimization {
     
     curr = tree->treeRoot;
     
-    while (curr != NULL) {
+    while (curr != randoms.leftOf(curr)) {
       leftDepth++;
       curr = randoms.leftOf(curr);
     }
     
     curr = tree->treeRoot;
     
-    while (curr != NULL) {
+    while (curr != randoms.leftOf(curr)) {
       rightDepth++;
       curr = randoms.rightOf(curr);
     }
@@ -209,7 +209,7 @@ namespace Optimization {
     for (uint64_t ix = 0; ix < requests; ix++) {
       curr = tree->treeRoot;
       
-      while (curr != NULL) {
+      while (curr != randoms.leftOf(curr)) {
         stack.push_back(curr);
         if ((rand() / (double)RAND_MAX) < pivot) {
           curr = randoms.leftOf(curr);

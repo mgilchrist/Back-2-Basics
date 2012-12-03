@@ -36,10 +36,10 @@ using namespace Graph;
 #include "Genetic.h"
 #include "Metaheuristic.h"
 
-const uint64_t glbInputSize = 0x40;
-const uint64_t glbOutputSize = 0x40;
+const uint64_t glbInputSize = 0x10;
+const uint64_t glbOutputSize = 0x10;
 const uint64_t glbIterations = 0x100;
-const uint64_t glbTestSize = 0x100000;
+const uint64_t glbTestSize = 0x10000;
 const uint64_t glbSlowTestSize = 0x10000;
 
 
@@ -272,7 +272,13 @@ int testLLRBTree() {
     
     uint64_t curr = arrayList->at(ix);
     
+    tmp = rbTree->size();
+    
     rbTree->remove(curr,curr);
+    
+    if (tmp == rbTree->size()) {
+      cout << "Nothing Removed!\n";
+    }
 #if 0
     current = rbTree->min(rbTree->treeRoot);
     tmp = current->key;
