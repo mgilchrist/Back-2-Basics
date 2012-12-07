@@ -26,20 +26,33 @@
 #include "Stack.h"
 #include <vector>
 
-
+template <class LogicType>
 struct Harmony {
-  void *logicElement = NULL;
+  LogicType *logicElement = NULL;
   double *reality = NULL;
   double *expectation = NULL;
 };
 
-template <class HeuristicType, class DataType>
+struct Connection {
+  uint8_t inputLayer;
+  uint8_t layer;
+  uint16_t inputPosition;
+  uint16_t position;
+};
+
+union Info {
+  Connection c;
+  uint64_t k;
+};
+
+template <class HeuristicType, class LogicType, class DataType>
 class Heuristic {
   
 public:
   
   double persistance = 0.0;
   double energy = 0.0;
+  uint64_t experiencedEpochs = 0;
   
 public:
   
@@ -47,30 +60,12 @@ public:
     
   }
   
-  Heuristic(std::vector<double *> *input,
-            std::vector<double *> *output,
-            std::vector<double *> *expectation,
-            std::vector<uint64_t> *hiddenInfo,
-            double persistance) {
-    HeuristicType(input, output, expectation, hiddenInfo);
-    this->persistance = persistance;
-    
-    /* Estimate energy use */
-    energy = (double)input->size();
-    
-    for (uint64_t ix = 0; ix < hiddenInfo->size(); ix++) {
-      energy *= (double)hiddenInfo->at(ix);
-    }
-    
-    energy *= (double)output->size();
-  }
-  
   virtual void calcExpectation(uint64_t) =0;
   virtual void doCorrection() =0;
   
   virtual vector<DataType *> *getInputs() =0;
-  virtual vector<uint64_t> *getHiddenInfo() =0;
-  virtual vector<Harmony *> *getHarmony() =0;
+  virtual vector<Info *> *getHiddenInfo() =0;
+  virtual vector<Harmony<LogicType> *> *getHarmony() =0;
   
   virtual void removeOutput(DataType *) =0;
   

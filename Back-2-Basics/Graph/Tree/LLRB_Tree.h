@@ -275,10 +275,7 @@ namespace Graph {
     
     if (TreeType::leftOf(node) == this->nullNode) {
       this->numNodes--;
-      
-      if (TreeType::rightOf(node) != this->nullNode) {
-        cout << "Error!";
-      }
+
       delete node;
       return this->nullNode;
     }
@@ -323,9 +320,7 @@ namespace Graph {
       if ((key == node->key) && (TreeType::rightOf(node) == this->nullNode)) {
         if (uniqueKeys || (victimData == node->data)) {
           this->numNodes--;
-          if (TreeType::leftOf(node) != this->nullNode) {
-            cout << "Error!";
-          }
+
           delete node;
           return this->nullNode;
         } else {

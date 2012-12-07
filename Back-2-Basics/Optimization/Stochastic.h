@@ -53,17 +53,27 @@ namespace Optimization {
     static uint64_t calcConsensus(LLRB_TreeNode<Trust<double> *,uint64_t> *current, void *reserved) {
       
       vector<double *> *expectations = current->data->prediction->predictions.select(NULL, NULL);
-      double sum = 0.0, average, diff = 0.0;
+      double sum = 0.0, average = 0.0, diff = 0.0;
+      uint64_t expectationCnt = 0;
       
       for (uint64_t ix = 0; ix < expectations->size(); ix++) {
-        sum += *(expectations->at(ix));
+        double expect = *(expectations->at(ix));
+        if (expect > 2.328306e-10) {
+          sum += expect;
+          expectationCnt++;
+        }
       }
       
-      average = max(sum / (double)expectations->size(), 2.328306e-10);
+      if (expectationCnt) {
+        average = max(sum / (double)expectationCnt, 2.328306e-10);
+      }
       
       for (uint64_t ix = 0; ix < expectations->size(); ix++) {
-        double tmp = *(expectations->at(ix))-average;
-        diff += tmp * tmp;
+        double expect = *(expectations->at(ix));
+        if (expect > 2.328306e-10) {
+          double tmp = expect-average;
+          diff += tmp * tmp;
+        }
       }
       
       current->data->prediction->expectation = average;
@@ -71,10 +81,10 @@ namespace Optimization {
       if (expectations->size() < 2) {
         current->data->prediction->confidence = 0.0;
       } else {
-        current->data->prediction->confidence = (1.0) / (1.0 + ((sqrt(diff)) / sqrt(double(expectations->size()-1))));
+        current->data->prediction->confidence = (1.0) / (1.0 + ((sqrt(diff)) / sqrt(double(expectationCnt-1))));
         //current->data->prediction->confidence = (average * 0.05) / ((sqrt(diff)) / sqrt(double(expectations->size()-1)));
       }
-        
+      
       return current->key;
     }
     
@@ -105,13 +115,10 @@ namespace Optimization {
   void Stoichastic<HeuristicType,DataType>::doEpoch() {
     iteration++;
     
-    
     this->candidates.modifyAll(doEpochEach, &iteration);
     active.modifyAll(calcConsensus, NULL);
     
     doGeneration();
-    
-    
   }
   
   template <class HeuristicType, class DataType>
@@ -231,16 +238,19 @@ namespace Optimization {
   HeuristicType *Stoichastic<HeuristicType,DataType>::spawn() {
     vector<DataType *> *inputEnv, *outputEnv, *expectation;
     vector<Trust<DataType> *> *trusts;
-    vector<uint64_t> *hiddenInfo = new vector<uint64_t>();
+    LLRB_Tree<Info *, uint64_t> infoTree;
+    vector<Info *> *hiddenInfo = new vector<Info *>();
     HeuristicType *tmp;
+    vector<uint64_t> randIn, randOut;
+    uint64_t layer, hiddenWidth, tmpNum;
     
-    uint64_t tmpSize;
+    //uint64_t tmpSize;
     
-    tmpSize = rand() % (uint64_t)log2(this->question.size());
-    inputEnv = pickRandoms(&this->question, NULL, tmpSize+1);
+    //tmpSize = rand() % (uint64_t)log2(this->question.size());
+    inputEnv = this->question.select(NULL,NULL); //pickRandoms(&this->question, NULL, tmpSize);
     
-    tmpSize = rand() % (uint64_t)log2(this->question.size());
-    trusts = pickRandomTrusts(&this->answer, NULL, tmpSize+1);
+    //tmpSize = rand() % (uint64_t)log2(this->answer.size());
+    trusts = this->answer.select(NULL,NULL); //pickRandomTrusts(&this->answer, NULL, 2);
     
     outputEnv = new vector<DataType *>();
     expectation = new vector<DataType *>();
@@ -262,28 +272,70 @@ namespace Optimization {
       active.insert(trusts->at(ix), (uint64_t)(trusts->at(ix)->actual));
     }
     
-    hiddenInfo->push_back(rand() % (inputEnv->size() + outputEnv->size()));
+    for (uint64_t ix = 0; ix < inputEnv->size(); ix++) {
+      randIn.push_back(ix);
+    }
+    
+    for (uint64_t ix = 0; ix < outputEnv->size(); ix++) {
+      randOut.push_back(ix);
+    }
+    
+    hiddenWidth = max(inputEnv->size(), outputEnv->size());
+    
+    /*
+    for (uint64_t ix = 0; ix < randIn.size(); ix++) {
+      uint64_t tmp = randIn[ix];
+      uint64_t index = random() % randIn.size();
+      randIn[ix] = randIn[index];
+      randIn[index] = tmp;
+    }
+     */
+    
+#if 0
+    for (uint64_t ix = 0; ix < randIn.size(); ix++) {
+      for (uint64_t jx = 0; jx < randOut.size(); jx++) {
+      Info *info = new Info;
+      info->c.inputLayer = 0;
+      info->c.inputPosition = ix;
+      info->c.layer = 7;
+      info->c.position = jx;
+      hiddenInfo->push_back(info);
+      }
+    }
+#endif
+    
+    
+    for (uint64_t ix = 0; ix < randOut.size(); ix++) {
+      layer = 7;
+      tmpNum = ix;
+      
+      while (layer != 0) {
+        Info *newConn = new Info;
+        newConn->c.layer = layer;
+        newConn->c.position = tmpNum;
+        layer -= (rand() % layer) + 1;
+        newConn->c.inputLayer = layer;
+        tmpNum = random() % hiddenWidth;
+        newConn->c.inputPosition = tmpNum;
+        
+        infoTree.insert(newConn, newConn->k);
+      }
+    }
+    
+    hiddenInfo = infoTree.select(NULL, NULL);
+     
     
     tmp = new HeuristicType(inputEnv, outputEnv, expectation, hiddenInfo);
     
     this->candidates.insert(tmp, (uint64_t)tmp);
     
     /* Estimate energy use */
-    tmp->energy = glbEnergyCnst;
-    
-    tmp->energy *= (double)inputEnv->size();
-    
-    for (uint64_t ix = 0; ix < hiddenInfo->size(); ix++) {
-      tmp->energy *= (double)hiddenInfo->at(ix);
-    }
-    
-    tmp->energy *= (double)outputEnv->size();
-    
-    tmp->persistance = outputEnv->size() * 8.0;
+    tmp->energy *= (double)hiddenInfo->size() * glbEnergyCnst;
     
     inputEnv->resize(0);
     outputEnv->resize(0);
     expectation->resize(0);
+    hiddenInfo->resize(0);
     
     delete inputEnv;
     delete outputEnv;
@@ -295,11 +347,11 @@ namespace Optimization {
   
   template <class HeuristicType, class DataType>
   void Stoichastic<HeuristicType,DataType>::initInternals() {
-    uint64_t firstGenSize = log2(this->question.size());
+    //uint64_t firstGenSize = this->question.size();
     
-    for (uint64_t ix = 0; ix < firstGenSize; ix++) {
+    //for (uint64_t ix = 0; ix < firstGenSize; ix++) {
       spawn();
-    }
+    //}
     
   }
   

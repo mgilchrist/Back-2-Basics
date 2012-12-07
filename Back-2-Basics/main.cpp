@@ -38,7 +38,7 @@ using namespace Graph;
 
 const uint64_t glbInputSize = 0x10;
 const uint64_t glbOutputSize = 0x10;
-const uint64_t glbIterations = 0x100;
+const uint64_t glbIterations = 0x10000;
 const uint64_t glbTestSize = 0x10000;
 const uint64_t glbSlowTestSize = 0x10000;
 
@@ -433,13 +433,30 @@ int testNeuralNetwork() {
   std::vector<double *> *thisInput, *thisOutput, *thisExpect;
   double errorRate = 0.0;
   double thisError;
-  std::vector<uint64_t> *layers = new std::vector<uint64_t>();
+  std::vector<Info *> *hiddenInfo = new std::vector<Info *>();
   uint64_t precision = (1 << 16);
   
-  layers->resize(0);
   
-  for (uint64_t ix = 0; ix < 1; ix++) {
-    layers->push_back(log2(glbOutputSize));
+  for (uint64_t ix = 0; ix < glbInputSize; ix++) {
+    for (uint64_t jx = 0; jx < log2(glbOutputSize); jx++) {
+      Info *info = new Info;
+      info->c.inputLayer = 0;
+      info->c.inputPosition = ix;
+      info->c.layer = 0;
+      info->c.position = jx;
+      hiddenInfo->push_back(info);
+    }
+  }
+  
+  for (uint64_t ix = 0; ix < log2(glbOutputSize); ix++) {
+    for (uint64_t jx = 0; jx < glbOutputSize; jx++) {
+      Info *info = new Info;
+      info->c.inputLayer = 0;
+      info->c.inputPosition = ix;
+      info->c.layer = 0;
+      info->c.position = jx;
+      hiddenInfo->push_back(info);
+    }
   }
   
   cout << "\nTesting NeuralNetwork\n";
@@ -462,7 +479,7 @@ int testNeuralNetwork() {
     thisExpect->at(jx) = new double();
   }
   
-  NNetwork = new NeuralNetwork::NeuralNetwork(thisInput, thisOutput, thisExpect, layers);
+  NNetwork = new NeuralNetwork::NeuralNetwork(thisInput, thisOutput, thisExpect, hiddenInfo);
   
   for (uint64_t jx = 0; jx < thisInput->size(); jx++) {
     *(thisInput->at(jx)) = (random() % precision) / (precision * 1.0);
@@ -670,7 +687,7 @@ int testNavigation() {
 }
 
 int testGenetic() {
-  Optimization::Genetic<NeuralNetwork::NeuralNetwork, double> *geneticExp;
+  Optimization::Genetic<NeuralNetwork::NeuralNetwork,NeuralNetwork::Neuron,double> *geneticExp;
   uint64_t iterations = 0;
   std::vector<double *> *thisInput, *thisOutput;
   std::vector<Optimization::Trust<double> *> *thisTrust;
@@ -699,7 +716,7 @@ int testGenetic() {
     thisOutput->at(jx) = new double();
   }
   
-  geneticExp = new Optimization::Genetic<NeuralNetwork::NeuralNetwork, double>();
+  geneticExp = new Optimization::Genetic<NeuralNetwork::NeuralNetwork,NeuralNetwork::Neuron,double>();
   
   geneticExp->addInput(thisInput);
   geneticExp->addOutput(thisOutput);
@@ -708,18 +725,23 @@ int testGenetic() {
   
   
   for (int ix = 0; ix < glbOutputSize; ix++) {
-    *(thisOutput->at(ix)) = (random() % precision) / (precision * 1.0);
+    *(thisInput->at(ix)) = (random() % precision) / (precision * 1.0);
+    *(thisOutput->at(ix)) = *(thisInput->at(ix));
   }
   
   do {
+#if 1
     for (uint64_t jx = 0; jx < thisInput->size(); jx++) {
-     *(thisInput->at(jx)) = (random() % precision) / (precision * 1.0);
+      *(thisInput->at(jx)) = *(thisOutput->at(jx)) + ((random()*0.1) - 0.05);
     }
+#endif
     
-    *(thisOutput->at(glbOutputSize-1)) = *(thisInput->at(0));
-    for (int ix = 1; ix < glbOutputSize; ix++) {
-      *(thisOutput->at(ix-1)) = *(thisInput->at(ix));
+#if 0
+    //*(thisOutput->at(glbOutputSize-1)) = *(thisInput->at(0));
+    for (int ix = 0; ix < glbOutputSize; ix++) {
+      *(thisOutput->at(ix)) = *(thisInput->at(ix));
     }
+#endif
     
     geneticExp->optimizeAnwser();
     
@@ -798,7 +820,7 @@ int main(int argc, const char * argv[])
   //ret |= testRBTree();
   ret |= testLLRBTree();
   //ret |= testStack();
-  //ret |= testNeuralNetwork();
+  ret |= testNeuralNetwork();
   ret |= testGenetic();
   //ret |= testMetaheuristic();
   //ret |= testNavigation();

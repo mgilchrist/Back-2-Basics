@@ -49,7 +49,7 @@ namespace NeuralNetwork
     PULSE
   };
   
-  const double irrelevant = 1.0 / double(0x10000);
+  const double irrelevant = 1.0 / double(0x100);
   static unsigned long currentIteration = -1;
   
   class Synapse : public Pipe<Neuron,Synapse> {
@@ -81,37 +81,55 @@ namespace NeuralNetwork
     
     SIG_FNCT_TYPE sigmoidFunctionType = NORMAL;
     
-    static uint64_t addInputsEach(LLRB_TreeNode<Harmony *, uint64_t> *current, void *neuron) {
+    static uint64_t addInputsEach(LLRB_TreeNode<Harmony<Neuron> *, uint64_t> *current, void *neuron) {
       new Synapse((Neuron *)neuron, (Neuron *)(current->data->logicElement));
       
       return current->key;
     }
     
-    static uint64_t optimalPruneEach(LLRB_TreeNode<Synapse *, uint64_t> *current, void *neuron) {
+    static bool optimalPruneEach(LLRB_TreeNode<Synapse *, uint64_t> *current, void *neuron) {
       
-      double tVal = sqrt(pow(current->data->lastCorrection,2) + pow(current->data->lastCorrection,2));
+      Neuron *input = current->data->getForward();
+      double tVal = sqrt(pow(current->data->influence,2) + pow(current->data->lastCorrection,2));
+      bool ret = false;
       
-      if (tVal < irrelevant) {
-        ((Neuron *)neuron)->removeEdge(current->data);
+      if ((tVal < irrelevant) || (current->data->lastCorrection > 0.5)) {
+        ret = true;
       }
       
-      current->data->getForward()->forwardEdges.modifyAll(Neuron::optimalPruneEach, current->data->getForward());
+      if (input->discovered < input->references) {
+        input->discovered++;
+      }
       
-      return current->key;
+      if (input->discovered == input->references) {
+        input->forwardEdges.removal(Neuron::optimalPruneEach, input);
+        input->discovered = 0;
+      }
+      
+      return ret;
     }
     
-    static uint64_t probablisticPruneEach(LLRB_TreeNode<Synapse *, uint64_t> *current, void *neuron) {
+    static bool probablisticPruneEach(LLRB_TreeNode<Synapse *, uint64_t> *current, void *neuron) {
       
-      double tVal = sqrt(pow(current->data->lastCorrection,2) + pow(current->data->lastCorrection,2));
+      Neuron *input = current->data->getForward();
+      double tVal = sqrt(pow(current->data->influence,2) + pow(current->data->lastCorrection,2));
       double cutoff = pow(rand() / RAND_MAX, 2);
+      bool ret = false;
       
-      if (tVal < cutoff)  {
-        ((Neuron *)neuron)->removeEdge(current->data);
+      if ((tVal < cutoff) || (current->data->lastCorrection > 0.5))  {
+        ret = true;
       }
       
-      current->data->getForward()->forwardEdges.modifyAll(Neuron::probablisticPruneEach, current->data->getForward());
+      if (input->discovered < input->references) {
+        input->discovered++;
+      }
       
-      return current->key;
+      if (input->discovered == input->references) {
+        input->forwardEdges.removal(Neuron::probablisticPruneEach, input);
+        input->discovered = 0;
+      }
+      
+      return ret;
     }
     
     static uint64_t probeActivationEach(LLRB_TreeNode<Synapse *, uint64_t> *current, void *neuron) {
@@ -173,34 +191,33 @@ namespace NeuralNetwork
     double *ptrInput = NULL;
     double totalInputs = 0.0;
     
-    Neuron(LLRB_Tree<Harmony *, uint64_t> *, vector<Neuron *> *, double *, double *);
+    Neuron(LLRB_Tree<Harmony<Neuron> *, uint64_t> *, vector<Neuron *> *, double *, double *);
     
     double probeActivation(uint64_t iteration);
-    void addInputNeuron(NeuralNetwork *,Neuron *);
     
     friend class NeuralNetwork;
     friend class Synapse;
   };
   
   
-  class NeuralNetwork : public Network<Neuron,Synapse> , public Heuristic<NeuralNetwork, double>
+  class NeuralNetwork : public Network<Neuron,Synapse> , public Heuristic<NeuralNetwork, Neuron, double>
   {
+    
   private:
     
     LLRB_Tree<Neuron *, uint64_t> inputs;
-    LLRB_Tree<Harmony *, uint64_t> outputs;
+    LLRB_Tree<Harmony<Neuron> *, uint64_t> outputs;
     Neuron *bias;
-    vector<uint64_t> *hiddenInfo;
+    vector<Info *> *hiddenInfo;
     vector<vector<Neuron *> *> *layers;
     bool layersDetermined = false;
     double networkBias = -1.0;
     double learningRule = LEARNING_RULE_DEFAULT;
     vector<Synapse *> terminalEdges;
-    uint64_t experiencedEpochs = 0;
     
   protected:
     
-    static uint64_t changeInputInfluenceEach(LLRB_TreeNode<Harmony *, uint64_t> *current, void *nnetwork) {
+    static uint64_t changeInputInfluenceEach(LLRB_TreeNode<Harmony<Neuron> *, uint64_t> *current, void *nnetwork) {
       Neuron *pCurrentNeuron = (Neuron *)(current->data->logicElement);
       
       if (pCurrentNeuron->discovered) {
@@ -213,12 +230,12 @@ namespace NeuralNetwork
       return current->key;
     }
     
-    static uint64_t calcExpectationEach(LLRB_TreeNode<Harmony *, uint64_t> *current, void *iteration) {
-      ((Neuron *)(current->data->logicElement))->probeActivation((uint64_t)iteration);
+    static uint64_t calcExpectationEach(LLRB_TreeNode<Harmony<Neuron> *, uint64_t> *current, void *iteration) {
+      current->data->logicElement->probeActivation((uint64_t)iteration);
       return current->key;
     }
     
-    static uint64_t doCorrectionEach(LLRB_TreeNode<Harmony *, uint64_t> *current, void *reserved) {
+    static uint64_t doCorrectionEach(LLRB_TreeNode<Harmony<Neuron> *, uint64_t> *current, void *reserved) {
       Neuron *pCurrentNeuron = (Neuron *)(current->data->logicElement);
       double reality = *(current->data->reality);
       double expectation = *(pCurrentNeuron->memory);
@@ -248,19 +265,20 @@ namespace NeuralNetwork
     }
     
   public:
+      
     NeuralNetwork();
     NeuralNetwork(std::vector<double *> *input,
                   std::vector<double *> *output,
                   std::vector<double *> *expectation,
-                  std::vector<uint64_t> *layers);
+                  std::vector<Info *> *layers);
     NeuralNetwork *clone();
     
     void calcExpectation(uint64_t);
     void doCorrection();
     
     vector<double *> *getInputs();
-    vector<uint64_t> *getHiddenInfo();
-    vector<Harmony *> *getHarmony();
+    vector<Info *> *getHiddenInfo();
+    vector<Harmony<Neuron> *> *getHarmony();
     
     void removeOutput(double *);
     
