@@ -38,35 +38,18 @@ namespace NeuralNetwork
     
     input->references++;
     neuron->addEdge(this);
-    this->influence = RANDOM_INFLUENCE;
-    //this->capacity = (influence < 0) ? -influence : influence;
-    lastCorrection = 0.0;
+    this->capacity = RANDOM_INFLUENCE;
+    momentum = 0.0;
   }
   
   void Synapse::changeInfluence(double correction) {
-    this->influence += correction;
-    //this->capacity = (this->influence < 0) ? -this->influence : this->influence;
-    lastCorrection = correction;
-  }
-  
-  void Synapse::multInfluence(double influence) {
-    this->influence *= influence;
-    //this->capacity = (this->influence < 0) ? -this->influence : this->influence;
-    lastCorrection *= influence;
-  }
-  
-  double Synapse::getInfluence() {
-    return influence;
-  }
-  
-  double Synapse::getMomentum() {
-    return (INERTIA_DEFAULT * this->lastCorrection);
+    this->capacity += correction;
+    powerDissipation = correction - momentum;
+    momentum = (correction * glbInertia);
   }
   
   Neuron::Neuron(LLRB_Tree<Harmony<Neuron> *, uint64_t> *layer, vector<Neuron *> *input, double *inputData, double *expectation) {
     Synapse *synapse;
-    
-    this->capacity = 0.0;
     
     if (inputData != NULL) {
       this->ptrInput = inputData;

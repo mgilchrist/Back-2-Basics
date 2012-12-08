@@ -30,7 +30,7 @@ namespace Optimization {
   
   static uint64_t currentTime = -1;
   static const double glbToughness = 0.0;
-  static const uint64_t ofAge = 180;
+  static const uint64_t ofAge = 20;
   
   template <class HeuristicType, class LogicType, class DataType>
   class Genetic : public Stoichastic<HeuristicType,DataType> {
@@ -43,7 +43,7 @@ namespace Optimization {
       LLRB_Tree<Trust<DataType> *, uint64_t> *cia = &(((Genetic *)world)->active);
       vector<Harmony<LogicType> *> *harmony = candidate->getHarmony();
       
-      if (candidate->experiencedEpochs < ofAge) {
+      if (!candidate->registered) {
         return false;
       }
       
@@ -64,7 +64,7 @@ namespace Optimization {
         candidate->persistance -= (toughness+glbToughness);
       }
       
-      if ((candidate->persistance < 0.0) && (candidate->registered)) {
+      if (candidate->persistance < 0.0) {
         for (uint64_t ix = 0; ix < harmony->size(); ix++) {
           Trust<double> *localComp = cia->search((uint64_t)harmony->at(ix)->reality);
           localComp->prediction->predictions.remove(harmony->at(ix)->expectation, (uint64_t)harmony->at(ix)->expectation);
@@ -107,7 +107,7 @@ namespace Optimization {
       
       fitness = sqrt(fitness/harmony->size());
       
-      candidate->persistance += (harmony->size() / pow((0.95 + fitness), 2));
+      candidate->persistance += (harmony->size() * (1.0 - fitness));
       
       return current->key;
     }
@@ -163,10 +163,10 @@ namespace Optimization {
       if (rVal < repoRate) {
         HeuristicType *child = reproduce(dad, mom);
         
-        dad->optimalPrune();
+        //dad->optimalPrune();
         
         if (mom != dad) {
-          mom->optimalPrune();
+        //  mom->optimalPrune();
         }
           
         this->candidates.insert(child, (uint64_t)child);

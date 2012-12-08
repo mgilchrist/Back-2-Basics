@@ -31,7 +31,7 @@ using namespace Collection;
 namespace Optimization {
   
   static double glbEnergyCnst = 1.0 / 1024.0;
-  static double glbAreaCapacity = 1.0;
+  static double glbAreaCapacity = 4.0;
   
   /*  typedef struct TotalCompetition {
    double competition = 0.0;

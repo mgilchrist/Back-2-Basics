@@ -41,7 +41,7 @@ namespace NeuralNetwork
 #define PPM 1e-6
 #define LEARNING_RULE_DEFAULT   0.1082
 #define OK  0
-#define INERTIA_DEFAULT 0.8928 // (1/30)^-30 = .8928; (1/90)^-90 = .95123
+#define glbInertia 0.8928 // (1/30)^-30 = .8928; (1/90)^-90 = .95123
   
 #define RANDOM_INFLUENCE ((rand() > rand()) ? 1.0 : -1.0)
   
@@ -56,19 +56,14 @@ namespace NeuralNetwork
   class Synapse : public Pipe<Neuron,Synapse> {
     
   protected:
-    string dbgName;
-    double influence;
-    double lastCorrection;
+    double momentum;
+    double powerDissipation;
     
   public:
     
     Synapse(Neuron *neuron, Neuron *input);
     
-    void changeInfluence(double influence);
-    void multInfluence(double influence);
-    
-    double getInfluence();
-    double getMomentum();
+    void changeInfluence(double capacity);
     
     friend Neuron;
   };
@@ -78,7 +73,7 @@ namespace NeuralNetwork
   protected:
     
     uint64_t iteration = 0;
-    const double inertia = INERTIA_DEFAULT;
+    const double inertia = glbInertia;
     
     SIG_FNCT_TYPE sigmoidFunctionType = NORMAL;
     
@@ -91,10 +86,10 @@ namespace NeuralNetwork
     static bool optimalPruneEach(LLRB_TreeNode<Synapse *, uint64_t> *current, void *neuron) {
       
       Neuron *input = current->data->getForward();
-      double tVal = sqrt(pow(current->data->influence,2) + pow(current->data->lastCorrection,2));
+      double tVal = sqrt(pow(current->data->capacity,2) + pow(current->data->momentum,2));
       bool ret = false;
       
-      if ((tVal < irrelevant) || (current->data->lastCorrection > 0.7)) {
+      if ((tVal < irrelevant) || (current->data->momentum > 0.7)) {
         ret = true;
       }
       
@@ -113,11 +108,11 @@ namespace NeuralNetwork
     static bool probablisticPruneEach(LLRB_TreeNode<Synapse *, uint64_t> *current, void *neuron) {
       
       Neuron *input = current->data->getForward();
-      double tVal = sqrt(pow(current->data->influence,2) + pow(current->data->lastCorrection,2));
+      double tVal = sqrt(pow(current->data->capacity,2) + pow(current->data->momentum,2));
       double cutoff = pow(rand() / RAND_MAX, 2);
       bool ret = false;
       
-      if ((tVal < cutoff) || (current->data->lastCorrection > 0.7))  {
+      if ((tVal < cutoff) || (current->data->momentum > 0.7))  {
         ret = true;
       }
       
@@ -139,7 +134,7 @@ namespace NeuralNetwork
       Neuron *input = synapse->getForward();
       
       if ((synapse != NULL) && (input != NULL)) {
-        *(((Neuron *)neuron)->memory) += input->probeActivation(currentIteration) * synapse->getInfluence();
+        *(((Neuron *)neuron)->memory) += input->probeActivation(currentIteration) * synapse->capacity;
       }
       return current->key;
     }
@@ -149,7 +144,7 @@ namespace NeuralNetwork
       Neuron *input = current->data->getForward();
       
       if (input->discovered < input->references) {
-        input->delta += synapse->getInfluence() * ((Neuron *)neuron)->delta;
+        input->delta += synapse->capacity * ((Neuron *)neuron)->delta;
         input->discovered++;
       }
       
@@ -175,7 +170,7 @@ namespace NeuralNetwork
       
       if (pCurrentNeuron->discovered) {
         correction = LEARNING_RULE_DEFAULT * pCurrentNeuron->delta * *(pCurrentNeuron->memory);
-        correction += synapse->getMomentum();
+        correction += synapse->momentum;
         
         synapse->changeInfluence(correction);
         
