@@ -38,6 +38,7 @@ namespace NeuralNetwork
   class Neuron;
   class Synapse;
   
+#define PPM 1e-6
 #define LEARNING_RULE_DEFAULT   0.1082
 #define OK  0
 #define INERTIA_DEFAULT 0.8928 // (1/30)^-30 = .8928; (1/90)^-90 = .95123
@@ -93,7 +94,7 @@ namespace NeuralNetwork
       double tVal = sqrt(pow(current->data->influence,2) + pow(current->data->lastCorrection,2));
       bool ret = false;
       
-      if ((tVal < irrelevant) || (current->data->lastCorrection > 0.5)) {
+      if ((tVal < irrelevant) || (current->data->lastCorrection > 0.7)) {
         ret = true;
       }
       
@@ -116,7 +117,7 @@ namespace NeuralNetwork
       double cutoff = pow(rand() / RAND_MAX, 2);
       bool ret = false;
       
-      if ((tVal < cutoff) || (current->data->lastCorrection > 0.5))  {
+      if ((tVal < cutoff) || (current->data->lastCorrection > 0.7))  {
         ret = true;
       }
       
@@ -157,7 +158,10 @@ namespace NeuralNetwork
         
         input->delta = (nCurrentOutput * (1.0 - nCurrentOutput) * input->delta);
         
-        input->modifyAllAdjacent(calcDeltaEach, input);
+        /* TODO don't go deeper if error is small */
+        if ((input->delta > PPM) || (input->delta < -PPM)) {
+          input->modifyAllAdjacent(calcDeltaEach, input);
+        }
       }
       
       return current->key;
@@ -240,12 +244,15 @@ namespace NeuralNetwork
       double reality = *(current->data->reality);
       double expectation = *(pCurrentNeuron->memory);
       
-      pCurrentNeuron->delta = (expectation *
-                               (1.0 - expectation) *
-                               (reality - expectation));
-      
-      pCurrentNeuron->modifyAllAdjacent(Neuron::calcDeltaEach, pCurrentNeuron);
-      pCurrentNeuron->discovered = 1;
+      /* TODO don't propagate small errors or no data */
+      if (reality > PPM) {
+        pCurrentNeuron->delta = (expectation *
+                                 (1.0 - expectation) *
+                                 (reality - expectation));
+        
+        pCurrentNeuron->modifyAllAdjacent(Neuron::calcDeltaEach, pCurrentNeuron);
+        pCurrentNeuron->discovered = 1;
+      }
       
       return current->key;
     }
@@ -265,7 +272,7 @@ namespace NeuralNetwork
     }
     
   public:
-      
+    
     NeuralNetwork();
     NeuralNetwork(std::vector<double *> *input,
                   std::vector<double *> *output,

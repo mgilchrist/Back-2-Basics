@@ -30,7 +30,7 @@ namespace Optimization {
   
   static uint64_t currentTime = -1;
   static const double glbToughness = 0.0;
-  static const uint64_t ofAge = 1000;
+  static const uint64_t ofAge = 180;
   
   template <class HeuristicType, class LogicType, class DataType>
   class Genetic : public Stoichastic<HeuristicType,DataType> {
@@ -49,6 +49,9 @@ namespace Optimization {
       
       for (uint64_t ix = 0; ix < harmony->size(); ix++) {
         Trust<double> *localComp = cia->search((uint64_t)harmony->at(ix)->reality);
+        if (localComp == NULL) {
+          continue;
+        }
         uint64_t envSize = localComp->prediction->predictions.size();
         double toughness = (localComp->prediction->confidence * envSize) - glbAreaCapacity;
         
@@ -61,7 +64,7 @@ namespace Optimization {
         candidate->persistance -= (toughness+glbToughness);
       }
       
-      if (candidate->persistance < 0.0) {
+      if ((candidate->persistance < 0.0) && (candidate->registered)) {
         for (uint64_t ix = 0; ix < harmony->size(); ix++) {
           Trust<double> *localComp = cia->search((uint64_t)harmony->at(ix)->reality);
           localComp->prediction->predictions.remove(harmony->at(ix)->expectation, (uint64_t)harmony->at(ix)->expectation);
@@ -91,6 +94,15 @@ namespace Optimization {
         err = (output - expectation);
         err = err * err;
         fitness += err;
+      }
+      
+      if (candidate->experiencedEpochs > ofAge) {
+        for (uint64_t ix = 0; ix < harmony->size(); ix++) {
+          Trust<double> *localComp = ((Genetic *)world)->answer.search((uint64_t)harmony->at(ix)->reality);
+          localComp->prediction->predictions.insert(harmony->at(ix)->expectation, (uint64_t)harmony->at(ix)->expectation);
+          ((Genetic *)world)->active.insert(localComp, (uint64_t)harmony->at(ix)->reality);
+        }
+        candidate->registered = true;
       }
       
       fitness = sqrt(fitness/harmony->size());
@@ -143,7 +155,7 @@ namespace Optimization {
         continue;
       }
       
-      double repoRate = 1.0 / (200.0 + dad->energy + mom->energy);
+      double repoRate = 1.0 / (30.0 + dad->energy + mom->energy);
       double rVal = rand() / (double)RAND_MAX;
       
       repoRate *= 1.0 - this->accuracy_rate;
@@ -152,8 +164,11 @@ namespace Optimization {
         HeuristicType *child = reproduce(dad, mom);
         
         dad->optimalPrune();
-        mom->optimalPrune();
         
+        if (mom != dad) {
+          mom->optimalPrune();
+        }
+          
         this->candidates.insert(child, (uint64_t)child);
       }
     }
@@ -164,7 +179,7 @@ namespace Optimization {
   
   template <class HeuristicType, class LogicType, class DataType>
   void Genetic<HeuristicType,LogicType,DataType>::doEvaluation() {
-    this->candidates.modifyAll(calcFitnessEach, 0);
+    this->candidates.modifyAll(calcFitnessEach, this);
   }
   
   template <class HeuristicType, class LogicType, class DataType>
@@ -255,10 +270,6 @@ namespace Optimization {
       if (childTrusts->at(ix)->prediction == NULL) {
         childTrusts->at(ix)->prediction = new Prediction<DataType>();
       }
-      childTrusts->at(ix)->prediction->predictions.insert(childExpect,
-                                                          (uint64_t)childExpect);
-      
-      this->active.insert(childTrusts->at(ix), (uint64_t)(childTrusts->at(ix)->actual));
     }
     
     tmpInfo = dad->getHiddenInfo();
@@ -278,23 +289,23 @@ namespace Optimization {
     
     layer = 7;
     
-    do {
+    for (uint64_t ix = 0; ix < log2(infoTree.size()); ix++) {
       while (layer != 0) {
         Info *newConn = new Info;
         newConn->c.layer = layer;
         newConn->c.position = random() % childInputs->size();
-        layer -= rand() % (layer+1);
+        layer -= (rand() % layer) + 1;
         newConn->c.inputLayer = layer;
         newConn->c.inputPosition = random() % childInputs->size();
         
         infoTree.insert(newConn, newConn->k);
       }
-    } while (tmpNum == infoTree.size());
+    }
     
     childHiddenInfo = infoTree.select(NULL, NULL);
     
-    
     tmpHeuristic = new HeuristicType(childInputs,childOutputs,childExpectations,childHiddenInfo);
+    
     tmpHeuristic->energy *= childHiddenInfo->size() * glbEnergyCnst;
     
     childInputs->resize(0);

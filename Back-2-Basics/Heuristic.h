@@ -53,6 +53,7 @@ public:
   double persistance = 0.0;
   double energy = 0.0;
   uint64_t experiencedEpochs = 0;
+  bool registered = false;
   
 public:
   

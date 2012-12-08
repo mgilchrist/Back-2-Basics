@@ -36,9 +36,9 @@ using namespace Graph;
 #include "Genetic.h"
 #include "Metaheuristic.h"
 
-const uint64_t glbInputSize = 0x10;
-const uint64_t glbOutputSize = 0x10;
-const uint64_t glbIterations = 0x10000;
+const uint64_t glbInputSize = 0x1000;
+const uint64_t glbOutputSize = 0x1000;
+const uint64_t glbIterations = 0x400;
 const uint64_t glbTestSize = 0x10000;
 const uint64_t glbSlowTestSize = 0x10000;
 
@@ -689,12 +689,15 @@ int testNavigation() {
 int testGenetic() {
   Optimization::Genetic<NeuralNetwork::NeuralNetwork,NeuralNetwork::Neuron,double> *geneticExp;
   uint64_t iterations = 0;
-  std::vector<double *> *thisInput, *thisOutput;
+  std::vector<double *> *thisInput, *thisOutput, *thisObjective;
   std::vector<Optimization::Trust<double> *> *thisTrust;
   double errorRate = 0.0;
   double thisError;
   std::vector<uint64_t> *layers = new std::vector<uint64_t>();
   uint64_t precision = (1 << 16);
+  uint64_t hShift = 0, wShift = 0;
+  uint64_t width = sqrt(glbOutputSize);
+  uint64_t height = glbOutputSize / width;
   
   layers->resize(0);
   
@@ -706,14 +709,17 @@ int testGenetic() {
   
   thisInput = new std::vector<double *>();
   thisOutput = new std::vector<double *>();
+  thisObjective = new std::vector<double *>();
   
   thisInput->resize(glbInputSize);
   thisOutput->resize(glbOutputSize);
+  thisObjective->resize(glbOutputSize);
   
   
   for (int jx = 0; jx < glbInputSize; jx++) {
     thisInput->at(jx) = new double();
     thisOutput->at(jx) = new double();
+    thisObjective->at(jx) = new double();
   }
   
   geneticExp = new Optimization::Genetic<NeuralNetwork::NeuralNetwork,NeuralNetwork::Neuron,double>();
@@ -725,25 +731,29 @@ int testGenetic() {
   
   
   for (int ix = 0; ix < glbOutputSize; ix++) {
-    *(thisInput->at(ix)) = (random() % precision) / (precision * 1.0);
-    *(thisOutput->at(ix)) = *(thisInput->at(ix));
+    *(thisObjective->at(ix)) = max(((random() % precision) / (precision * 1.0)), 0.05);
+    *(thisOutput->at(ix)) = *(thisObjective->at(ix)) + (((rand()/(double)RAND_MAX)*0.1) - 0.05);
   }
   
   do {
 #if 1
     for (uint64_t jx = 0; jx < thisInput->size(); jx++) {
-      *(thisInput->at(jx)) = *(thisOutput->at(jx)) + ((random()*0.1) - 0.05);
+      *(thisInput->at(jx)) = *(thisOutput->at(jx));
     }
 #endif
     
-#if 0
-    //*(thisOutput->at(glbOutputSize-1)) = *(thisInput->at(0));
+#if 1
     for (int ix = 0; ix < glbOutputSize; ix++) {
-      *(thisOutput->at(ix)) = *(thisInput->at(ix));
+      *(thisOutput->at(ix)) = *(thisObjective->at(((ix+(wShift%width)+(width*(hShift%height))))%glbOutputSize)) + (((rand()/(double)RAND_MAX)*0.1) - 0.05);
     }
 #endif
     
     geneticExp->optimizeAnwser();
+    
+    /* place objective reality for error rate */
+    for (int ix = 0; ix < glbOutputSize; ix++) {
+      *(thisOutput->at(ix)) = *(thisObjective->at(ix));
+    }
     
     thisTrust = geneticExp->answer.select(NULL,NULL);
     
@@ -782,15 +792,22 @@ int testGenetic() {
       cout << "Error Rate: ";
       cout << errorRate;
       cout << "\n";
-      cout << "Size: ";
+      cout << "Size/Iteration: ";
       cout << geneticExp->candidates.size();
+      cout << "/";
+      cout << iterations;
       cout << "\n";
+      
     }
     
     geneticExp->accuracy_rate = 1.0 - errorRate;
     
     iterations++;
-    
+    /*hShift++;
+    hShift %= 3;
+    wShift++;
+    wShift %= 3;
+    */
   } while (iterations < glbIterations);
   
   
@@ -820,7 +837,7 @@ int main(int argc, const char * argv[])
   //ret |= testRBTree();
   ret |= testLLRBTree();
   //ret |= testStack();
-  ret |= testNeuralNetwork();
+  //ret |= testNeuralNetwork();
   ret |= testGenetic();
   //ret |= testMetaheuristic();
   //ret |= testNavigation();

@@ -244,13 +244,8 @@ namespace Optimization {
     vector<uint64_t> randIn, randOut;
     uint64_t layer, hiddenWidth, tmpNum;
     
-    //uint64_t tmpSize;
-    
-    //tmpSize = rand() % (uint64_t)log2(this->question.size());
-    inputEnv = this->question.select(NULL,NULL); //pickRandoms(&this->question, NULL, tmpSize);
-    
-    //tmpSize = rand() % (uint64_t)log2(this->answer.size());
-    trusts = this->answer.select(NULL,NULL); //pickRandomTrusts(&this->answer, NULL, 2);
+    inputEnv = this->question.select(NULL,NULL);
+    trusts = this->answer.select(NULL,NULL);
     
     outputEnv = new vector<DataType *>();
     expectation = new vector<DataType *>();
@@ -266,10 +261,6 @@ namespace Optimization {
       if (trusts->at(ix)->prediction == NULL) {
         trusts->at(ix)->prediction = new Prediction<DataType>();
       }
-      trusts->at(ix)->prediction->predictions.insert(spawnExpect,
-                                                     (uint64_t)spawnExpect);
-      
-      active.insert(trusts->at(ix), (uint64_t)(trusts->at(ix)->actual));
     }
     
     for (uint64_t ix = 0; ix < inputEnv->size(); ix++) {
@@ -281,28 +272,6 @@ namespace Optimization {
     }
     
     hiddenWidth = max(inputEnv->size(), outputEnv->size());
-    
-    /*
-    for (uint64_t ix = 0; ix < randIn.size(); ix++) {
-      uint64_t tmp = randIn[ix];
-      uint64_t index = random() % randIn.size();
-      randIn[ix] = randIn[index];
-      randIn[index] = tmp;
-    }
-     */
-    
-#if 0
-    for (uint64_t ix = 0; ix < randIn.size(); ix++) {
-      for (uint64_t jx = 0; jx < randOut.size(); jx++) {
-      Info *info = new Info;
-      info->c.inputLayer = 0;
-      info->c.inputPosition = ix;
-      info->c.layer = 7;
-      info->c.position = jx;
-      hiddenInfo->push_back(info);
-      }
-    }
-#endif
     
     
     for (uint64_t ix = 0; ix < randOut.size(); ix++) {
@@ -347,11 +316,10 @@ namespace Optimization {
   
   template <class HeuristicType, class DataType>
   void Stoichastic<HeuristicType,DataType>::initInternals() {
-    //uint64_t firstGenSize = this->question.size();
     
-    //for (uint64_t ix = 0; ix < firstGenSize; ix++) {
+    for (uint64_t ix = 0; ix < 1; ix++) {
       spawn();
-    //}
+    }
     
   }
   
