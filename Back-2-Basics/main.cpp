@@ -36,8 +36,8 @@ using namespace Graph;
 #include "Genetic.h"
 #include "Metaheuristic.h"
 
-const uint64_t glbInputSize = 0x100;
-const uint64_t glbOutputSize = 0x100;
+const uint64_t glbInputSize = 0x1000;
+const uint64_t glbOutputSize = 0x1000;
 const uint64_t glbIterations = 0x400;
 const uint64_t glbTestSize = 0x10000;
 const uint64_t glbSlowTestSize = 0x10000;
