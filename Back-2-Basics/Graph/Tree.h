@@ -214,14 +214,8 @@ namespace Graph {
                                                     void *object,
                                                     TreeNodeType *current,
                                                     vector<TreeNodeType *> *victims) {
-    vector<TreeNodeType *> *L;
+    vector<TreeNodeType *> L;
     TreeNodeType *u;
-    
-    L = new vector<TreeNodeType *>();
-    
-    if (current == leftOf(current)) {
-      return;
-    }
     
     u = current;
     
@@ -229,14 +223,14 @@ namespace Graph {
       
       /* Lean left */
       while (u != leftOf(u)) {
-        L->push_back(u);
+        L.push_back(u);
         u = leftOf(u);
       }
       
       /* Visit */
-      while (!L->empty()) {
-        u = L->back();
-        L->resize(L->size()-1);
+      while (!L.empty()) {
+        u = L.back();
+        L.resize(L.size()-1);
         
         if ((criteria == NULL) || ((*criteria)(u, object))) {
           victims->push_back(u);
@@ -251,8 +245,6 @@ namespace Graph {
       
     } while (u != rightOf(u));
     
-    delete L;
-    
   }
   
   template <class TreeNodeType, class DataType, class KeyType>
@@ -260,15 +252,9 @@ namespace Graph {
                                                        void *object,
                                                        TreeNodeType *current,
                                                        vector<TreeNodeType *> *updates) {
-    vector<TreeNodeType *> *L;
+    vector<TreeNodeType *> L;
     TreeNodeType *u;
     KeyType newKey;
-    
-    if (current == leftOf(current)) {
-      return;
-    }
-    
-    L = new vector<TreeNodeType *>();
     
     u = current;
     
@@ -276,14 +262,14 @@ namespace Graph {
       
       /* Lean left */
       while (u != leftOf(u)) {
-        L->push_back(u);
+        L.push_back(u);
         u = leftOf(u);
       }
       
       /* Visit */
-      while (!L->empty()) {
-        u = L->back();
-        L->resize(L->size()-1);
+      while (!L.empty()) {
+        u = L.back();
+        L.resize(L.size()-1);
         
         /* Visit */
         newKey = (*action)(u, object);
@@ -300,114 +286,7 @@ namespace Graph {
       }
     } while (u != rightOf(u));
     
-    delete L;
-    
   }
-
-  
-#if 0
-  template <class TreeNodeType, class DataType, class KeyType>
-  void Tree<TreeNodeType,DataType,KeyType>::rSelect(bool (*criteria)(TreeNodeType *, void *),
-                                                    void *object,
-                                                    TreeNodeType *current,
-                                                    vector<TreeNodeType *> *victims) {
-    vector<TreeNodeType *> *L;
-    vector<TreeNodeType *> *nextL;
-    TreeNodeType *u;
-    
-    L = new vector<TreeNodeType *>();
-    
-    if (current->data != (DataType)NULL) {
-      L->push_back(current);
-    }
-    
-    while (!L->empty()) {
-      
-      // Initialize new layer
-      nextL = new vector<TreeNodeType *>();
-      
-      while (!(L->empty())) {
-        u = L->back();
-        L->resize(L->size()-1);
-        
-        if (u->data == (DataType)NULL) {
-          continue;
-        }
-        
-        if ((criteria == NULL) || ((*criteria)(u, object))) {
-          victims->push_back(u);
-        }
-        
-        if (leftOf(u) != leftOf(leftOf(u))) {
-          nextL->push_back(leftOf(u));
-        }
-        
-        if (rightOf(u) != rightOf(rightOf(u))) {
-          nextL->push_back(rightOf(u));
-        }
-      }
-      
-      L = nextL;
-      
-    }
-    
-    delete L;
-    
-  }
-  
-  template <class TreeNodeType, class DataType, class KeyType>
-  void Tree<TreeNodeType,DataType,KeyType>::rModifyAll(KeyType (*action)(TreeNodeType *, void *),
-                                                       void *object,
-                                                       TreeNodeType *current,
-                                                       vector<TreeNodeType *> *updates) {
-    vector<TreeNodeType *> *L;
-    vector<TreeNodeType *> *nextL;
-    TreeNodeType *u;
-    KeyType newKey;
-    
-    L = new vector<TreeNodeType *>();
-    
-    if (current->data != NULL) {
-      L->push_back(current);
-    }
-    
-    
-    while (!L->empty()) {
-      
-      // Initialize new layer
-      nextL = new vector<TreeNodeType *>();
-      
-      while (!(L->empty())) {
-        u = L->back();
-        L->resize(L->size()-1);
-        
-        if (u->data == NULL) {
-          continue;
-        }
-        
-        newKey = (*action)(u, object);
-        
-        if (u->key != newKey) {
-          updates->push_back(u);
-        }
-        
-        if (leftOf(u) != leftOf(leftOf(u))) {
-          nextL->push_back(leftOf(u));
-        }
-        
-        if (rightOf(u) != rightOf(rightOf(u))) {
-          nextL->push_back(rightOf(u));
-        }
-      }
-      
-      L = nextL;
-      
-    }
-    
-    delete L;
-    
-  }
-#endif
   
   
   template <class TreeNodeType, class DataType, class KeyType>
@@ -415,9 +294,7 @@ namespace Graph {
     
     vector<TreeNodeType *> *victims = new vector<TreeNodeType *>();
     
-    if (this->treeRoot != nullNode) {
-      rSelect(criteria,object,this->treeRoot,victims);
-    }
+    rSelect(criteria,object,this->treeRoot,victims);
     
     while (!victims->empty()) {
       this->remove(victims->back()->data, victims->back()->key);
@@ -434,9 +311,7 @@ namespace Graph {
     vector<TreeNodeType *> *victims = new vector<TreeNodeType *>();
     vector<DataType> *ret = new vector<DataType>();
     
-    if (this->treeRoot != nullNode) {
-      rSelect(criteria,object,this->treeRoot,victims);
-    }
+    rSelect(criteria,object,this->treeRoot,victims);
     
     for (uint64_t ix = 0; ix < victims->size(); ix++) {
       ret->push_back(victims->at(ix)->data);
