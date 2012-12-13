@@ -27,11 +27,14 @@
 
 namespace Graph {
   
+  class SimplePipe;
+  class SimpleHub;
+  
   template <class HubType, class PipeType>
   class Pipe : public Edge<HubType,PipeType>
   {
   public:
-    double      capacity = 0.0;
+    double capacity = 0.0;
     
   public:
     Pipe<HubType,PipeType>();
@@ -44,13 +47,16 @@ namespace Graph {
   {
     
   public:
-    double        capacity = 0.0;
+    double capacity = 0.0;
     
   public:
     
     Hub();
   };
   
+  
+  class SimplePipe : public Pipe<SimpleHub, SimplePipe> {};
+  class SimpleHub : public Hub<SimpleHub, SimplePipe> {};
   
   /* Pipe */
   
@@ -97,6 +103,7 @@ namespace Graph {
     Network();
     ~Network();
     
+    vector<EdgeType *> *minimumSpanningTree();
     virtual std::vector<double> *getMaximumFlow();
   };
   
@@ -112,6 +119,45 @@ namespace Graph {
     }
   }
   
+  template <class NodeType, class EdgeType>
+  vector<EdgeType *> *Network<NodeType,EdgeType>::minimumSpanningTree() {
+    vector<NodeType *> *nodes = this->getReachableNodes(this->start,this->terminal);
+    vector<EdgeType *> *ret = this->getEdges(nodes);
+    LLRB_Tree<EdgeType *, double> edges = new LLRB_Tree<EdgeType *, double>(false);
+    
+    for (uint64_t ix = 0; ix < ret->size(); ix++) {
+      edges.insert(ret->at(ix), (ret->at(ix))->capacity);
+    }
+    
+    ret->resize(0);
+    
+    for (uint64_t ix = 0; ix < nodes->size(); ix++) {
+      nodes->at(ix)->previousEdge = NULL;
+    }
+    
+    while ((ret->size() < nodes->size()) && edges.size() ) {
+      EdgeType *edge = edges.min(edges.treeRoot)->data;
+      NodeType *u = edge->getBackward();
+      NodeType *v = edge->getForward();
+      
+      if ((u->previousEdge->getBackward() != v->previousEdge->getBackward()) ||
+          (v->previousEdge->getBackward() == NULL)) {
+        NodeType *tmp = v->previousEdge->getBackward();
+        for (uint64_t ix = 0; ix < nodes->size(); ix++) {
+          if (nodes->at(ix) == tmp ) {
+            nodes->at(ix) = u->previousEdge->getBackward();
+          }
+        }
+        
+        ret->push_back(edge);
+      }
+      
+      edges.removeMin();
+    }
+    
+    return ret;
+    
+  }
   
   /* Network Flow */
   template <class NodeType, class EdgeType>

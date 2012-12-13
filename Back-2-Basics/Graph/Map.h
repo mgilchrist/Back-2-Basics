@@ -153,6 +153,7 @@ namespace Graph {
     void setStart(NodeType *start);
     void setTerminal(NodeType *terminal);
     virtual vector<EdgeType *> *getShortestPath();
+    vector<EdgeType *> *minimumSpanningTree();
     
   };
   
@@ -169,7 +170,7 @@ namespace Graph {
   
   template <class NodeType, class EdgeType>
   Map<NodeType,EdgeType>::Map() {
-    Graph<NodeType,EdgeType>();
+    //Graph<NodeType,EdgeType>();
     shortPathTree = NULL;
     shortestPathToTerminal = NULL;
     numNegativeEdges = 0;
@@ -188,8 +189,48 @@ namespace Graph {
     
   }
   
-  /* Bellman-Ford */
+  template <class NodeType, class EdgeType>
+  vector<EdgeType *> *Map<NodeType,EdgeType>::minimumSpanningTree() {
+    vector<NodeType *> *nodes = this->getReachableNodes(this->start,this->terminal);
+    vector<EdgeType *> *ret = this->getEdges(nodes);
+    LLRB_Tree<EdgeType *, double> edges = new LLRB_Tree<EdgeType *, double>(false);
+    
+    for (uint64_t ix = 0; ix < ret->size(); ix++) {
+      edges.insert(ret->at(ix), (ret->at(ix))->length);
+    }
+    
+    ret->resize(0);
+    
+    for (uint64_t ix = 0; ix < nodes->size(); ix++) {
+      nodes->at(ix)->previousEdge = NULL;
+    }
+    
+    while ((ret->size() < nodes->size()) && edges.size() ) {
+      EdgeType *edge = edges.min(edges.treeRoot)->data;
+      NodeType *u = edge->getBackward();
+      NodeType *v = edge->getForward();
+      
+      if ((u->previousEdge->getBackward() != v->previousEdge->getBackward()) ||
+          (v->previousEdge->getBackward() == NULL)) {
+        NodeType *tmp = v->previousEdge->getBackward();
+        for (uint64_t ix = 0; ix < nodes->size(); ix++) {
+          if (nodes->at(ix) == tmp ) {
+            nodes->at(ix) = u->previousEdge->getBackward();
+          }
+        }
+        
+        ret->push_back(edge);
+      }
+      
+      edges.removeMin();
+    }
+    
+    return ret;
   
+  }
+
+  /* Bellman-Ford */
+
   template <class NodeType, class EdgeType>
   void Map<NodeType,EdgeType>::bellmanFord() {
     vector<EdgeType *> *ret = new vector<EdgeType *>();

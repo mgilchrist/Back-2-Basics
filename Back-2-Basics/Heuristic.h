@@ -25,6 +25,7 @@
 #include "Collection.h"
 #include "Stack.h"
 #include <vector>
+//#include "LLRB_Tree.h"
 
 template <class LogicType>
 struct Harmony {
@@ -54,6 +55,7 @@ public:
   double energy = 0.0;
   uint64_t experiencedEpochs = 0;
   bool registered = false;
+  //LLRB_Tree<Info *, uint64_t> *hiddenInfo;
   
 public:
   
@@ -70,12 +72,8 @@ public:
   
   virtual void removeOutput(DataType *) =0;
   
-  virtual uint64_t timeAlive() =0;
-  
   virtual void optimalPrune() =0;
   virtual void probablisticPrune() =0;
-  
-  virtual void merge(HeuristicType *) =0;
 };
 
 

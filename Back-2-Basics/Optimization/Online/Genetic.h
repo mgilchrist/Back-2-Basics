@@ -31,6 +31,7 @@ namespace Optimization {
   static uint64_t currentTime = -1;
   static const double glbToughness = 0.0;
   static const uint64_t ofAge = 20;
+  static const uint64_t maxAge = 250;
   
   template <class HeuristicType, class LogicType, class DataType>
   class Genetic : public Stoichastic<HeuristicType,DataType> {
@@ -43,7 +44,11 @@ namespace Optimization {
       LLRB_Tree<Trust<DataType> *, uint64_t> *cia = &(((Genetic *)world)->active);
       vector<Harmony<LogicType> *> *harmony = candidate->getHarmony();
       
+      
       if (!candidate->registered) {
+        if (candidate->experiencedEpochs > maxAge) {
+          return true;
+        }
         return false;
       }
       
@@ -55,7 +60,7 @@ namespace Optimization {
         uint64_t envSize = localComp->prediction->predictions.size();
         double toughness = (localComp->prediction->confidence * envSize) - glbAreaCapacity;
         
-        if (toughness >= 0.0) {
+        if (toughness > 0.0) {
           toughness /= envSize;
         } else {
           toughness = 0.0;
@@ -84,7 +89,7 @@ namespace Optimization {
     static uint64_t calcFitnessEach(LLRB_TreeNode<HeuristicType *,uint64_t> *current, void *world) {
       Heuristic<HeuristicType,LogicType,DataType> *candidate = current->data;
       vector<Harmony<LogicType> *> *harmony = candidate->getHarmony();
-      double fitness = 0, err;
+      double fitness = 0.0, err;
       
       candidate->calcExpectation(currentTime);
       
@@ -92,11 +97,11 @@ namespace Optimization {
         double output = *(harmony->at(ix)->reality);
         double expectation = *(harmony->at(ix)->expectation);
         err = (output - expectation);
-        err = err * err;
+        err = pow(err,2);
         fitness += err;
       }
       
-      if (candidate->experiencedEpochs > ofAge) {
+      if ((candidate->persistance > (double(harmony->size()) * 16.0)) && (!candidate->registered)) {
         for (uint64_t ix = 0; ix < harmony->size(); ix++) {
           Trust<double> *localComp = ((Genetic *)world)->answer.search((uint64_t)harmony->at(ix)->reality);
           localComp->prediction->predictions.insert(harmony->at(ix)->expectation, (uint64_t)harmony->at(ix)->expectation);
@@ -105,9 +110,10 @@ namespace Optimization {
         candidate->registered = true;
       }
       
-      fitness = sqrt(fitness/harmony->size());
+      fitness /= harmony->size();
+      fitness = sqrt(fitness);
       
-      candidate->persistance += (harmony->size() * (1.0 - fitness));
+      candidate->persistance += harmony->size() * (1.0 / (1.0 + fitness));
       
       return current->key;
     }
@@ -161,13 +167,14 @@ namespace Optimization {
       repoRate *= 1.0 - this->accuracy_rate;
       
       if (rVal < repoRate) {
-        HeuristicType *child = reproduce(dad, mom);
         
-        //dad->optimalPrune();
+        dad->optimalPrune();
         
         if (mom != dad) {
-        //  mom->optimalPrune();
+          mom->optimalPrune();
         }
+        
+        HeuristicType *child = reproduce(dad, mom);
           
         this->candidates.insert(child, (uint64_t)child);
       }
@@ -273,7 +280,7 @@ namespace Optimization {
     }
     
     tmpInfo = dad->getHiddenInfo();
-    
+
     for (uint64_t ix = 0; ix < tmpInfo->size(); ix++) {
       infoTree.insert(tmpInfo->at(ix), tmpInfo->at(ix)->k);
     }

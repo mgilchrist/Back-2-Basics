@@ -32,24 +32,25 @@ namespace NeuralNetwork
   
   static double zero = 0.0;
   
-  Synapse::Synapse(Neuron *input, Neuron *neuron) {
+  Axion::Axion(Neuron *input, Neuron *neuron, Info **info) {
     this->u = neuron;
     this->v = input;
     
     input->references++;
     neuron->addEdge(this);
     this->capacity = RANDOM_INFLUENCE;
-    momentum = 0.0;
+    mFlux = 0.0;
+    
+    adjacency = info;
   }
   
-  void Synapse::changeInfluence(double correction) {
-    this->capacity += correction;
-    powerDissipation = correction - momentum;
-    momentum = (correction * glbInertia);
+  void Axion::changeInfluence(double correction) {
+    this->capacity += (correction * glbElecConductivity) + mFlux;
+    powerDissipation = pow(correction, 2) * mFlux;
+    mFlux = (correction * glbElecConductivity) + (glbMagConductivity * mFlux);
   }
   
-  Neuron::Neuron(LLRB_Tree<Harmony<Neuron> *, uint64_t> *layer, vector<Neuron *> *input, double *inputData, double *expectation) {
-    Synapse *synapse;
+  Neuron::Neuron(double *inputData, double *expectation) {
     
     if (inputData != NULL) {
       this->ptrInput = inputData;
@@ -62,16 +63,6 @@ namespace NeuralNetwork
       memory = new double();
     } else {
       memory = expectation;
-    }
-    
-    if (input != NULL) {
-      for (int ix = 0; ix < input->size(); ix++) {
-        synapse = new Synapse(input->at(ix), this);
-      }
-    }
-    
-    if (layer != NULL) {
-      layer->modifyAll(Neuron::addInputsEach, this);
     }
     
     iteration = 0;
@@ -87,6 +78,11 @@ namespace NeuralNetwork
     
     *memory = *ptrInput;
     
+    if (!this->references) {
+      /* killed neuron */
+      return 0.0;
+    }
+    
     // Get impulse from relavent connected neurons
     modifyAllAdjacent(Neuron::probeActivationEach, this);
     
@@ -98,17 +94,6 @@ namespace NeuralNetwork
     
     return *memory;
   }
-  
-  /*
-   void Neuron::changeInputInfluence() {
-   double correction;
-   
-   correction = LEARNING_RULE_DEFAULT * inputInfluenceDelta * totalInputs;
-   correction += inputLastCorrection * inertia;
-   inputLastCorrection = correction;
-   inputInfluence += correction;
-   }
-   */
   
   NeuralNetwork::NeuralNetwork() {
   }
@@ -130,45 +115,48 @@ namespace NeuralNetwork
       }
     }
     
-    hiddenInfo = new vector<Info *>();
-    
-    bias = new Neuron(NULL,NULL,&networkBias,NULL);
+    bias = new Neuron(&networkBias,NULL);
     
     for (uint64_t ix = 0; ix < output->size(); ix++) {
-      currentNeuron = new Neuron(NULL, NULL, &zero, expectation->at(ix));
+      currentNeuron = new Neuron(&zero, expectation->at(ix));
       
       Harmony<Neuron> *tmp = new Harmony<Neuron>;
       tmp->logicElement = currentNeuron;
       tmp->expectation = expectation->at(ix);
       tmp->reality = output->at(ix);
+      currentNeuron->references = 0;
       outputs.insert(tmp, (uint64_t)(output->at(ix)));
       neuronArray[7][ix] = currentNeuron;
       
-      new Synapse(bias, currentNeuron);
+      new Axion(bias, currentNeuron, NULL);
     }
     
     for (uint64_t ix = 0; ix < connectivity->size(); ix++) {
       Info *conn = connectivity->at(ix);
       
-      hiddenInfo->push_back(conn);
+      if (conn->c.layer == 7) {
+        neuronArray[7][conn->c.position]->references = 1;
+      }
       
       if (neuronArray[conn->c.inputLayer][conn->c.inputPosition] == NULL) {
-        currentNeuron = new Neuron(NULL, NULL, input->at(conn->c.inputPosition), NULL);
+        currentNeuron = new Neuron(input->at(conn->c.inputPosition), NULL);
         if (conn->c.inputLayer == 0) {
           inputs.insert(currentNeuron, (uint64_t)input->at(conn->c.inputPosition));
         }
         neuronArray[conn->c.inputLayer][conn->c.inputPosition] = currentNeuron;
-        new Synapse(bias, currentNeuron);
+        new Axion(bias, currentNeuron, NULL);
       }
       
       if (neuronArray[conn->c.layer][conn->c.position] == NULL) {
-        currentNeuron = new Neuron(NULL, NULL, &zero, NULL);
+        currentNeuron = new Neuron(&zero, NULL);
         neuronArray[conn->c.layer][conn->c.position] = currentNeuron;
-        new Synapse(bias, currentNeuron);
+        new Axion(bias, currentNeuron, NULL);
       }
       
-      new Synapse(neuronArray[conn->c.inputLayer][conn->c.inputPosition],
-                  neuronArray[conn->c.layer][conn->c.position]);
+      hiddenInfo.push_back(conn);
+                                       
+      new Axion(neuronArray[conn->c.inputLayer][conn->c.inputPosition],
+                  neuronArray[conn->c.layer][conn->c.position], &(hiddenInfo[hiddenInfo.size()-1]));
     }
     
     for (uint64_t ix = 0; ix < 8; ix++) {
@@ -201,12 +189,12 @@ namespace NeuralNetwork
     outputLayer = this->outputs.select(NULL, NULL);
     
     for (uint64_t kx = 0; kx < outputLayer->size(); kx++) {
-      outputLayer->at(kx)->logicElement->forwardEdges.removal(Neuron::optimalPruneEach, outputLayer->at(kx)->logicElement);
-    }
-    
-    for (uint64_t kx = 0; kx < outputLayer->size(); kx++) {
-      if (outputLayer->at(kx)->logicElement->forwardEdges.size() == 0) {
-        *(outputLayer->at(kx)->logicElement->ptrInput) = -2.328306e10;
+      if (outputLayer->at(kx)->logicElement->references != 0) {
+        Neuron *tmpNeuron = outputLayer->at(kx)->logicElement;
+        tmpNeuron->forwardEdges.deletion(Neuron::optimalPruneEach, tmpNeuron);
+        if (!tmpNeuron->forwardEdges.size()) {
+          outputLayer->at(kx)->logicElement->references = 0;
+        }
       }
     }
     
@@ -221,62 +209,9 @@ namespace NeuralNetwork
     outputLayer = this->outputs.select(NULL, NULL);
     
     for (uint64_t kx = 0; kx < outputLayer->size(); kx++) {
-      outputLayer->at(kx)->logicElement->forwardEdges.removal(Neuron::probablisticPruneEach, outputLayer->at(kx)->logicElement);
+      outputLayer->at(kx)->logicElement->forwardEdges.deletion(Neuron::probablisticPruneEach, outputLayer->at(kx)->logicElement);
     }
     
-    for (uint64_t kx = 0; kx < outputLayer->size(); kx++) {
-      if (outputLayer->at(kx)->logicElement->forwardEdges.size() == 0) {
-        *(outputLayer->at(kx)->logicElement->ptrInput) = -2.328306e10;
-      }
-    }
-    
-  }
-  
-  void NeuralNetwork::merge(NeuralNetwork *network) {
-    
-    vector<Neuron *> *currentStack, *previousStack, *mergeeLayer;
-    LLRB_Tree<Neuron *, uint64_t> *outputTree = new LLRB_Tree<Neuron *, uint64_t>();
-    
-    Neuron *tmpInput;
-    uint64_t outputSize;
-    
-    network->inputs.modifyAll(NeuralNetwork::addEach, this);
-    
-    currentStack = this->layers->at(network->layers->size()-1);
-    
-    while ((tmpInput = currentStack->back()) != NULL) {
-      currentStack->resize(currentStack->size()-1);
-      outputTree->insert(tmpInput, (uint64_t)tmpInput->ptrInput);
-    }
-    
-    currentStack = network->layers->at(network->layers->size()-1);
-    
-    while ((tmpInput = currentStack->back()) != NULL) {
-      currentStack->resize(currentStack->size()-1);
-      outputTree->insert(tmpInput, (uint64_t)tmpInput->ptrInput);
-    }
-    
-    previousStack = this->layers->at(this->layers->size()-1);
-    outputSize = previousStack->size();
-    
-    /* add new network outputs to this one */
-    
-    mergeeLayer = network->layers->back();
-    network->layers->resize(network->layers->size()-1);
-    
-    while ((tmpInput = mergeeLayer->back()) != NULL) {
-      mergeeLayer->resize(mergeeLayer->size()-1);
-      previousStack->push_back(tmpInput);
-    }
-    
-  }
-  
-  NeuralNetwork *split() {
-    return NULL;
-  }
-  
-  NeuralNetwork *clone(double errorRate) {
-    return NULL;
   }
   
   vector<double *> *NeuralNetwork::getInputs() {
@@ -287,12 +222,26 @@ namespace NeuralNetwork
     return ret;
   }
   
-  vector<Info *> *NeuralNetwork::getHiddenInfo() {
-    return hiddenInfo;
-  }
-  
   vector<Harmony<Neuron> *> *NeuralNetwork::getHarmony() {
     return outputs.select(NULL, NULL);
+  }
+  
+  vector<Info *> *NeuralNetwork::getHiddenInfo() {
+    vector<Info *> *ret = new vector<Info *>();
+    
+    for (uint64_t ix = 0; ix < hiddenInfo.size(); ix++) {
+      if (hiddenInfo[ix] != NULL) {
+        Info *tmp = new Info;
+        Info *thisInfo = hiddenInfo[ix];
+        tmp->c.inputLayer = thisInfo->c.inputLayer;
+        tmp->c.inputPosition = thisInfo->c.inputPosition;
+        tmp->c.layer = thisInfo->c.layer;
+        tmp->c.position = thisInfo->c.position;
+        ret->push_back(tmp);
+      }
+    }
+    
+    return ret;
   }
   
   void NeuralNetwork::removeOutput(double *output) {

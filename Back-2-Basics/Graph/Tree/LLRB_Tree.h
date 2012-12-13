@@ -74,9 +74,8 @@ namespace Graph {
       this->treeRoot->color = BLACK;
     }
     
-    LLRB_Tree(bool uniqueKeys) {
+    LLRB_Tree(bool uniqueKeys) : uniqueKeys(uniqueKeys) {
       this->treeRoot->color = BLACK;
-      this->uniqueKeys = uniqueKeys;
     }
     
     static inline bool isRed(TreeNodeType *node) {

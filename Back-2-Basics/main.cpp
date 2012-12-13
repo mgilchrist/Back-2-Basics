@@ -36,8 +36,8 @@ using namespace Graph;
 #include "Genetic.h"
 #include "Metaheuristic.h"
 
-const uint64_t glbInputSize = 0x10000;
-const uint64_t glbOutputSize = 0x10000;
+const uint64_t glbInputSize = 0x100;
+const uint64_t glbOutputSize = 0x100;
 const uint64_t glbIterations = 0x400;
 const uint64_t glbTestSize = 0x10000;
 const uint64_t glbSlowTestSize = 0x10000;
@@ -198,12 +198,6 @@ int testHeap() {
   return 0;
 }
 
-int testStack() {
-  Stack<uint64_t> *stack;
-  stack = new Stack<uint64_t>();
-  
-  return 0;
-}
 
 int testLLRBTree() {
   LLRB_Tree<uint64_t,uint64_t> *rbTree;
@@ -818,6 +812,55 @@ int testGenetic() {
   return 0;
 }
 
+int testNetworkFlow() {
+  Network<SimpleHub, SimplePipe> *network;
+  SimpleHub *start, *terminal;
+  const uint64_t xSize = 1920;
+  const uint64_t ySize = 1200;
+//  const uint64_t tSize = 60;
+  const int xDist = log2(xSize);
+  const int yDist = log2(ySize);
+  const double a = 1, xO = 1.0, yO = 1.0;
+  double capacity[(2*xDist)+1][(2*yDist)+1];
+  SimpleHub *hubs[glbSlowTestSize][glbSlowTestSize];
+  
+  network = new Network<SimpleHub, SimplePipe>();
+  network->setStart(start = new SimpleHub());
+  network->setTerminal(terminal = new SimpleHub);
+  
+  for (int ix = 0; ix < ((2*xDist)+1); ix++) {
+    for (int jx = 0; jx < ((2*yDist)+1); jx++) {
+      capacity[ix][jx] = a * exp(-((pow(ix-xDist, 2)/(2*pow(xO, 2))) + (pow(jx-yDist, 2)/(2*pow(yO, 2)))));
+    }
+  }
+  
+  for (int ix = 0; ix < xSize; ix++) {
+    for (int jx = 0; jx < glbSlowTestSize; jx++) {
+      hubs[ix][jx] = new SimpleHub();
+    }
+  }
+  
+  for (int ix = 0; ix < xSize; ix++) {
+    for (int jx = 0; jx < glbSlowTestSize; jx++) {
+      for (int xOff = -xDist; xOff <= xDist; xOff++) {
+        if ((ix + xOff < 0) || (ix + xOff >= xSize)) {
+          continue;
+        }
+        for (int yOff = -yDist; yOff <= yDist; yOff++) {
+          if ((jx + yOff < 0) || (jx + yOff >= xSize)) {
+            continue;
+          }
+          new Pipe<SimpleHub,SimplePipe>(hubs[ix+xOff][jx+yOff],hubs[ix][jx],capacity[xOff+xDist][yOff+yDist]);
+        }
+      }
+    }
+  }
+  
+  
+  return 0;
+  
+}
+
 
 int main(int argc, const char * argv[])
 {
@@ -841,6 +884,7 @@ int main(int argc, const char * argv[])
   ret |= testGenetic();
   //ret |= testMetaheuristic();
   //ret |= testNavigation();
+  //ret |= testNetworkFlow();
   
   cout << "Finished Testing:";
   cout << ret;

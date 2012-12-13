@@ -110,6 +110,7 @@ namespace Graph {
     TreeNodeType *min(TreeNodeType *);
     
     void removal(bool (*action)(TreeNodeType *, void *), void *);
+    void deletion(bool (*action)(TreeNodeType *, void *), void *);
     vector<DataType> *select(bool (*criteria)(TreeNodeType *, void *), void *);
     void modifyAll(KeyType (*action)(TreeNodeType *, void *), void *);
     uint64_t size() {return numNodes;}
@@ -297,7 +298,27 @@ namespace Graph {
     rSelect(criteria,object,this->treeRoot,victims);
     
     while (!victims->empty()) {
-      this->remove(victims->back()->data, victims->back()->key);
+      TreeNodeType *tmp = victims->back();
+      this->remove(tmp->data, tmp->key);
+      victims->resize(victims->size()-1);
+    }
+    
+    delete victims;
+    
+  }
+  
+  template <class TreeNodeType, class DataType, class KeyType>
+  void Tree<TreeNodeType,DataType,KeyType>::deletion(bool (*criteria)(TreeNodeType *, void *), void *object) {
+    
+    vector<TreeNodeType *> *victims = new vector<TreeNodeType *>();
+    
+    rSelect(criteria,object,this->treeRoot,victims);
+    
+    while (!victims->empty()) {
+      TreeNodeType *tmp = victims->back();
+      DataType tmpData = tmp->data;
+      this->remove(tmpData, tmp->key);
+      delete tmpData;
       victims->resize(victims->size()-1);
     }
     

@@ -31,6 +31,12 @@ using namespace std;
 
 namespace Graph {
   
+  struct Adjacency {
+    uint64_t uLayer;
+    uint64_t vLayer;
+    uint64_t uPosition;
+    uint64_t vposition;
+  };
   
   template <class NodeType, class EdgeType>
   class Edge;
@@ -71,11 +77,6 @@ namespace Graph {
     
   protected:
     LLRB_Tree<EdgeType *, uint64_t> forwardEdges;
-    static uint64_t deleteEdgesEach(LLRB_TreeNode<EdgeType *, uint64_t> *current, void *reserved) {
-      delete current->data;
-      
-      return current->key;
-    }
     
   public:
     uint64_t    discovered = 0;
@@ -177,6 +178,7 @@ namespace Graph {
     static vector<EdgeType *> *getEdges(vector<NodeType *> *nodes);
     
     virtual vector<EdgeType *> *getPathToTerminal();
+    virtual vector<EdgeType *> *minimumSpanningTree() =0;
     
     void setStart(NodeType *start);
     void setTerminal(NodeType *terminal);
@@ -249,7 +251,7 @@ namespace Graph {
   
   template <class NodeType, class EdgeType>
   Node<NodeType,EdgeType>::~Node() {
-    forwardEdges.modifyAll(deleteEdgesEach, 0);
+    forwardEdges.deletion(NULL,NULL);
   }
   
   template <class NodeType, class EdgeType>
@@ -270,6 +272,11 @@ namespace Graph {
   }
   
   /* Graph */
+  
+  template <class NodeType, class EdgeType>
+  vector<Adjacency *> *getAdjacencyList(NodeType *a, NodeType *b) {
+    
+  }
   
   template <class NodeType, class EdgeType>
   vector<NodeType *> *Graph<NodeType,EdgeType>::getReachableNodes(NodeType *a, NodeType *b) {

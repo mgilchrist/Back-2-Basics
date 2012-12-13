@@ -58,31 +58,31 @@ namespace Optimization {
       
       for (uint64_t ix = 0; ix < expectations->size(); ix++) {
         double expect = *(expectations->at(ix));
-        if (expect > 2.328306e-10) {
+        if (expect > PPM) {
           sum += expect;
           expectationCnt++;
         }
       }
       
       if (expectationCnt) {
-        average = max(sum / (double)expectationCnt, 2.328306e-10);
+        average = max(sum / (double)expectationCnt, PPM);
       }
       
       for (uint64_t ix = 0; ix < expectations->size(); ix++) {
         double expect = *(expectations->at(ix));
-        if (expect > 2.328306e-10) {
+        if (expect > PPM) {
           double tmp = expect-average;
-          diff += tmp * tmp;
+          diff += pow(tmp,2);
         }
       }
       
       current->data->prediction->expectation = average;
       
       if (expectations->size() < 2) {
-        current->data->prediction->confidence = 0.0;
+        current->data->prediction->confidence = 0.5;
       } else {
-        current->data->prediction->confidence = (1.0) / (1.0 + ((sqrt(diff)) / sqrt(double(expectationCnt-1))));
-        //current->data->prediction->confidence = (average * 0.05) / ((sqrt(diff)) / sqrt(double(expectations->size()-1)));
+        double variance = sqrt(diff / double(expectationCnt-1));
+        current->data->prediction->confidence = 1.0 / (1.0 + ((0.05 + variance) / sqrt(expectationCnt)));
       }
       
       return current->key;
@@ -299,7 +299,7 @@ namespace Optimization {
     this->candidates.insert(tmp, (uint64_t)tmp);
     
     /* Estimate energy use */
-    tmp->energy *= (double)hiddenInfo->size() * glbEnergyCnst;
+    tmp->energy = (double)hiddenInfo->size() * glbEnergyCnst;
     
     inputEnv->resize(0);
     outputEnv->resize(0);
