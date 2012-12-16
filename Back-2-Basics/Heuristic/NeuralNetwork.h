@@ -52,7 +52,7 @@ namespace NeuralNetwork
     PULSE
   };
   
-  const double irrelevant = 1.0 / double(0x100);
+  const double irrelevant = 10000.0 * PPM;
   static unsigned long currentIteration = -1;
   
   class Axion : public Pipe<Neuron,Axion> {
@@ -60,18 +60,16 @@ namespace NeuralNetwork
   protected:
     double mFlux = 0.0;
     double powerDissipation = 0.0;
-    Info **adjacency = NULL;
+    Info *adjacency = NULL;
     
   public:
     
-    Axion(Neuron *neuron, Neuron *input, Info **tree);
+    Axion(Neuron *neuron, Neuron *input, Info *tree);
     
     ~Axion() {
       if (adjacency != NULL) {
-        if (*adjacency != NULL) {
-          //delete *adjacency;
-          *adjacency = NULL;
-        }
+        //delete adjacency;
+        adjacency = NULL;
       }
     }
     
@@ -162,7 +160,7 @@ namespace NeuralNetwork
         input->delta = (nCurrentOutput * (1.0 - nCurrentOutput) * input->delta);
         
         /* TODO don't go deeper if error is small */
-        if ((input->delta > PPM) || (input->delta < -PPM)) {
+        if (pow(input->delta, 2) > irrelevant) {
           input->modifyAllAdjacent(calcDeltaEach, input);
         }
       }
@@ -211,8 +209,8 @@ namespace NeuralNetwork
     
   private:
     
-    LLRB_Tree<Neuron *, uint64_t> inputs;
-    LLRB_Tree<Harmony<Neuron> *, uint64_t> outputs;
+    vector<Neuron *> inputs;
+    vector<Harmony<Neuron> *> outputs;
     Neuron *bias;
     vector<Info *> hiddenInfo;
     vector<vector<Neuron *> *> *layers;
@@ -223,8 +221,8 @@ namespace NeuralNetwork
     
   protected:
     
-    static uint64_t changeInputInfluenceEach(LLRB_TreeNode<Harmony<Neuron> *, uint64_t> *current, void *nnetwork) {
-      Neuron *pCurrentNeuron = (Neuron *)(current->data->logicElement);
+    static void changeInputInfluenceEach(Harmony<Neuron> *current) {
+      Neuron *pCurrentNeuron = (Neuron *)(current->logicElement);
       
       if (pCurrentNeuron->discovered) {
         pCurrentNeuron->modifyAllAdjacent(Neuron::changeInputInfluenceEach, pCurrentNeuron);
@@ -232,8 +230,6 @@ namespace NeuralNetwork
         pCurrentNeuron->discovered = 0;
         pCurrentNeuron->delta = 0.0;
       }
-      
-      return current->key;
     }
     
     static uint64_t calcExpectationEach(LLRB_TreeNode<Harmony<Neuron> *, uint64_t> *current, void *iteration) {
@@ -241,34 +237,28 @@ namespace NeuralNetwork
       return current->key;
     }
     
-    static uint64_t doCorrectionEach(LLRB_TreeNode<Harmony<Neuron> *, uint64_t> *current, void *reserved) {
-      Neuron *pCurrentNeuron = (Neuron *)(current->data->logicElement);
-      double reality = *(current->data->reality);
+    static void doCorrectionEach(Harmony<Neuron> *current) {
+      Neuron *pCurrentNeuron = (Neuron *)(current->logicElement);
+      double reality = *(current->reality);
       double expectation = *(pCurrentNeuron->memory);
       
       /* TODO don't propagate small errors or no data */
-      if (reality > PPM) {
+      if (reality > irrelevant) {
         pCurrentNeuron->delta = (expectation *
                                  (1.0 - expectation) *
                                  (reality - expectation));
         
-        pCurrentNeuron->modifyAllAdjacent(Neuron::calcDeltaEach, pCurrentNeuron);
+        if (pow(pCurrentNeuron->delta, 2) > irrelevant) {
+          pCurrentNeuron->modifyAllAdjacent(Neuron::calcDeltaEach, pCurrentNeuron);
+        }
+        
         pCurrentNeuron->discovered = 1;
       }
-      
-      return current->key;
     }
     
     static uint64_t addInputToVectorEach(LLRB_TreeNode<Neuron *, uint64_t> *current, void *vect) {
       
       ((vector<double *> *)vect)->push_back(current->data->ptrInput);
-      
-      return current->key;
-    }
-    
-    static uint64_t addEach(LLRB_TreeNode<Neuron *, uint64_t> *current, void *network) {
-      
-      ((NeuralNetwork *)network)->inputs.insert(current->data, current->key);
       
       return current->key;
     }
@@ -287,9 +277,7 @@ namespace NeuralNetwork
     vector<double *> *getInputs();
     vector<Info *> *getHiddenInfo();
     vector<Harmony<Neuron> *> *getHarmony();
-    
-    void removeOutput(double *);
-    
+        
     uint64_t timeAlive();
     
     void optimalPrune();

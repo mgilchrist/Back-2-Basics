@@ -34,14 +34,20 @@ struct Harmony {
   double *expectation = NULL;
 };
 
+#define LAYER_SHIFT 28
+
+#define POSITION_MASK (((uint32_t)1 << LAYER_SHIFT) - 1)
+#define LAYER_MASK    ((uint32_t)(POSITION_MASK ^ 0xFFFFFFFF))
+
+#define INFO_LAYER(x) (x >> LAYER_SHIFT)
+#define INFO_POSITION(x) (x & POSITION_MASK)
+
 struct Connection {
-  uint8_t inputLayer;
-  uint8_t layer;
-  uint16_t inputPosition;
-  uint16_t position;
+  uint32_t inputPosition;
+  uint32_t position;
 };
 
-union Info {
+union Info { /* NOT RIGHT!! TODO */
   Connection c;
   uint64_t k;
 };
@@ -69,8 +75,6 @@ public:
   virtual vector<DataType *> *getInputs() =0;
   virtual vector<Info *> *getHiddenInfo() =0;
   virtual vector<Harmony<LogicType> *> *getHarmony() =0;
-  
-  virtual void removeOutput(DataType *) =0;
   
   virtual void optimalPrune() =0;
   virtual void probablisticPrune() =0;

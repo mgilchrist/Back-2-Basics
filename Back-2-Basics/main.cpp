@@ -36,8 +36,8 @@ using namespace Graph;
 #include "Genetic.h"
 #include "Metaheuristic.h"
 
-const uint64_t glbInputSize = 0x100;
-const uint64_t glbOutputSize = 0x100;
+const uint64_t glbInputSize = 0x1000;
+const uint64_t glbOutputSize = 0x1000;
 const uint64_t glbIterations = 0x400;
 const uint64_t glbTestSize = 0x10000;
 const uint64_t glbSlowTestSize = 0x10000;
@@ -431,24 +431,20 @@ int testNeuralNetwork() {
   uint64_t precision = (1 << 16);
   
   
-  for (uint64_t ix = 0; ix < glbInputSize; ix++) {
-    for (uint64_t jx = 0; jx < log2(glbOutputSize); jx++) {
+  for (uint32_t ix = 0; ix < glbInputSize; ix++) {
+    for (uint32_t jx = 0; jx < log2(glbOutputSize); jx++) {
       Info *info = new Info;
-      info->c.inputLayer = 0;
       info->c.inputPosition = ix;
-      info->c.layer = 0;
-      info->c.position = jx;
+      info->c.position = (4 << LAYER_SHIFT) | jx;
       hiddenInfo->push_back(info);
     }
   }
   
-  for (uint64_t ix = 0; ix < log2(glbOutputSize); ix++) {
-    for (uint64_t jx = 0; jx < glbOutputSize; jx++) {
+  for (uint32_t ix = 0; ix < log2(glbOutputSize); ix++) {
+    for (uint32_t jx = 0; jx < glbOutputSize; jx++) {
       Info *info = new Info;
-      info->c.inputLayer = 0;
-      info->c.inputPosition = ix;
-      info->c.layer = 0;
-      info->c.position = jx;
+      info->c.inputPosition = (4 << LAYER_SHIFT) | jx;
+      info->c.position = (7 << LAYER_SHIFT) | jx;
       hiddenInfo->push_back(info);
     }
   }
@@ -794,7 +790,7 @@ int testGenetic() {
       
     }
     
-    geneticExp->accuracy_rate = 1.0 - errorRate;
+    geneticExp->error_rate = errorRate;
     
     iterations++;
     /*hShift++;

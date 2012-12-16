@@ -54,10 +54,11 @@ namespace Optimization {
   protected:
     
     virtual void doEpoch() =0;
+    uint64_t hiddenWidth;
     
   public:
     
-    double accuracy_rate = 0.0;
+    double error_rate = 0.0;
     
     LLRB_Tree<DataType *, uint64_t> question;
     LLRB_Tree<Trust<DataType> *, uint64_t> answer;
@@ -97,8 +98,6 @@ namespace Optimization {
     Trust<DataType> *trust = new Trust<DataType>;
     
     trust->actual = output;
-    //trust->prediction.expectation = 0.0;
-    //trust->prediction.confidence = 0.0;
     
     answer.insert(trust, (uint64_t)output);
   }
@@ -108,6 +107,8 @@ namespace Optimization {
     for (uint64_t ix = 0; ix < input->size(); ix++) {
       question.insert(input->at(ix), (uint64_t)(input->at(ix)));
     }
+    
+    hiddenWidth = log2(max(question.size(),answer.size()));
   }
   
   template <class HeuristicType, class DataType>
@@ -121,6 +122,8 @@ namespace Optimization {
       
       answer.insert(trust, (uint64_t)output->at(ix));
     }
+    
+    hiddenWidth = log2(max(question.size(), answer.size()));
   }
   
   template <class HeuristicType, class DataType>

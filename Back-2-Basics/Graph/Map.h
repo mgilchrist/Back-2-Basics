@@ -201,10 +201,6 @@ namespace Graph {
     
     ret->resize(0);
     
-    for (uint64_t ix = 0; ix < nodes->size(); ix++) {
-      nodes->at(ix)->previousEdge = NULL;
-    }
-    
     while ((ret->size() < nodes->size()) && edges.size() ) {
       EdgeType *edge = edges.min(edges.treeRoot)->data;
       NodeType *u = edge->getBackward();
@@ -223,6 +219,11 @@ namespace Graph {
       }
       
       edges.removeMin();
+    }
+    
+    /* Cleanup */
+    for (uint64_t ix = 0; ix < nodes->size(); ix++) {
+      nodes->at(ix)->previousEdge = NULL;
     }
     
     return ret;
