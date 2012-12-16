@@ -236,52 +236,48 @@ namespace Optimization {
   
   template <class HeuristicType, class DataType>
   HeuristicType *Stoichastic<HeuristicType,DataType>::spawn(uint64_t spawnNum) {
-    vector<DataType *> *inputEnv, *outputEnv, *expectation;
+    vector<DataType *> *inputEnv;
+    LLRB_Tree<double *, uint64_t> *expectation;
     vector<Trust<DataType> *> *trusts;
     LLRB_Tree<Info *, uint64_t> infoTree;
     vector<Info *> *hiddenInfo = new vector<Info *>();
     HeuristicType *tmp;
-    vector<uint64_t> randIn, randOut;
     uint64_t layer, tmpNum, incVal;
     
-    inputEnv = this->question.select(NULL,NULL);
-    trusts = this->answer.select(NULL,NULL);
+    if (this->questionCache == NULL) {
+      this->questionCache = this->question.select(NULL,NULL);
+    }
     
-    outputEnv = new vector<DataType *>();
-    expectation = new vector<DataType *>();
+    if (this->answerCache == NULL) {
+      this->answerCache = this->answer.select(NULL,NULL);
+    }
     
-    outputEnv->reserve(trusts->size());
-    expectation->reserve(trusts->size());
+    inputEnv = this->questionCache;
+    trusts = this->answerCache;
     
-    for (uint64_t ix = 0; ix < trusts->size(); ix++) {
+    incVal = log2(trusts->size()); //random() % (uint64_t)(sqrt(randOut.size()) * 2.0);
+    spawnNum *= incVal;
+    
+    expectation = new LLRB_Tree<double *, uint64_t>();
+    
+    for (uint64_t ix = 0; ix < incVal; ix++) {
+      tmpNum = (spawnNum + ix) % trusts->size();
       double *spawnExpect = new double(0.0);
-      outputEnv->push_back(trusts->at(ix)->actual);
-      expectation->push_back(spawnExpect);
+      expectation->insert(spawnExpect, (uint64_t)(trusts->at(tmpNum)->actual));
       
-      if (trusts->at(ix)->prediction == NULL) {
-        trusts->at(ix)->prediction = new Prediction<DataType>();
+      if (trusts->at(tmpNum)->prediction == NULL) {
+        trusts->at(tmpNum)->prediction = new Prediction<DataType>();
       }
     }
     
-    for (uint64_t ix = 0; ix < inputEnv->size(); ix++) {
-      randIn.push_back(ix);
-    }
-    
-    for (uint64_t ix = 0; ix < outputEnv->size(); ix++) {
-      randOut.push_back(ix);
-    }
-    
-    incVal = log2(randOut.size()); //random() % (uint64_t)(sqrt(randOut.size()) * 2.0);
-    spawnNum *= incVal;
-    
     for (uint64_t ix = 0; ix < incVal; ix++) {
       layer = 7;
-      tmpNum = spawnNum + ix;
+      tmpNum = (spawnNum + ix) % trusts->size();
       
       while (layer != 0) {
         Info *newConn = new Info;
         newConn->c.position = ((uint32_t)layer << LAYER_SHIFT) | (uint32_t)tmpNum;
-        layer -= (rand() % layer) + 1;
+        layer -= log2((rand() % (1 << layer))) + 1;
         if (layer) {
           tmpNum = random() % this->hiddenWidth;
         } else {
@@ -291,29 +287,19 @@ namespace Optimization {
         
         infoTree.insert(newConn, newConn->k);
       }
-      
-      //if (infoTree.size() > 256) {
-      //  break;
-      //}
     }
     
     hiddenInfo = infoTree.select(NULL, NULL);
      
-    
-    tmp = new HeuristicType(inputEnv, outputEnv, expectation, hiddenInfo);
+    tmp = new HeuristicType(inputEnv, trusts, expectation, hiddenInfo);
     
     this->candidates.insert(tmp, (uint64_t)tmp);
     
     /* Estimate energy use */
     tmp->energy = (double)hiddenInfo->size() * glbEnergyCnst;
     
-    inputEnv->resize(0);
-    outputEnv->resize(0);
-    expectation->resize(0);
     hiddenInfo->resize(0);
     
-    delete inputEnv;
-    delete outputEnv;
     delete expectation;
     delete hiddenInfo;
     
@@ -322,7 +308,7 @@ namespace Optimization {
   
   template <class HeuristicType, class DataType>
   void Stoichastic<HeuristicType,DataType>::initInternals() {
-    uint64_t numSpawn = this->answer.size() / log2(this->answer.size());
+    uint64_t numSpawn = (this->answer.size() / log2(this->answer.size())) + 1;
     
     for (uint64_t ix = 0; ix < numSpawn; ix++) {
       spawn(ix);

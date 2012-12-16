@@ -36,8 +36,8 @@ using namespace Graph;
 #include "Genetic.h"
 #include "Metaheuristic.h"
 
-const uint64_t glbInputSize = 0x1000;
-const uint64_t glbOutputSize = 0x1000;
+const uint64_t glbInputSize = 0x10000;
+const uint64_t glbOutputSize = 0x10000;
 const uint64_t glbIterations = 0x400;
 const uint64_t glbTestSize = 0x10000;
 const uint64_t glbSlowTestSize = 0x10000;
@@ -424,7 +424,9 @@ int testArrayList() {
 int testNeuralNetwork() {
   NeuralNetwork::NeuralNetwork *NNetwork;
   uint64_t iterations = 0;
-  std::vector<double *> *thisInput, *thisOutput, *thisExpect;
+  std::vector<double *> *thisInput;
+  LLRB_Tree<double *, uint64_t> *thisExpect;
+  std::vector<Trust<double> *> *thisOutput;
   double errorRate = 0.0;
   double thisError;
   std::vector<Info *> *hiddenInfo = new std::vector<Info *>();
@@ -452,21 +454,19 @@ int testNeuralNetwork() {
   cout << "\nTesting NeuralNetwork\n";
   
   thisInput = new std::vector<double *>();
-  thisOutput = new std::vector<double *>();
-  thisExpect = new std::vector<double *>();
+  thisOutput = new std::vector<Trust<double> *>();
+  thisExpect = new LLRB_Tree<double *, uint64_t>();
   
   thisInput->resize(glbInputSize);
-  thisOutput->resize(glbOutputSize);
-  thisExpect->resize(glbOutputSize);
-  
+  thisOutput->resize(glbOutputSize);  
   
   for (int jx = 0; jx < glbInputSize; jx++) {
     thisInput->at(jx) = new double();
-    thisOutput->at(jx) = new double();
+    thisOutput->at(jx)->actual = new double();
   }
   
   for (uint64_t jx = 0; jx < glbOutputSize; jx++) {
-    thisExpect->at(jx) = new double();
+    thisExpect->insert(new double(), jx);
   }
   
   NNetwork = new NeuralNetwork::NeuralNetwork(thisInput, thisOutput, thisExpect, hiddenInfo);
@@ -486,16 +486,16 @@ int testNeuralNetwork() {
     if (iterations > (glbIterations-4)) {
       for (int ix = 0; ix < glbOutputSize; ix++) {
         cout << "{";
-        cout << (*thisOutput->at(ix));
+        cout << (*thisOutput->at(ix)->actual);
         cout << ":";
-        cout << (*thisExpect->at(ix));
+        cout << (*thisExpect->search(ix));
         cout << "},";
       }
       cout << "\n\n";
     }
     
     for (int ix = 0; ix < glbOutputSize; ix++) {
-      *(thisOutput->at(ix)) = *(thisInput->at(ix));
+      *(thisOutput->at(ix)->actual) = *(thisInput->at(ix));
     }
     
     
@@ -503,7 +503,7 @@ int testNeuralNetwork() {
       errorRate = 0.0;
       
       for (int ix = 0; ix < glbOutputSize; ix++) {
-        thisError = (*thisOutput->at(ix) - *(thisExpect->at(ix))) / *thisOutput->at(ix);
+        thisError = (*thisOutput->at(ix)->actual - *(thisExpect->search(ix))) / *thisOutput->at(ix)->actual;
         errorRate += thisError * thisError;
       }
       
@@ -680,7 +680,7 @@ int testGenetic() {
   Optimization::Genetic<NeuralNetwork::NeuralNetwork,NeuralNetwork::Neuron,double> *geneticExp;
   uint64_t iterations = 0;
   std::vector<double *> *thisInput, *thisOutput, *thisObjective;
-  std::vector<Optimization::Trust<double> *> *thisTrust;
+  std::vector<Trust<double> *> *thisTrust;
   double errorRate = 0.0;
   double thisError;
   std::vector<uint64_t> *layers = new std::vector<uint64_t>();

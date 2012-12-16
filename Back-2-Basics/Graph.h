@@ -27,6 +27,7 @@ using namespace std;
 
 #include "Stack.h"
 #include "LLRB_Tree.h"
+using namespace Tree;
 
 
 namespace Graph {

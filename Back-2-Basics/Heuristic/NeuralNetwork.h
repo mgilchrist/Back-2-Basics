@@ -267,8 +267,8 @@ namespace NeuralNetwork
     
     NeuralNetwork();
     NeuralNetwork(std::vector<double *> *input,
-                  std::vector<double *> *output,
-                  std::vector<double *> *expectation,
+                  std::vector<Trust<double> *> *output,
+                  LLRB_Tree<double *, uint64_t> *expectation,
                   std::vector<Info *> *layers);
     
     void calcExpectation(uint64_t);

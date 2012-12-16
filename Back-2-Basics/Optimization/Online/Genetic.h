@@ -182,10 +182,10 @@ namespace Optimization {
         continue;
       }
       
-      double repoRate = 1.0 / (1000.0 + dad->energy + mom->energy);
+      double repoRate = 1.0 / (200.0 + dad->energy + mom->energy);
       double rVal = rand() / (double)RAND_MAX;
       
-      //repoRate *= this->error_rate;
+      repoRate *= this->error_rate;
       
       if (rVal < repoRate) {
         
@@ -201,9 +201,9 @@ namespace Optimization {
       }
     }
     
-    if ((rand() / (double)RAND_MAX) < this->error_rate) {
-      //this->spawn();
-    }
+    //if ((rand() / (double)RAND_MAX) < this->error_rate) {
+    //this->spawn();
+    //}
     
     doMeditation();
   }
@@ -296,35 +296,28 @@ namespace Optimization {
   template <class HeuristicType, class LogicType, class DataType>
   HeuristicType *Genetic<HeuristicType,LogicType,DataType>::reproduce(HeuristicType *dad, HeuristicType *mom) {
     vector<double *> *childInputs;
-    vector<double *> *childOutputs;
     vector<Trust<DataType> *> *childTrusts;
-    vector<double *> *childExpectations;
+    LLRB_Tree<double *, uint64_t> *childExpectations;
     vector<Info *> *childHiddenInfo, *tmpInfo;
     LLRB_Tree<Info *, uint64_t> infoTree;
     HeuristicType *tmpHeuristic;
     double mutation_rate = pow(this->error_rate, 2);
     
-    
-    childInputs = this->question.select(NULL,NULL);
-    childTrusts = this->answer.select(NULL,NULL);
-    
-    childOutputs = new vector<DataType *>();
-    childOutputs->reserve(childTrusts->size());
-    childExpectations = new vector<double *>();
-    childExpectations->reserve(childTrusts->size());
-    
-    for (uint64_t ix = 0; ix < childTrusts->size(); ix++) {
-      double *childExpect = new double(0.0);
-      childOutputs->push_back(childTrusts->at(ix)->actual);
-      childExpectations->push_back(childExpect);
-      
-      if (childTrusts->at(ix)->prediction == NULL) {
-        childTrusts->at(ix)->prediction = new Prediction<DataType>();
-      }
+    if (this->questionCache == NULL) {
+      this->questionCache = this->question.select(NULL,NULL);
     }
     
+    if (this->answerCache == NULL) {
+      this->answerCache = this->answer.select(NULL,NULL);
+    }
+    
+    childInputs = this->questionCache;
+    childTrusts = this->answerCache;
+    
+    childExpectations = new LLRB_Tree<double *, uint64_t>();
+    
     tmpInfo = dad->getHiddenInfo();
-    mutate(tmpInfo, childOutputs->size(), childInputs->size(),
+    mutate(tmpInfo, childTrusts->size(), childInputs->size(),
            this->hiddenWidth, mutation_rate);
     
     for (uint64_t ix = 0; ix < tmpInfo->size(); ix++) {
@@ -332,7 +325,7 @@ namespace Optimization {
     }
     
     tmpInfo = mom->getHiddenInfo();
-    mutate(tmpInfo, childOutputs->size(), childInputs->size(),
+    mutate(tmpInfo, childTrusts->size(), childInputs->size(),
            this->hiddenWidth, mutation_rate);
     
     for (uint64_t ix = 0; ix < tmpInfo->size(); ix++) {
@@ -341,21 +334,26 @@ namespace Optimization {
     
     childHiddenInfo = infoTree.select(NULL, NULL);
     
-    tmpHeuristic = new HeuristicType(childInputs,childOutputs,childExpectations,childHiddenInfo);
+    for (uint64_t ix = 0; ix < childHiddenInfo->size(); ix++) {
+      if (INFO_LAYER(childHiddenInfo->at(ix)->c.position) == 7) {
+        double *reality = childTrusts->at(INFO_POSITION(childHiddenInfo->at(ix)->c.position))->actual;
+        double *childExpect = new double(0.0);
+        childExpectations->insert(childExpect, (uint64_t)reality);
+        
+        if (childTrusts->at(ix)->prediction == NULL) {
+          childTrusts->at(ix)->prediction = new Prediction<DataType>();
+        }
+      }
+    }
+    
+    tmpHeuristic = new HeuristicType(childInputs,childTrusts,childExpectations,childHiddenInfo);
     
     tmpHeuristic->energy *= childHiddenInfo->size() * glbEnergyCnst;
     
-    childInputs->resize(0);
-    childOutputs->resize(0);
-    childExpectations->resize(0);
     childHiddenInfo->resize(0);
-    childTrusts->resize(0);
     
-    delete childInputs;
-    delete childOutputs;
     delete childExpectations;
     delete childHiddenInfo;
-    delete childTrusts;
     
     return tmpHeuristic;
   }

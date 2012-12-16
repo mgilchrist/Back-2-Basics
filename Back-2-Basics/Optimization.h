@@ -28,19 +28,6 @@
 
 namespace Optimization {
   
-  template <class DataType>
-  struct Prediction {
-    LLRB_Tree<DataType *, uint64_t> predictions;
-    DataType expectation = 0;
-    double confidence = 0.0;
-  };
-  
-  template <class DataType>
-  struct Trust {
-    DataType *actual;
-    Prediction<DataType> *prediction = NULL;
-  };
-  
   template <class HeuristicType, class DataType>
   class Optimization {
     
@@ -55,6 +42,9 @@ namespace Optimization {
     
     virtual void doEpoch() =0;
     uint64_t hiddenWidth;
+    
+    vector<DataType *> *questionCache = NULL;
+    vector<Trust<DataType> *> *answerCache = NULL;
     
   public:
     
@@ -91,6 +81,12 @@ namespace Optimization {
   template <class HeuristicType, class DataType>
   void Optimization<HeuristicType,DataType>::addInput(DataType *input) {
     question.insert(input, (uint64_t)input);
+    
+    if (questionCache != NULL) {
+      questionCache->resize(0);
+      delete questionCache;
+      questionCache = NULL;
+    }
   }
   
   template <class HeuristicType, class DataType>
@@ -100,6 +96,13 @@ namespace Optimization {
     trust->actual = output;
     
     answer.insert(trust, (uint64_t)output);
+    
+    if (answerCache != NULL) {
+      answerCache->resize(0);
+      delete answerCache;
+      answerCache = NULL;
+    }
+
   }
   
   template <class HeuristicType, class DataType>
@@ -109,6 +112,13 @@ namespace Optimization {
     }
     
     hiddenWidth = log2(max(question.size(),answer.size()));
+    
+    if (questionCache != NULL) {
+      questionCache->resize(0);
+      delete questionCache;
+      questionCache = NULL;
+    }
+
   }
   
   template <class HeuristicType, class DataType>
@@ -124,6 +134,12 @@ namespace Optimization {
     }
     
     hiddenWidth = log2(max(question.size(), answer.size()));
+    
+    if (answerCache != NULL) {
+      answerCache->resize(0);
+      delete answerCache;
+      answerCache = NULL;
+    }
   }
   
   template <class HeuristicType, class DataType>

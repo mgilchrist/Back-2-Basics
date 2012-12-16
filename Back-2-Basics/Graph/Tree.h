@@ -22,10 +22,11 @@
 #ifndef Back_2_Basics_Tree_h
 #define Back_2_Basics_Tree_h
 
-#include "Graph.h"
+//#include "Graph.h"
+#include <vector>
+using namespace std;
 
-
-namespace Graph {
+namespace Tree {
   
 #define VERBOSITY 1
   

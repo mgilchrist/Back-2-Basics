@@ -24,7 +24,7 @@
 
 #include "Tree.h"
 
-namespace Graph {
+namespace Tree {
   
 #define TreeType Tree<TreeNodeType,EntryType,KeyType>
   

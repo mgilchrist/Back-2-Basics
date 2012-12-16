@@ -22,10 +22,12 @@
 #ifndef OpenSource_Heuristic_h
 #define OpenSource_Heuristic_h
 
+//#include "Graph.h"
+#include "LLRB_Tree.h"
+using namespace Tree;
 #include "Collection.h"
 #include "Stack.h"
 #include <vector>
-//#include "LLRB_Tree.h"
 
 template <class LogicType>
 struct Harmony {
@@ -50,6 +52,19 @@ struct Connection {
 union Info { /* NOT RIGHT!! TODO */
   Connection c;
   uint64_t k;
+};
+
+template <class DataType>
+struct Prediction {
+  LLRB_Tree<DataType *, uint64_t> predictions;
+  DataType expectation = 0;
+  double confidence = 0.0;
+};
+
+template <class DataType>
+struct Trust {
+  DataType *actual;
+  Prediction<DataType> *prediction = NULL;
 };
 
 template <class HeuristicType, class LogicType, class DataType>

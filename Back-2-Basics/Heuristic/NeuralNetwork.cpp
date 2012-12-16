@@ -99,8 +99,8 @@ namespace NeuralNetwork
   }
   
   NeuralNetwork::NeuralNetwork(std::vector<double *> *input,
-                               std::vector<double *> *output,
-                               std::vector<double *> *expectation,
+                               std::vector<Trust<double> *> *output,
+                               LLRB_Tree<double *, uint64_t> *expectation,
                                std::vector<Info *> *connectivity) {
     
     Neuron *currentNeuron;
@@ -123,12 +123,14 @@ namespace NeuralNetwork
       
       if (INFO_LAYER(conn->c.position) == 7) {
         uint32_t pos = INFO_POSITION(conn->c.position);
-        currentNeuron = new Neuron(&zero, expectation->at(pos));
+        double *reality = output->at(pos)->actual;
+        double *expect = expectation->search((uint64_t)reality);
+        currentNeuron = new Neuron(&zero, expect);
         
         Harmony<Neuron> *tmp = new Harmony<Neuron>;
         tmp->logicElement = currentNeuron;
-        tmp->expectation = expectation->at(pos);
-        tmp->reality = output->at(pos);
+        tmp->expectation = expect;
+        tmp->reality = reality;
         outputs.push_back(tmp);
         neuronArray[7][pos] = currentNeuron;
         
@@ -150,11 +152,11 @@ namespace NeuralNetwork
         neuronArray[INFO_LAYER(conn->c.inputPosition)][INFO_POSITION(conn->c.inputPosition)] = currentNeuron;
         new Axion(bias, currentNeuron, NULL);
       }
-      
-      hiddenInfo.push_back(conn);
                                        
       new Axion(neuronArray[INFO_LAYER(conn->c.inputPosition)][INFO_POSITION(conn->c.inputPosition)],
-                  neuronArray[INFO_LAYER(conn->c.position)][INFO_POSITION(conn->c.position)], hiddenInfo[hiddenInfo.size()-1]);
+                  neuronArray[INFO_LAYER(conn->c.position)][INFO_POSITION(conn->c.position)], conn);
+      
+      hiddenInfo.push_back(conn);
     }
     
     for (uint64_t ix = 0; ix < 8; ix++) {
