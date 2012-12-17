@@ -266,10 +266,10 @@ namespace NeuralNetwork
   public:
     
     NeuralNetwork();
-    NeuralNetwork(std::vector<double *> *input,
-                  std::vector<Trust<double> *> *output,
+    NeuralNetwork(vector<double *> *input,
+                  vector<Trust<double> *> *output,
                   LLRB_Tree<double *, uint64_t> *expectation,
-                  std::vector<Info *> *layers);
+                  vector<Info *> *layers);
     
     void calcExpectation(uint64_t);
     void doCorrection();

@@ -77,12 +77,13 @@ namespace Optimization {
       }
       
       current->data->prediction->expectation = average;
+      current->data->prediction->confidence = 0.0;
       
-      if (expectations->size() < 2) {
-        current->data->prediction->confidence = 0.5;
+      if (expectationCnt == 1) {
+        current->data->prediction->confidence = 0.95 * (1.0 - diff);
       } else {
         double variance = sqrt(diff / double(expectationCnt-1));
-        current->data->prediction->confidence = 1.0 / (1.0 + ((0.05 + variance) / sqrt(expectationCnt)));
+        current->data->prediction->confidence = 1.0 / (1.0 + (variance / sqrt(expectationCnt)));
       }
       
       return current->key;

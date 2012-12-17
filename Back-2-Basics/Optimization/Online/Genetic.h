@@ -29,7 +29,7 @@ namespace Optimization {
   
   
   static uint64_t currentTime = -1;
-  static const double glbToughness = 0.0;
+  static const double glbToughness = 0.5;
   static const uint64_t ofAge = 20;
   static const uint64_t maxAge = 250;
   
@@ -297,7 +297,7 @@ namespace Optimization {
   HeuristicType *Genetic<HeuristicType,LogicType,DataType>::reproduce(HeuristicType *dad, HeuristicType *mom) {
     vector<double *> *childInputs;
     vector<Trust<DataType> *> *childTrusts;
-    LLRB_Tree<double *, uint64_t> *childExpectations;
+    LLRB_Tree<double *, uint64_t> childExpectations;
     vector<Info *> *childHiddenInfo, *tmpInfo;
     LLRB_Tree<Info *, uint64_t> infoTree;
     HeuristicType *tmpHeuristic;
@@ -313,8 +313,6 @@ namespace Optimization {
     
     childInputs = this->questionCache;
     childTrusts = this->answerCache;
-    
-    childExpectations = new LLRB_Tree<double *, uint64_t>();
     
     tmpInfo = dad->getHiddenInfo();
     mutate(tmpInfo, childTrusts->size(), childInputs->size(),
@@ -338,7 +336,7 @@ namespace Optimization {
       if (INFO_LAYER(childHiddenInfo->at(ix)->c.position) == 7) {
         double *reality = childTrusts->at(INFO_POSITION(childHiddenInfo->at(ix)->c.position))->actual;
         double *childExpect = new double(0.0);
-        childExpectations->insert(childExpect, (uint64_t)reality);
+        childExpectations.insert(childExpect, (uint64_t)reality);
         
         if (childTrusts->at(ix)->prediction == NULL) {
           childTrusts->at(ix)->prediction = new Prediction<DataType>();
@@ -346,13 +344,12 @@ namespace Optimization {
       }
     }
     
-    tmpHeuristic = new HeuristicType(childInputs,childTrusts,childExpectations,childHiddenInfo);
+    tmpHeuristic = new HeuristicType(childInputs,childTrusts,&childExpectations,childHiddenInfo);
     
     tmpHeuristic->energy *= childHiddenInfo->size() * glbEnergyCnst;
     
     childHiddenInfo->resize(0);
     
-    delete childExpectations;
     delete childHiddenInfo;
     
     return tmpHeuristic;
