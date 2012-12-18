@@ -269,7 +269,8 @@ namespace NeuralNetwork
     NeuralNetwork(vector<double *> *input,
                   vector<Trust<double> *> *output,
                   LLRB_Tree<double *, uint64_t> *expectation,
-                  vector<Info *> *layers);
+                  vector<Info *> *layers,
+                  uint64_t maxHiddenWidth);
     
     void calcExpectation(uint64_t);
     void doCorrection();

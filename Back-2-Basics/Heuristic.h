@@ -39,7 +39,7 @@ struct Harmony {
 #define LAYER_SHIFT 28
 
 #define POSITION_MASK (((uint32_t)1 << LAYER_SHIFT) - 1)
-#define LAYER_MASK    ((uint32_t)(POSITION_MASK ^ 0xFFFFFFFF))
+#define LAYER_MASK    ((uint32_t)(0xFFFFFFFF << LAYER_SHIFT))
 
 #define INFO_LAYER(x) (x >> LAYER_SHIFT)
 #define INFO_POSITION(x) (x & POSITION_MASK)
@@ -76,6 +76,7 @@ public:
   double energy = 0.0;
   uint64_t experiencedEpochs = 0;
   bool registered = false;
+  uint64_t hiddenWidth = 0;
   //LLRB_Tree<Info *, uint64_t> *hiddenInfo;
   
 public:

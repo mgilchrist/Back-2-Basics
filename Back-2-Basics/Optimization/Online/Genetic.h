@@ -29,9 +29,9 @@ namespace Optimization {
   
   
   static uint64_t currentTime = -1;
-  static const double glbToughness = 0.5;
-  static const uint64_t ofAge = 20;
-  static const uint64_t maxAge = 250;
+  static const double glbToughness = 0.0;
+  static const uint64_t ofAge = 1;
+  static const uint64_t maxAge = 10;
   
   template <class HeuristicType, class LogicType, class DataType>
   class Genetic : public Stoichastic<HeuristicType,DataType> {
@@ -46,7 +46,7 @@ namespace Optimization {
       
       
       if (!candidate->registered) {
-        if (candidate->experiencedEpochs > maxAge) {
+        if (candidate->experiencedEpochs > (pow(candidate->hiddenWidth, 2) * maxAge)) {
           return true;
         }
         return false;
@@ -90,6 +90,9 @@ namespace Optimization {
       if (candidate->persistance < 0.0) {
         for (uint64_t ix = 0; ix < harmony->size(); ix++) {
           Trust<double> *localComp = cia->search((uint64_t)harmony->at(ix)->reality);
+          if (localComp == NULL) {
+            continue;
+          }
           localComp->prediction->predictions.remove(harmony->at(ix)->expectation, (uint64_t)harmony->at(ix)->expectation);
           
           if (!localComp->prediction->predictions.size()) {
@@ -108,6 +111,7 @@ namespace Optimization {
       Heuristic<HeuristicType,LogicType,DataType> *candidate = current->data;
       vector<Harmony<LogicType> *> *harmony = candidate->getHarmony();
       double fitness = 0.0, err;
+      uint64_t harmonySize = 0;
       
       candidate->calcExpectation(currentTime);
       
@@ -118,10 +122,11 @@ namespace Optimization {
           err = (output - expectation);
           err = pow(err,2);
           fitness += err;
+          harmonySize++;
         }
       }
       
-      if ((candidate->persistance > (double(harmony->size()) * 16.0)) && (!candidate->registered)) {
+      if ((candidate->experiencedEpochs > (pow(candidate->hiddenWidth, 2) * ofAge)) && (!candidate->registered)) {
         for (uint64_t ix = 0; ix < harmony->size(); ix++) {
           Trust<double> *localComp = ((Genetic *)world)->answer.search((uint64_t)harmony->at(ix)->reality);
           localComp->prediction->predictions.insert(harmony->at(ix)->expectation, (uint64_t)harmony->at(ix)->expectation);
@@ -130,10 +135,10 @@ namespace Optimization {
         candidate->registered = true;
       }
       
-      fitness /= harmony->size();
+      fitness /= harmonySize;
       fitness = sqrt(fitness);
       
-      candidate->persistance += harmony->size() * (1.0 / (1.0 + fitness));
+      candidate->persistance += (double)harmonySize * ((pow(harmonySize, 2) / pow(((Genetic *)world)->answer.size(), 2))) * (1.0 - fitness);
       
       return current->key;
     }
@@ -178,7 +183,7 @@ namespace Optimization {
       HeuristicType *dad = mates->at(ix);
       HeuristicType *mom = mates->at(rand() % mates->size());
       
-      if ((dad->experiencedEpochs < ofAge) || (mom->experiencedEpochs < ofAge)) {
+      if ((dad->experiencedEpochs < dad->hiddenWidth) || (mom->experiencedEpochs < dad->hiddenWidth)) {
         continue;
       }
       
@@ -268,12 +273,15 @@ namespace Optimization {
     uint64_t mutations = (double)vect->size() * error_rate;
     uint32_t pos;
     Info *entry;
+    uint64_t randVal = 0;
     
     for (uint64_t ix = 0; ix < mutations; ix++) {
-      uint64_t randVal = random();
-      entry = vect->at(randVal%vect->size());
+      if (!randVal) {
+        randVal = random();
+      }
+      entry = vect->at(rand()%vect->size());
       
-      if (randVal >> 63) {;
+      if (randVal & 0x01) {;
         pos = entry->c.position ^ (1 << (rand() % LAYER_SHIFT));
         
         if (INFO_LAYER(entry->c.position) == 7) {
@@ -290,6 +298,7 @@ namespace Optimization {
           entry->c.inputPosition = (pos & LAYER_MASK) | pos % inputWidth;
         }
       }
+      randVal >>= 1;
     }
   }
   
@@ -301,7 +310,7 @@ namespace Optimization {
     vector<Info *> *childHiddenInfo, *tmpInfo;
     LLRB_Tree<Info *, uint64_t> infoTree;
     HeuristicType *tmpHeuristic;
-    double mutation_rate = pow(this->error_rate, 2);
+    double mutation_rate = this->error_rate;
     
     if (this->questionCache == NULL) {
       this->questionCache = this->question.select(NULL,NULL);
@@ -316,7 +325,7 @@ namespace Optimization {
     
     tmpInfo = dad->getHiddenInfo();
     mutate(tmpInfo, childTrusts->size(), childInputs->size(),
-           this->hiddenWidth, mutation_rate);
+           dad->hiddenWidth, mutation_rate);
     
     for (uint64_t ix = 0; ix < tmpInfo->size(); ix++) {
       infoTree.insert(tmpInfo->at(ix), tmpInfo->at(ix)->k);
@@ -324,10 +333,17 @@ namespace Optimization {
     
     tmpInfo = mom->getHiddenInfo();
     mutate(tmpInfo, childTrusts->size(), childInputs->size(),
-           this->hiddenWidth, mutation_rate);
+           mom->hiddenWidth, mutation_rate);
     
     for (uint64_t ix = 0; ix < tmpInfo->size(); ix++) {
-      infoTree.insert(tmpInfo->at(ix), tmpInfo->at(ix)->k);
+      Info *thisInfo = tmpInfo->at(ix);
+      if (INFO_LAYER(thisInfo->c.position) != 7) {
+        thisInfo->c.position = (thisInfo->c.position & LAYER_MASK) | INFO_POSITION(thisInfo->c.position + dad->hiddenWidth);
+      }
+      if (!(INFO_LAYER(thisInfo->c.inputPosition))) {
+        thisInfo->c.inputPosition = (thisInfo->c.inputPosition & LAYER_MASK) | INFO_POSITION(thisInfo->c.inputPosition + dad->hiddenWidth);
+      }
+      infoTree.insert(thisInfo, thisInfo->k);
     }
     
     childHiddenInfo = infoTree.select(NULL, NULL);
@@ -344,8 +360,9 @@ namespace Optimization {
       }
     }
     
-    tmpHeuristic = new HeuristicType(childInputs,childTrusts,&childExpectations,childHiddenInfo);
+    tmpHeuristic = new HeuristicType(childInputs,childTrusts,&childExpectations,childHiddenInfo,dad->hiddenWidth+mom->hiddenWidth);
     
+    tmpHeuristic->persistance = dad->persistance + mom->persistance;
     tmpHeuristic->energy *= childHiddenInfo->size() * glbEnergyCnst;
     
     childHiddenInfo->resize(0);

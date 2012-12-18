@@ -30,7 +30,7 @@ using namespace Collection;
 
 namespace Optimization {
   
-  static double glbEnergyCnst = 1.0 / 64.0;
+  static double glbEnergyCnst = 1.0 / 128.0;
   static double glbAreaCapacity = 1.0;
   
   /*  typedef struct TotalCompetition {
@@ -80,7 +80,7 @@ namespace Optimization {
       current->data->prediction->confidence = 0.0;
       
       if (expectationCnt == 1) {
-        current->data->prediction->confidence = 0.95 * (1.0 - diff);
+        current->data->prediction->confidence = 1.0;
       } else {
         double variance = sqrt(diff / double(expectationCnt-1));
         current->data->prediction->confidence = 1.0 / (1.0 + (variance / sqrt(expectationCnt)));
@@ -101,7 +101,7 @@ namespace Optimization {
     
     vector<DataType *> *pickRandoms(LLRB_Tree<DataType *, uint64_t> *, vector<DataType *> *originals, uint64_t);
     vector<Trust<DataType> *> *pickRandomTrusts(LLRB_Tree<Trust<DataType> *, uint64_t> *, vector<Trust<DataType> *> *originals, uint64_t);
-    HeuristicType *spawn(uint64_t);
+    HeuristicType *spawn(uint64_t, uint64_t);
     
   public:
     Stoichastic() {
@@ -236,14 +236,14 @@ namespace Optimization {
   }
   
   template <class HeuristicType, class DataType>
-  HeuristicType *Stoichastic<HeuristicType,DataType>::spawn(uint64_t spawnNum) {
+  HeuristicType *Stoichastic<HeuristicType,DataType>::spawn(uint64_t spawnNum, uint64_t hiddenWidth) {
     vector<DataType *> *inputEnv;
     LLRB_Tree<double *, uint64_t> *expectation;
     vector<Trust<DataType> *> *trusts;
     LLRB_Tree<Info *, uint64_t> infoTree;
     vector<Info *> *hiddenInfo = new vector<Info *>();
     HeuristicType *tmp;
-    uint64_t layer, tmpNum, incVal;
+    uint64_t layer, tmpNum, incVal, inIncVal, inSOffset, sOffset;
     
     if (this->questionCache == NULL) {
       this->questionCache = this->question.select(NULL,NULL);
@@ -256,13 +256,15 @@ namespace Optimization {
     inputEnv = this->questionCache;
     trusts = this->answerCache;
     
-    incVal = log2(trusts->size()); //random() % (uint64_t)(sqrt(randOut.size()) * 2.0);
-    spawnNum *= incVal;
+    inIncVal = (inputEnv->size() / (trusts->size() / log2(trusts->size())));
+    inSOffset = inIncVal * spawnNum;
+    incVal = log2(trusts->size());
+    sOffset = incVal * spawnNum;
     
     expectation = new LLRB_Tree<double *, uint64_t>();
     
     for (uint64_t ix = 0; ix < incVal; ix++) {
-      tmpNum = (spawnNum + ix) % trusts->size();
+      tmpNum = (sOffset + ix) % trusts->size();
       double *spawnExpect = new double(0.0);
       expectation->insert(spawnExpect, (uint64_t)(trusts->at(tmpNum)->actual));
       
@@ -273,16 +275,16 @@ namespace Optimization {
     
     for (uint64_t ix = 0; ix < incVal; ix++) {
       layer = 7;
-      tmpNum = (spawnNum + ix) % trusts->size();
+      tmpNum = (sOffset + ix) % trusts->size();
       
       while (layer != 0) {
         Info *newConn = new Info;
         newConn->c.position = ((uint32_t)layer << LAYER_SHIFT) | (uint32_t)tmpNum;
         layer -= log2((rand() % (1 << layer))) + 1;
         if (layer) {
-          tmpNum = random() % this->hiddenWidth;
+          tmpNum = rand() % hiddenWidth;
         } else {
-          tmpNum = random() % inputEnv->size();
+          tmpNum = (inSOffset - (inSOffset/2) + (rand() % (inIncVal*2))) % inputEnv->size();
         }
         newConn->c.inputPosition = ((uint32_t)layer << LAYER_SHIFT) |  (uint32_t)tmpNum;
         
@@ -292,7 +294,7 @@ namespace Optimization {
     
     hiddenInfo = infoTree.select(NULL, NULL);
      
-    tmp = new HeuristicType(inputEnv, trusts, expectation, hiddenInfo);
+    tmp = new HeuristicType(inputEnv, trusts, expectation, hiddenInfo, hiddenWidth);
     
     this->candidates.insert(tmp, (uint64_t)tmp);
     
@@ -312,7 +314,7 @@ namespace Optimization {
     uint64_t numSpawn = (this->answer.size() / log2(this->answer.size())) + 1;
     
     for (uint64_t ix = 0; ix < numSpawn; ix++) {
-      spawn(ix);
+      spawn(ix, this->spawnHiddenWidth);
     }
     
   }

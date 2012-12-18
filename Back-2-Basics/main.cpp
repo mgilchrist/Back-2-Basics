@@ -38,7 +38,7 @@ using namespace Graph;
 
 const uint64_t glbInputSize = 0x1000;
 const uint64_t glbOutputSize = 0x1000;
-const uint64_t glbIterations = 0x4000;
+const uint64_t glbIterations = 0x10000;
 const uint64_t glbTestSize = 0x10000;
 const uint64_t glbSlowTestSize = 0x10000;
 
@@ -469,7 +469,7 @@ int testNeuralNetwork() {
     thisExpect->insert(new double(), jx);
   }
   
-  NNetwork = new NeuralNetwork::NeuralNetwork(thisInput, thisOutput, thisExpect, hiddenInfo);
+  NNetwork = new NeuralNetwork::NeuralNetwork(thisInput, thisOutput, thisExpect, hiddenInfo, thisOutput->size());
   
   for (uint64_t jx = 0; jx < thisInput->size(); jx++) {
     *(thisInput->at(jx)) = (random() % precision) / (precision * 1.0);

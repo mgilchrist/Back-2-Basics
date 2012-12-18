@@ -101,18 +101,28 @@ namespace NeuralNetwork
   NeuralNetwork::NeuralNetwork(std::vector<double *> *input,
                                std::vector<Trust<double> *> *output,
                                LLRB_Tree<double *, uint64_t> *expectation,
-                               std::vector<Info *> *connectivity) {
+                               std::vector<Info *> *connectivity,
+                               uint64_t maxHiddenWidth) {
     
     Neuron *currentNeuron;
     Neuron **neuronArray[8];
     
-    uint64_t maxHiddenWidth = max(input->size(), output->size());
+    this->hiddenWidth = maxHiddenWidth;
     
-    for (uint64_t ix = 0; ix < 8; ix++) {
+    for (uint64_t ix = 1; ix < 7; ix++) {
       neuronArray[ix] = new Neuron*[maxHiddenWidth];
       for (uint64_t jx = 0; jx < maxHiddenWidth; jx++) {
         neuronArray[ix][jx] = NULL;
       }
+    }
+    
+    neuronArray[0] = new Neuron*[input->size()];
+    for (uint64_t jx = 0; jx < input->size(); jx++) {
+      neuronArray[0][jx] = NULL;
+    }
+    neuronArray[7] = new Neuron*[output->size()];
+    for (uint64_t jx = 0; jx < output->size(); jx++) {
+      neuronArray[7][jx] = NULL;
     }
     
     bias = new Neuron(&networkBias,NULL);
@@ -120,9 +130,13 @@ namespace NeuralNetwork
     
     for (int64_t ix = connectivity->size()-1; ix >= 0; ix--) {
       Info *conn = connectivity->at(ix);
+      uint8_t inLayer = INFO_LAYER(conn->c.inputPosition);
+      uint8_t outLayer = INFO_LAYER(conn->c.position);
+      uint32_t inPosition = INFO_POSITION(conn->c.inputPosition);
+      uint32_t outPosition = INFO_POSITION(conn->c.position);
       
-      if (INFO_LAYER(conn->c.position) == 7) {
-        uint32_t pos = INFO_POSITION(conn->c.position);
+      if (outLayer == 7) {
+        uint32_t pos = outPosition;
         double *reality = output->at(pos)->actual;
         double *expect = expectation->search((uint64_t)reality);
         currentNeuron = new Neuron(&zero, expect);
@@ -139,22 +153,24 @@ namespace NeuralNetwork
         neuronArray[7][pos]->references = 1;
       }
       
-      if (neuronArray[INFO_LAYER(conn->c.position)][INFO_POSITION(conn->c.position)] == NULL) {
+      if (neuronArray[outLayer][outPosition] == NULL) {
         /* there's no output neuron */
         continue;
       }
       
-      if (neuronArray[INFO_LAYER(conn->c.inputPosition)][INFO_POSITION(conn->c.inputPosition)] == NULL) {
-        currentNeuron = new Neuron(input->at(INFO_POSITION(conn->c.inputPosition)), NULL);
-        if (INFO_LAYER(conn->c.inputPosition) == 0) {
+      if (neuronArray[inLayer][inPosition] == NULL) {
+        if (inLayer == 0) {
+          currentNeuron = new Neuron(input->at(inPosition), NULL);
           inputs.push_back(currentNeuron);
+        } else {
+          currentNeuron = new Neuron(&zero, NULL);
         }
-        neuronArray[INFO_LAYER(conn->c.inputPosition)][INFO_POSITION(conn->c.inputPosition)] = currentNeuron;
+        neuronArray[inLayer][inPosition] = currentNeuron;
         new Axion(bias, currentNeuron, NULL);
       }
                                        
-      new Axion(neuronArray[INFO_LAYER(conn->c.inputPosition)][INFO_POSITION(conn->c.inputPosition)],
-                  neuronArray[INFO_LAYER(conn->c.position)][INFO_POSITION(conn->c.position)], conn);
+      new Axion(neuronArray[inLayer][inPosition],
+                  neuronArray[outLayer][outPosition], conn);
       
       hiddenInfo.push_back(conn);
     }
@@ -202,7 +218,7 @@ namespace NeuralNetwork
       if ((outputs[kx] != NULL) && (outputs[kx]->logicElement != NULL)) {
         Neuron *tmpNeuron = outputs[kx]->logicElement;
         tmpNeuron->forwardEdges.deletion(Neuron::optimalPruneEach, tmpNeuron);
-        if (!tmpNeuron->forwardEdges.size()) {
+        if ((!tmpNeuron->forwardEdges.size()) && (tmpNeuron->ptrInput == &zero)) {
           delete outputs[kx]->logicElement;
           outputs[kx]->logicElement = NULL;
         }

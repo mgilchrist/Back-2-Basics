@@ -41,7 +41,7 @@ namespace Optimization {
   protected:
     
     virtual void doEpoch() =0;
-    uint64_t hiddenWidth;
+    uint64_t spawnHiddenWidth;
     
     vector<DataType *> *questionCache = NULL;
     vector<Trust<DataType> *> *answerCache = NULL;
@@ -57,8 +57,6 @@ namespace Optimization {
   public:
     
     LLRB_Tree<HeuristicType *, uint64_t> candidates;
-    
-    
     
     Optimization();
     
@@ -82,6 +80,8 @@ namespace Optimization {
   void Optimization<HeuristicType,DataType>::addInput(DataType *input) {
     question.insert(input, (uint64_t)input);
     
+    spawnHiddenWidth = log2(max(question.size(),answer.size()));
+    
     if (questionCache != NULL) {
       questionCache->resize(0);
       delete questionCache;
@@ -97,6 +97,8 @@ namespace Optimization {
     
     answer.insert(trust, (uint64_t)output);
     
+    spawnHiddenWidth = log2(max(question.size(),answer.size()));
+    
     if (answerCache != NULL) {
       answerCache->resize(0);
       delete answerCache;
@@ -111,7 +113,7 @@ namespace Optimization {
       question.insert(input->at(ix), (uint64_t)(input->at(ix)));
     }
     
-    hiddenWidth = log2(max(question.size(),answer.size()));
+    spawnHiddenWidth = log2(max(question.size(),answer.size()));
     
     if (questionCache != NULL) {
       questionCache->resize(0);
@@ -133,7 +135,7 @@ namespace Optimization {
       answer.insert(trust, (uint64_t)output->at(ix));
     }
     
-    hiddenWidth = log2(max(question.size(), answer.size()));
+    spawnHiddenWidth = log2(max(question.size(), answer.size()));
     
     if (answerCache != NULL) {
       answerCache->resize(0);
