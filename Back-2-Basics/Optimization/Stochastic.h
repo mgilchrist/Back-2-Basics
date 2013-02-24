@@ -80,7 +80,7 @@ namespace Optimization {
       current->data->prediction->confidence = 0.0;
       
       if (expectationCnt == 1) {
-        current->data->prediction->confidence = 1.0;
+        current->data->prediction->confidence = 0.99;
       } else {
         double variance = sqrt(diff / double(expectationCnt-1));
         current->data->prediction->confidence = 1.0 / (1.0 + (variance / sqrt(expectationCnt)));

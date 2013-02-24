@@ -38,14 +38,14 @@ namespace NeuralNetwork
     
     input->references++;
     neuron->addEdge(this);
-    this->capacity = RANDOM_INFLUENCE;
+    this->attrib = RANDOM_INFLUENCE;
     mFlux = 0.0;
     
     adjacency = info;
   }
   
   void Axion::changeInfluence(double correction) {
-    this->capacity += (correction * glbElecConductivity) + mFlux;
+    this->attrib += (correction * glbElecConductivity) + mFlux;
     powerDissipation = pow(correction, 2) * mFlux;
     mFlux = (correction * glbElecConductivity) + (glbMagConductivity * mFlux);
   }

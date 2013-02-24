@@ -125,7 +125,7 @@ namespace Graph {
       if (!uv->blocked) {
         Coordinate *u = uv->getBackward();
         Coordinate *v = uv->getForward();
-        double cost = u->distanceFromStart + uv->length;
+        double cost = u->distanceFromStart + uv->length();
         
         if (cost < v->distanceFromStart) {
           if (!openTable->get(u, &tmpBool) && (tmpBool)) {
@@ -169,7 +169,7 @@ namespace Graph {
       double deltaY = path->getForward()->Y - path->getBackward()->Y;
       double deltaZ = path->getForward()->Z - path->getBackward()->Z;
       
-      path->length = sqrt((deltaX * deltaX) +
+      path->attrib = sqrt((deltaX * deltaX) +
                           (deltaY * deltaY) +
                           (deltaZ * deltaZ));
       

@@ -91,7 +91,7 @@ namespace NeuralNetwork
     static bool optimalPruneEach(LLRB_TreeNode<Axion *, uint64_t> *current, void *neuron) {
       
       Neuron *input = current->data->getForward();
-      double tVal = sqrt(pow(current->data->capacity,2) + pow(current->data->mFlux,2));
+      double tVal = sqrt(pow(current->data->capacity(),2) + pow(current->data->mFlux,2));
       bool ret = false;
       
       if (tVal < irrelevant) /*|| (current->data->powerDissipation > 0.01)) */ {
@@ -114,7 +114,7 @@ namespace NeuralNetwork
     static bool probablisticPruneEach(LLRB_TreeNode<Axion *, uint64_t> *current, void *neuron) {
       
       Neuron *input = current->data->getForward();
-      double tVal = sqrt(pow(current->data->capacity,2) + pow(current->data->mFlux,2));
+      double tVal = sqrt(pow(current->data->capacity(),2) + pow(current->data->mFlux,2));
       double cutoff = pow(rand() / RAND_MAX, 2);
       bool ret = false;
       
@@ -140,7 +140,7 @@ namespace NeuralNetwork
       Neuron *input = synapse->getForward();
       
       if ((synapse != NULL) && (input != NULL)) {
-        *(((Neuron *)neuron)->memory) += input->probeActivation(currentIteration) * synapse->capacity;
+        *(((Neuron *)neuron)->memory) += input->probeActivation(currentIteration) * synapse->capacity();
       }
       return current->key;
     }
@@ -150,7 +150,7 @@ namespace NeuralNetwork
       Neuron *input = current->data->getForward();
       
       if (input->discovered < input->references) {
-        input->delta += synapse->capacity * ((Neuron *)neuron)->delta;
+        input->delta += synapse->capacity() * ((Neuron *)neuron)->delta;
         input->discovered++;
       }
       

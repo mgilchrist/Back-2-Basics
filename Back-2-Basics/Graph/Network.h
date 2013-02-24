@@ -33,12 +33,14 @@ namespace Graph {
   template <class HubType, class PipeType>
   class Pipe : public Edge<HubType,PipeType>
   {
-  public:
-    double capacity = 0.0;
     
   public:
     Pipe<HubType,PipeType>();
     Pipe<HubType,PipeType>(HubType *v, HubType *u, double capacity);
+    
+    inline double capacity() {
+      return this->attrib;
+    }
   };
   
   
@@ -73,7 +75,7 @@ namespace Graph {
     v->references++;
     u->addEdge((PipeType *)this);
     
-    this->capacity = capacity;
+    this->attrib = capacity;
   }
   
   
@@ -103,7 +105,6 @@ namespace Graph {
     Network();
     ~Network();
     
-    vector<EdgeType *> *minimumSpanningTree();
     virtual std::vector<double> *getMaximumFlow();
   };
   
@@ -119,45 +120,6 @@ namespace Graph {
     }
   }
   
-  template <class NodeType, class EdgeType>
-  vector<EdgeType *> *Network<NodeType,EdgeType>::minimumSpanningTree() {
-    vector<NodeType *> *nodes = this->getReachableNodes(this->start,this->terminal);
-    vector<EdgeType *> *ret = this->getEdges(nodes);
-    LLRB_Tree<EdgeType *, double> edges = new LLRB_Tree<EdgeType *, double>(false);
-    
-    for (uint64_t ix = 0; ix < ret->size(); ix++) {
-      edges.insert(ret->at(ix), (ret->at(ix))->capacity);
-    }
-    
-    ret->resize(0);
-    
-    for (uint64_t ix = 0; ix < nodes->size(); ix++) {
-      nodes->at(ix)->previousEdge = NULL;
-    }
-    
-    while ((ret->size() < nodes->size()) && edges.size() ) {
-      EdgeType *edge = edges.min(edges.treeRoot)->data;
-      NodeType *u = edge->getBackward();
-      NodeType *v = edge->getForward();
-      
-      if ((u->previousEdge->getBackward() != v->previousEdge->getBackward()) ||
-          (v->previousEdge->getBackward() == NULL)) {
-        NodeType *tmp = v->previousEdge->getBackward();
-        for (uint64_t ix = 0; ix < nodes->size(); ix++) {
-          if (nodes->at(ix) == tmp ) {
-            nodes->at(ix) = u->previousEdge->getBackward();
-          }
-        }
-        
-        ret->push_back(edge);
-      }
-      
-      edges.removeMin();
-    }
-    
-    return ret;
-    
-  }
   
   /* Network Flow */
   template <class NodeType, class EdgeType>
@@ -171,7 +133,7 @@ namespace Graph {
       thisEdge = edges->at(ix);
       
       thisEdge = new Pipe<NodeType,EdgeType>(thisEdge->getBackward(), thisEdge->getForward(),
-                              thisEdge->capacity);
+                              thisEdge->capacity());
       thisEdge->blocked = true;
       
       auxEdges->at(ix) = thisEdge;
@@ -193,11 +155,11 @@ namespace Graph {
   
   template <class NodeType, class EdgeType>
   double Network<NodeType,EdgeType>::bottleneck(double *flow, vector<Pipe<NodeType,EdgeType> *> *path) {
-    double bottleneck = path->at(0)->capacity - flow[0];
+    double bottleneck = path->at(0)->capacity() - flow[0];
     
     for (int ix = 1; ix < path->size(); ix++) {
-      if (bottleneck > (path->at(ix)->capacity - flow[ix])) {
-        bottleneck = (path->at(ix)->capacity - flow[ix]);
+      if (bottleneck > (path->at(ix)->capacity() - flow[ix])) {
+        bottleneck = (path->at(ix)->capacity() - flow[ix]);
       }
     }
     
@@ -260,7 +222,7 @@ namespace Graph {
       }
       
       for (int ix = 0; ix < flow->size(); ix++) {
-        if (flow->at(ix) == edges->at(ix)->capacity) {
+        if (flow->at(ix) == edges->at(ix)->capacity()) {
           edges->at(ix)->blocked = true;
         } else {
           edges->at(ix)->blocked = false;

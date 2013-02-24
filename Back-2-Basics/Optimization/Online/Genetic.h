@@ -138,7 +138,7 @@ namespace Optimization {
       fitness /= harmonySize;
       fitness = sqrt(fitness);
       
-      candidate->persistance += (double)harmonySize * ((pow(harmonySize, 2) / pow(((Genetic *)world)->answer.size(), 2))) * (1.0 - fitness);
+      candidate->persistance += (double)harmonySize * ((pow(harmonySize, 1.618) / pow(((Genetic *)world)->answer.size(), 1.618))) * (1.0 - fitness);
       
       return current->key;
     }

@@ -37,9 +37,12 @@ namespace Graph {
   class Via : public Edge<LocationType,ViaType>
   {
   public:
-    double      length = 0.0;
     Via<LocationType>();
     Via<LocationType>(Location<LocationType,Via> *v, Location<LocationType,Via> *u, double length);
+    
+    inline double length() {
+      return this->attrib;
+    }
   };
   
   
@@ -111,8 +114,8 @@ namespace Graph {
         NodeType *u = uv->getBackward();
         NodeType *v = uv->getForward();
         
-        if ((u->distanceFromStart + uv->length) < v->distanceFromStart) {
-          v->distanceFromStart = u->distanceFromStart + uv->length;
+        if ((u->distanceFromStart + uv->length()) < v->distanceFromStart) {
+          v->distanceFromStart = u->distanceFromStart + uv->length();
           v->previousEdge = uv;
         }
       }
@@ -125,7 +128,7 @@ namespace Graph {
         
         NodeType *u = current->data->getBackward();
         NodeType *v = current->data->getForward();
-        double tmp = u->distanceFromStart + current->data->length;
+        double tmp = u->distanceFromStart + current->data->length();
         
         if (tmp < v->distanceFromStart) {
           v->distanceFromStart = tmp;
@@ -153,7 +156,6 @@ namespace Graph {
     void setStart(NodeType *start);
     void setTerminal(NodeType *terminal);
     virtual vector<EdgeType *> *getShortestPath();
-    vector<EdgeType *> *minimumSpanningTree();
     
   };
   
@@ -187,47 +189,6 @@ namespace Graph {
       delete shortestPathToTerminal;
     }
     
-  }
-  
-  template <class NodeType, class EdgeType>
-  vector<EdgeType *> *Map<NodeType,EdgeType>::minimumSpanningTree() {
-    vector<NodeType *> *nodes = this->getReachableNodes(this->start,this->terminal);
-    vector<EdgeType *> *ret = this->getEdges(nodes);
-    LLRB_Tree<EdgeType *, double> edges = new LLRB_Tree<EdgeType *, double>(false);
-    
-    for (uint64_t ix = 0; ix < ret->size(); ix++) {
-      edges.insert(ret->at(ix), (ret->at(ix))->length);
-    }
-    
-    ret->resize(0);
-    
-    while ((ret->size() < nodes->size()) && edges.size() ) {
-      EdgeType *edge = edges.min(edges.treeRoot)->data;
-      NodeType *u = edge->getBackward();
-      NodeType *v = edge->getForward();
-      
-      if ((u->previousEdge->getBackward() != v->previousEdge->getBackward()) ||
-          (v->previousEdge->getBackward() == NULL)) {
-        NodeType *tmp = v->previousEdge->getBackward();
-        for (uint64_t ix = 0; ix < nodes->size(); ix++) {
-          if (nodes->at(ix) == tmp ) {
-            nodes->at(ix) = u->previousEdge->getBackward();
-          }
-        }
-        
-        ret->push_back(edge);
-      }
-      
-      edges.removeMin();
-    }
-    
-    /* Cleanup */
-    for (uint64_t ix = 0; ix < nodes->size(); ix++) {
-      nodes->at(ix)->previousEdge = NULL;
-    }
-    
-    return ret;
-  
   }
 
   /* Bellman-Ford */
@@ -263,7 +224,7 @@ namespace Graph {
       
       u = uv->getBackward();
       v = uv->getForward();
-      if ((u->distanceFromStart + uv->length) < v->distanceFromStart) {
+      if ((u->distanceFromStart + uv->length()) < v->distanceFromStart) {
         if (shortestPathToTerminal != NULL) {
           delete shortestPathToTerminal;
           shortestPathToTerminal = NULL;

@@ -125,7 +125,7 @@ namespace Graph {
   Path::Path(Coordinate *v, Coordinate *u, double length) {
     this->u = u;
     this->v = v;
-    this->length = length;
+    this->attrib = length;
     
     v->references++;
     u->addEdge((Path *)this);

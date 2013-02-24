@@ -58,7 +58,8 @@ namespace Graph {
     
   public:
     
-    bool        blocked;
+    bool        blocked = false;
+    double      attrib = 0.0;
     
     Edge();
     Edge(NodeType *v, NodeType *u);
@@ -179,7 +180,10 @@ namespace Graph {
     static vector<EdgeType *> *getEdges(vector<NodeType *> *nodes);
     
     virtual vector<EdgeType *> *getPathToTerminal();
-    virtual vector<EdgeType *> *minimumSpanningTree() =0;
+    vector<EdgeType *> *minimumSpanningTree();
+    vector<EdgeType *> *maximumSpanningTree();
+    
+    vector<vector<NodeType *> *> *getRelatedNodeGroups();
     
     void setStart(NodeType *start);
     void setTerminal(NodeType *terminal);
@@ -502,6 +506,132 @@ namespace Graph {
     
     return findAPath(start, terminal);
   }
+  
+  
+  template <class NodeType, class EdgeType>
+  vector<EdgeType *> *Graph<NodeType,EdgeType>::minimumSpanningTree() {
+    vector<NodeType *> *nodes = this->getReachableNodes(this->start,this->terminal);
+    vector<EdgeType *> *ret = this->getEdges(nodes);
+    LLRB_Tree<EdgeType *, double> edges = new LLRB_Tree<EdgeType *, double>(false);
+    
+    for (uint64_t ix = 0; ix < ret->size(); ix++) {
+      edges.insert(ret->at(ix), (ret->at(ix))->length);
+    }
+    
+    ret->resize(0);
+    
+    while ((ret->size() < nodes->size()) && edges.size() ) {
+      EdgeType *edge = edges.min(edges.treeRoot)->data;
+      NodeType *u = edge->getBackward();
+      NodeType *v = edge->getForward();
+      
+      if ((u->previousEdge->getBackward() != v->previousEdge->getBackward()) ||
+          (v->previousEdge->getBackward() == NULL)) {
+        NodeType *tmp = v->previousEdge->getBackward();
+        for (uint64_t ix = 0; ix < nodes->size(); ix++) {
+          if (nodes->at(ix) == tmp ) {
+            nodes->at(ix) = u->previousEdge->getBackward();
+          }
+        }
+        
+        ret->push_back(edge);
+      }
+      
+      edges.removeMin();
+    }
+    
+    /* Cleanup */
+    for (uint64_t ix = 0; ix < nodes->size(); ix++) {
+      nodes->at(ix)->previousEdge = NULL;
+    }
+    
+    return ret;
+    
+  }
+  
+  template <class NodeType, class EdgeType>
+  vector<EdgeType *> *Graph<NodeType,EdgeType>::maximumSpanningTree() {
+    vector<NodeType *> *nodes = this->getReachableNodes(this->start,this->terminal);
+    vector<EdgeType *> *ret = this->getEdges(nodes);
+    LLRB_Tree<EdgeType *, double> edges = new LLRB_Tree<EdgeType *, double>(false);
+    
+    for (uint64_t ix = 0; ix < ret->size(); ix++) {
+      edges.insert(ret->at(ix), -(ret->at(ix))->length); /* multiply by -1 to get maximum */
+    }
+    
+    ret->resize(0);
+    
+    while ((ret->size() < nodes->size()) && edges.size() ) {
+      EdgeType *edge = edges.min(edges.treeRoot)->data;
+      NodeType *u = edge->getBackward();
+      NodeType *v = edge->getForward();
+      
+      if ((u->previousEdge->getBackward() != v->previousEdge->getBackward()) ||
+          (v->previousEdge->getBackward() == NULL)) {
+        NodeType *tmp = v->previousEdge->getBackward();
+        for (uint64_t ix = 0; ix < nodes->size(); ix++) {
+          if (nodes->at(ix) == tmp ) {
+            nodes->at(ix) = u->previousEdge->getBackward();
+          }
+        }
+        
+        ret->push_back(edge);
+      }
+      
+      edges.removeMin();
+    }
+    
+    /* Cleanup */
+    for (uint64_t ix = 0; ix < nodes->size(); ix++) {
+      nodes->at(ix)->previousEdge = NULL;
+    }
+    
+    return ret;
+    
+  }
+  
+  template <class NodeType, class EdgeType>
+  vector<vector<NodeType *> *> *Graph<NodeType,EdgeType>::getRelatedNodeGroups() {
+    uint64_t maxEdgesPos = 0, minEdgesPos = 0;
+    
+    vector<EdgeType *> maxNotMin;
+    vector<EdgeType *> *minList = minimumSpanningTree();
+    vector<EdgeType *> *maxList = maximumSpanningTree();
+    uint64_t minLength = minList->getSize();
+    uint64_t maxLength = maxList->getSize();
+    
+    minEdgesPos = minLength-1;
+    maxEdgesPos = 0;
+    
+    /* get most heavy neccessary edges while discarding those
+     * that also happen to be the least heavy (but neccessary). */
+    
+    while (maxLength > 0) {
+      if ((maxLength > 0) and (minLength > 0)) {
+        if (maxList->atIndex(maxEdgesPos) == minList->atIndex(minEdgesPos)) {
+          maxEdgesPos++;
+          maxLength--;
+          minEdgesPos--;
+          minLength--;
+        } else if (maxList->atIndex(maxEdgesPos)->length >=
+                   minList->atIndex(minEdgesPos)->length) {
+          maxNotMin->push_back(maxList->atIndex(maxEdgesPos));
+          maxEdgesPos++;
+          maxLength--;
+        } else {
+          minEdgesPos--;
+          minLength--;
+        }
+      } else if (maxLength > 0) {
+        maxNotMin->push_back(maxList->atIndex(maxEdgesPos));
+        maxEdgesPos++;
+        maxLength--;
+      }
+    }
+    
+    
+  }
+  
   
   template <class NodeType, class EdgeType>
   void Graph<NodeType,EdgeType>::setStart(NodeType *start) {
