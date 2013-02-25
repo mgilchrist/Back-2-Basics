@@ -56,10 +56,11 @@ namespace Graph {
     NodeType    *u;
     NodeType    *v;
     
+    double      attrib = 0.0;
+    
   public:
     
     bool        blocked = false;
-    double      attrib = 0.0;
     
     Edge();
     Edge(NodeType *v, NodeType *u);
@@ -183,7 +184,7 @@ namespace Graph {
     vector<EdgeType *> *minimumSpanningTree();
     vector<EdgeType *> *maximumSpanningTree();
     
-    vector<vector<NodeType *> *> *getRelatedNodeGroups();
+    vector<vector<NodeType *> *> *getCloselyRelatedNodeGroups();
     
     void setStart(NodeType *start);
     void setTerminal(NodeType *terminal);
@@ -515,7 +516,7 @@ namespace Graph {
     LLRB_Tree<EdgeType *, double> edges = new LLRB_Tree<EdgeType *, double>(false);
     
     for (uint64_t ix = 0; ix < ret->size(); ix++) {
-      edges.insert(ret->at(ix), (ret->at(ix))->length);
+      edges.insert(ret->at(ix), (ret->at(ix))->attrib);
     }
     
     ret->resize(0);
@@ -544,6 +545,9 @@ namespace Graph {
     for (uint64_t ix = 0; ix < nodes->size(); ix++) {
       nodes->at(ix)->previousEdge = NULL;
     }
+    
+    nodes->resize(0);
+    delete nodes;
     
     return ret;
     
@@ -556,7 +560,7 @@ namespace Graph {
     LLRB_Tree<EdgeType *, double> edges = new LLRB_Tree<EdgeType *, double>(false);
     
     for (uint64_t ix = 0; ix < ret->size(); ix++) {
-      edges.insert(ret->at(ix), -(ret->at(ix))->length); /* multiply by -1 to get maximum */
+      edges.insert(ret->at(ix), -(ret->at(ix))->attrib); /* multiply by -1 to get maximum */
     }
     
     ret->resize(0);
@@ -586,52 +590,90 @@ namespace Graph {
       nodes->at(ix)->previousEdge = NULL;
     }
     
+    nodes->resize(0);
+    delete nodes;
+    
     return ret;
     
   }
   
   template <class NodeType, class EdgeType>
-  vector<vector<NodeType *> *> *Graph<NodeType,EdgeType>::getRelatedNodeGroups() {
-    uint64_t maxEdgesPos = 0, minEdgesPos = 0;
+  vector<vector<NodeType *> *> *Graph<NodeType,EdgeType>::getCloselyRelatedNodeGroups() {
     
-    vector<EdgeType *> maxNotMin;
-    vector<EdgeType *> *minList = minimumSpanningTree();
-    vector<EdgeType *> *maxList = maximumSpanningTree();
-    uint64_t minLength = minList->getSize();
-    uint64_t maxLength = maxList->getSize();
+    LLRB_Tree<vector<NodeType *>, uint64_t> rootsFound;
+    vector<NodeType *> *nodes = this->getReachableNodes(this->start,this->terminal);
+    vector<EdgeType *> *edgesMaxList = maximumSpanningTree();
+    double mean = 0.0, stdDev = 0.0, cutoff;
+
+    /* Determine edge cutoff limit (one standard deviation below average) */
     
-    minEdgesPos = minLength-1;
-    maxEdgesPos = 0;
+    for (uint64_t ix = 0; ix < edgesMaxList->size(); ix++) {
+      mean += edgesMaxList->at(ix)->attrib;
+    }
     
-    /* get most heavy neccessary edges while discarding those
-     * that also happen to be the least heavy (but neccessary). */
+    mean /= edgesMaxList->size();
     
-    while (maxLength > 0) {
-      if ((maxLength > 0) and (minLength > 0)) {
-        if (maxList->atIndex(maxEdgesPos) == minList->atIndex(minEdgesPos)) {
-          maxEdgesPos++;
-          maxLength--;
-          minEdgesPos--;
-          minLength--;
-        } else if (maxList->atIndex(maxEdgesPos)->length >=
-                   minList->atIndex(minEdgesPos)->length) {
-          maxNotMin->push_back(maxList->atIndex(maxEdgesPos));
-          maxEdgesPos++;
-          maxLength--;
-        } else {
-          minEdgesPos--;
-          minLength--;
-        }
-      } else if (maxLength > 0) {
-        maxNotMin->push_back(maxList->atIndex(maxEdgesPos));
-        maxEdgesPos++;
-        maxLength--;
+    for (uint64_t ix = 0; ix < edgesMaxList->size(); ix++) {
+      stdDev += pow(mean - edgesMaxList->at(ix)->attrib, 2);
+    }
+    
+    stdDev /= edgesMaxList->size();
+    stdDev = sqrt(stdDev);
+  
+    cutoff = mean - stdDev;
+    
+    for (uint64_t ix = 0; ix < edgesMaxList->size(); ix++) {
+      if (edgesMaxList->at(ix)->length() >= cutoff) {
+        edgesMaxList->at(ix)->getForward()->previousEdge = edgesMaxList->at(ix);
       }
     }
     
+    /* For each node find its root parent and store base on root */
     
+    for (uint64_t ix = 0; ix < nodes->size(); ix++) {
+      vector<NodeType *> *group;
+      NodeType *current = nodes->at(ix);
+      NodeType *previous = nodes->at(ix);
+      EdgeType *memo;
+      
+      /* get root node */
+      
+      while (current->previousEdge != NULL) {
+        memo = current->previousEdge;
+        current = current->previousEdge->getBackward();
+      }
+      
+      /* assign previous edges as edge connected to root to skip work */
+      
+      current = nodes->at(ix);
+      while (current->previousEdge != NULL) {
+        current->previousEdge = memo;
+        current = current->previousEdge->getBackward();
+      }
+      
+      if ((group = rootsFound.search((uint64_t)current)) == NULL) {
+        group = new vector<NodeType *>();
+        rootsFound.insert(group, (uint64_t)current);
+      }
+      
+      group->push_back(nodes->at(ix));
+    }
+    
+    /* Cleanup */
+    
+    for (uint64_t ix = 0; ix < edgesMaxList->size(); ix++) {
+      edgesMaxList->at(ix)->getForward()->previousEdge = NULL;
+    }
+    
+    nodes->resize(0);
+    delete nodes;
+    
+    edgesMaxList->resize(0);
+    delete edgesMaxList;
+    
+    return rootsFound.select(NULL, NULL);
   }
-  
+
   
   template <class NodeType, class EdgeType>
   void Graph<NodeType,EdgeType>::setStart(NodeType *start) {

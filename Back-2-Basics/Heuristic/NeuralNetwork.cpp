@@ -45,7 +45,7 @@ namespace NeuralNetwork
   }
   
   void Axion::changeInfluence(double correction) {
-    this->attrib += (correction * glbElecConductivity) + mFlux;
+    this->setCapacity(this->capacity() + (correction * glbElecConductivity) + mFlux);
     powerDissipation = pow(correction, 2) * mFlux;
     mFlux = (correction * glbElecConductivity) + (glbMagConductivity * mFlux);
   }

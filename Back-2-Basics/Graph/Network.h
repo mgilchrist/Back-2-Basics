@@ -41,6 +41,10 @@ namespace Graph {
     inline double capacity() {
       return this->attrib;
     }
+    
+    inline void setCapacity(double capacity) {
+      this->attrib = capacity;
+    }
   };
   
   

@@ -43,6 +43,10 @@ namespace Graph {
     inline double length() {
       return this->attrib;
     }
+    
+    inline void setLength(double length) {
+      this->attrib = length;
+    }
   };
   
   

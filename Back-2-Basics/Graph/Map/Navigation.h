@@ -169,9 +169,9 @@ namespace Graph {
       double deltaY = path->getForward()->Y - path->getBackward()->Y;
       double deltaZ = path->getForward()->Z - path->getBackward()->Z;
       
-      path->attrib = sqrt((deltaX * deltaX) +
+      path->setLength( sqrt((deltaX * deltaX) +
                           (deltaY * deltaY) +
-                          (deltaZ * deltaZ));
+                          (deltaZ * deltaZ)) );
       
       return current->key;
     }
