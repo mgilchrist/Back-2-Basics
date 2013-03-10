@@ -42,16 +42,16 @@ namespace Graph {
   
   void HeuristicMap::aStar() {
     Heap<Coordinate *,double> *open;
-    HashTable<bool,Coordinate *> *openTable;
-    HashTable<double,Coordinate *> *closed;
+    HashTable<bool *,Coordinate *> *openTable;
+    HashTable<double *,Coordinate *> *closed;
     Coordinate *u;
     vector<Path *> *ret;
     vector <Coordinate *> *dirtyNodes;
-    bool tmpBool;
+    bool tmpTrue = true;
     
     open = new Heap<Coordinate *,double>();
-    openTable = new HashTable<bool,Coordinate *>();
-    closed = new HashTable<double,Coordinate *>();
+    openTable = new HashTable<bool *,Coordinate *>();
+    closed = new HashTable<double *,Coordinate *>();
     dirtyNodes = new vector<Coordinate *>();
     
     AStarStorage *aStarStorage = new AStarStorage;
@@ -64,18 +64,18 @@ namespace Graph {
     
     start->auxIndex = open->push(this->start,0.0);
 
-    openTable->insert(true, this->start);
+    openTable->insert(&tmpTrue, this->start);
     
     while (open->size()) {
       u = open->pop();
       u->auxIndex = NULL;
       dirtyNodes->push_back(u);
       
-      if (!openTable->get(u, &tmpBool) || (!tmpBool)) {
+      if (!openTable->get(u)) {
         break;
       }
       
-      closed->insert(u->distanceFromStart, u);
+      closed->insert(&u->distanceFromStart, u);
       
       u->modifyAllAdjacent(aStarGambit, (void *)aStarStorage);
     }

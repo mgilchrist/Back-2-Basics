@@ -32,7 +32,11 @@ namespace NeuralNetwork
   
   static double zero = 0.0;
   
-  Axion::Axion(Neuron *input, Neuron *neuron, Info *info) {
+  Axion::Axion() {
+    
+  }
+  
+  void Axion::initialize(Neuron *input, Neuron *neuron, Info *info) {
     this->u = neuron;
     this->v = input;
     
@@ -50,7 +54,11 @@ namespace NeuralNetwork
     mFlux = (correction * glbElecConductivity) + (glbMagConductivity * mFlux);
   }
   
-  Neuron::Neuron(double *inputData, double *expectation) {
+  Neuron::Neuron() {
+    
+  }
+  
+  void Neuron::initialize(double *inputData, double *expectation) {
     
     if (inputData != NULL) {
       this->ptrInput = inputData;
@@ -98,7 +106,7 @@ namespace NeuralNetwork
   NeuralNetwork::NeuralNetwork() {
   }
   
-  NeuralNetwork::NeuralNetwork(std::vector<double *> *input,
+  void NeuralNetwork::initialize(std::vector<double *> *input,
                                std::vector<Trust<double> *> *output,
                                LLRB_Tree<double *, uint64_t> *expectation,
                                std::vector<Info *> *connectivity,
@@ -106,6 +114,7 @@ namespace NeuralNetwork
     
     Neuron *currentNeuron;
     Neuron **neuronArray[8];
+    Axion *tmpAxion;
     
     this->hiddenWidth = maxHiddenWidth;
     
@@ -125,7 +134,8 @@ namespace NeuralNetwork
       neuronArray[7][jx] = NULL;
     }
     
-    bias = new Neuron(&networkBias,NULL);
+    bias = new Neuron();
+    bias->initialize(&networkBias,NULL);
     
     
     for (int64_t ix = connectivity->size()-1; ix >= 0; ix--) {
@@ -139,7 +149,8 @@ namespace NeuralNetwork
         uint32_t pos = outPosition;
         double *reality = output->at(pos)->actual;
         double *expect = expectation->search((uint64_t)reality);
-        currentNeuron = new Neuron(&zero, expect);
+        currentNeuron = new Neuron();
+        currentNeuron->initialize(&zero, expect);
         
         Harmony<Neuron> *tmp = new Harmony<Neuron>;
         tmp->logicElement = currentNeuron;
@@ -148,7 +159,8 @@ namespace NeuralNetwork
         outputs.push_back(tmp);
         neuronArray[7][pos] = currentNeuron;
         
-        new Axion(bias, currentNeuron, NULL);
+        tmpAxion = new Axion();
+        tmpAxion->initialize(bias, currentNeuron, NULL);
         
         neuronArray[7][pos]->references = 1;
       }
@@ -160,16 +172,20 @@ namespace NeuralNetwork
       
       if (neuronArray[inLayer][inPosition] == NULL) {
         if (inLayer == 0) {
-          currentNeuron = new Neuron(input->at(inPosition), NULL);
-          inputs.push_back(currentNeuron);
+          currentNeuron = new Neuron();
+          currentNeuron->initialize(input->at(inPosition), NULL);
+          this->inputs.push_back(currentNeuron);
         } else {
-          currentNeuron = new Neuron(&zero, NULL);
+          currentNeuron = new Neuron();
+          currentNeuron->initialize(&zero, NULL);
         }
         neuronArray[inLayer][inPosition] = currentNeuron;
-        new Axion(bias, currentNeuron, NULL);
+        tmpAxion = new Axion();
+        tmpAxion->initialize(bias, currentNeuron, NULL);
       }
                                        
-      new Axion(neuronArray[inLayer][inPosition],
+      tmpAxion = new Axion();
+      tmpAxion->initialize(neuronArray[inLayer][inPosition],
                   neuronArray[outLayer][outPosition], conn);
       
       hiddenInfo.push_back(conn);

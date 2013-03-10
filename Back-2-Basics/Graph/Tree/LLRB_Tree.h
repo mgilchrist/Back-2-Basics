@@ -22,6 +22,7 @@
 #ifndef Back_2_Basics_LLRB_Tree_h
 #define Back_2_Basics_LLRB_Tree_h
 
+#include <assert.h>
 #include "Tree.h"
 
 namespace Tree {
@@ -232,6 +233,8 @@ namespace Tree {
   
   template <class EntryType, class KeyType, class TreeNodeType>
   void LLRB_Tree<EntryType,KeyType,TreeNodeType>::removeMax() {
+    assert(this->treeRoot != this->nullNode);
+    
     this->treeRoot = removeMax(this->treeRoot);
     this->treeRoot->color = BLACK;
   }
@@ -264,6 +267,8 @@ namespace Tree {
   
   template <class EntryType, class KeyType, class TreeNodeType>
   void LLRB_Tree<EntryType,KeyType,TreeNodeType>::removeMin() {
+    assert(this->treeRoot != this->nullNode);
+    
     this->treeRoot = removeMin(this->treeRoot);
     this->treeRoot->color = BLACK;
   }
@@ -293,27 +298,21 @@ namespace Tree {
   template <class EntryType, class KeyType, class TreeNodeType>
   TreeNodeType *LLRB_Tree<EntryType,KeyType,TreeNodeType>::remove(TreeNodeType *node, EntryType victimData, KeyType key) {
     
-    if (node == this->nullNode) {
-      return this->nullNode;
-    }
+    assert(node != this->nullNode);
     
     if (key < node->key) {
       if ((!isRed(TreeType::leftOf(node))) &&
           (!isRed(TreeType::leftOf(TreeType::leftOf(node))))) {
         node = moveViolationLeft(node);
         
-        if (node == this->nullNode) {
-          return this->nullNode;
-        }
+        assert(node != this->nullNode);
       }
       TreeType::setLeft(node, remove(TreeType::leftOf(node), victimData, key));
     } else {
       if (isRed(TreeType::leftOf(node))) {
         node = rotateRight(node);
         
-        if (node == this->nullNode) {
-          return this->nullNode;
-        }
+        assert(node != this->nullNode);
       }
       
       if ((key == node->key) && (TreeType::rightOf(node) == this->nullNode)) {
@@ -331,9 +330,7 @@ namespace Tree {
           (!isRed(TreeType::leftOf(TreeType::rightOf(node))))) {
         node = moveViolationRight(node);
         
-        if (node == this->nullNode) {
-          return this->nullNode;
-        }
+        assert(node != this->nullNode);
       }
       
       if ((key == node->key) && (uniqueKeys || (victimData == node->data))) {
@@ -354,6 +351,8 @@ namespace Tree {
   
   template <class EntryType, class KeyType, class TreeNodeType>
   void LLRB_Tree<EntryType,KeyType,TreeNodeType>::remove(EntryType data, KeyType key) {
+    assert(this->treeRoot != this->nullNode);
+    
     this->treeRoot = remove(this->treeRoot, data, key);
     this->treeRoot->color = BLACK;
   }

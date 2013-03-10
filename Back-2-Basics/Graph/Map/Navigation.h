@@ -29,8 +29,8 @@ namespace Graph {
   
   typedef struct AStarStorage {
     Heap<Coordinate *,double> *open;
-    HashTable<bool,Coordinate *> *openTable;
-    HashTable<double,Coordinate *> *closed;
+    HashTable<bool *,Coordinate *> *openTable;
+    HashTable<double *,Coordinate *> *closed;
   } AStarStorage;
   
   class Path : public Via<Coordinate,Path>
@@ -116,11 +116,11 @@ namespace Graph {
     static uint64_t aStarGambit(LLRB_TreeNode<Path *, uint64_t> *current, void *storage) {
       
       Path *uv = current->data;
-      bool tmpBool;
-      double tmpDouble;
+      bool tmpTrue, tmpFalse;
+      bool *available;
       Heap<Coordinate *,double> *open = ((AStarStorage *)storage)->open;
-      HashTable<bool,Coordinate *> *openTable = ((AStarStorage *)storage)->openTable;
-      HashTable<double,Coordinate *> *closed = ((AStarStorage *)storage)->closed;
+      HashTable<bool *,Coordinate *> *openTable = ((AStarStorage *)storage)->openTable;
+      HashTable<double *,Coordinate *> *closed = ((AStarStorage *)storage)->closed;
       
       if (!uv->blocked) {
         Coordinate *u = uv->getBackward();
@@ -128,19 +128,21 @@ namespace Graph {
         double cost = u->distanceFromStart + uv->length();
         
         if (cost < v->distanceFromStart) {
-          if (!openTable->get(u, &tmpBool) && (tmpBool)) {
-            openTable->update(false, v, &tmpBool);
+          available = openTable->get(u);
+          
+          if (available != NULL) {
+            openTable->update(v, &tmpFalse);
           }
           
-          closed->remove(v, &tmpDouble);
+          closed->remove(v);
         }
         
-        if ((openTable->get(u, &tmpBool) || (!tmpBool)) &&
-            ((!closed->get(v, &tmpDouble)) && (tmpDouble != 0.0))) {
+        if (!(openTable->get(u)) && (!closed->get(v))) {
           
           v->distanceFromStart = cost;
           
-          if (!openTable->update(true, v, &tmpBool) && (!tmpBool)) {
+          if (!openTable->get(v)) {
+            openTable->update(v, &tmpTrue);
             open->remove(*(v->auxIndex));
             v->auxIndex = NULL;
           }

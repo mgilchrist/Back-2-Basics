@@ -333,6 +333,8 @@ namespace Tree {
     vector<TreeNodeType *> *victims = new vector<TreeNodeType *>();
     vector<DataType> *ret = new vector<DataType>();
     
+    assert(this->treeRoot != nullNode);
+    
     rSelect(criteria,object,this->treeRoot,victims);
     
     for (uint64_t ix = 0; ix < victims->size(); ix++) {
@@ -351,9 +353,9 @@ namespace Tree {
     
     vector<TreeNodeType *> *updates = new vector<TreeNodeType *>();
     
-    if (this->treeRoot != nullNode) {
-      rModifyAll(action,object,this->treeRoot,updates);
-    }
+    assert(this->treeRoot != nullNode);
+    
+    rModifyAll(action,object,this->treeRoot,updates);
     
     for (uint64_t ix = 0; ix < updates->size(); ix++) {
       DataType data = updates->at(ix)->data;

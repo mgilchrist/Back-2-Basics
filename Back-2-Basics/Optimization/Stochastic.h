@@ -294,7 +294,8 @@ namespace Optimization {
     
     hiddenInfo = infoTree.select(NULL, NULL);
      
-    tmp = new HeuristicType(inputEnv, trusts, expectation, hiddenInfo, hiddenWidth);
+    tmp = new HeuristicType();
+    tmp->initialize(inputEnv, trusts, expectation, hiddenInfo, hiddenWidth);
     
     this->candidates.insert(tmp, (uint64_t)tmp);
     

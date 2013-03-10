@@ -64,7 +64,7 @@ namespace NeuralNetwork
     
   public:
     
-    Axion(Neuron *neuron, Neuron *input, Info *tree);
+    Axion();
     
     ~Axion() {
       if (adjacency != NULL) {
@@ -72,6 +72,8 @@ namespace NeuralNetwork
         adjacency = NULL;
       }
     }
+    
+    void initialize(Neuron *neuron, Neuron *input, Info *tree);
     
     void changeInfluence(double capacity);
     
@@ -195,7 +197,9 @@ namespace NeuralNetwork
     double *ptrInput = NULL;
     double totalInputs = 0.0;
     
-    Neuron(double *, double *);
+    Neuron();
+    
+    void initialize(double *, double *);
     
     double probeActivation(uint64_t iteration);
     
@@ -266,7 +270,8 @@ namespace NeuralNetwork
   public:
     
     NeuralNetwork();
-    NeuralNetwork(vector<double *> *input,
+    
+    void initialize(vector<double *> *input,
                   vector<Trust<double> *> *output,
                   LLRB_Tree<double *, uint64_t> *expectation,
                   vector<Info *> *layers,

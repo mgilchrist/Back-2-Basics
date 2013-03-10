@@ -184,8 +184,6 @@ namespace Graph {
     vector<EdgeType *> *minimumSpanningTree();
     vector<EdgeType *> *maximumSpanningTree();
     
-    vector<vector<NodeType *> *> *getCloselyRelatedNodeGroups();
-    
     void setStart(NodeType *start);
     void setTerminal(NodeType *terminal);
     NodeType *getStart();
@@ -595,83 +593,6 @@ namespace Graph {
     
     return ret;
     
-  }
-  
-  template <class NodeType, class EdgeType>
-  vector<vector<NodeType *> *> *Graph<NodeType,EdgeType>::getCloselyRelatedNodeGroups() {
-    
-    LLRB_Tree<vector<NodeType *>, uint64_t> rootsFound;
-    vector<NodeType *> *nodes = this->getReachableNodes(this->start,this->terminal);
-    vector<EdgeType *> *edgesMaxList = maximumSpanningTree();
-    double mean = 0.0, stdDev = 0.0, cutoff;
-
-    /* Determine edge cutoff limit (one standard deviation below average) */
-    
-    for (uint64_t ix = 0; ix < edgesMaxList->size(); ix++) {
-      mean += edgesMaxList->at(ix)->attrib;
-    }
-    
-    mean /= edgesMaxList->size();
-    
-    for (uint64_t ix = 0; ix < edgesMaxList->size(); ix++) {
-      stdDev += pow(mean - edgesMaxList->at(ix)->attrib, 2);
-    }
-    
-    stdDev /= edgesMaxList->size();
-    stdDev = sqrt(stdDev);
-  
-    cutoff = mean - stdDev;
-    
-    for (uint64_t ix = 0; ix < edgesMaxList->size(); ix++) {
-      if (edgesMaxList->at(ix)->length() >= cutoff) {
-        edgesMaxList->at(ix)->getForward()->previousEdge = edgesMaxList->at(ix);
-      }
-    }
-    
-    /* For each node find its root parent and store base on root */
-    
-    for (uint64_t ix = 0; ix < nodes->size(); ix++) {
-      vector<NodeType *> *group;
-      NodeType *current = nodes->at(ix);
-      NodeType *previous = nodes->at(ix);
-      EdgeType *memo;
-      
-      /* get root node */
-      
-      while (current->previousEdge != NULL) {
-        memo = current->previousEdge;
-        current = current->previousEdge->getBackward();
-      }
-      
-      /* assign previous edges as edge connected to root to skip work */
-      
-      current = nodes->at(ix);
-      while (current->previousEdge != NULL) {
-        current->previousEdge = memo;
-        current = current->previousEdge->getBackward();
-      }
-      
-      if ((group = rootsFound.search((uint64_t)current)) == NULL) {
-        group = new vector<NodeType *>();
-        rootsFound.insert(group, (uint64_t)current);
-      }
-      
-      group->push_back(nodes->at(ix));
-    }
-    
-    /* Cleanup */
-    
-    for (uint64_t ix = 0; ix < edgesMaxList->size(); ix++) {
-      edgesMaxList->at(ix)->getForward()->previousEdge = NULL;
-    }
-    
-    nodes->resize(0);
-    delete nodes;
-    
-    edgesMaxList->resize(0);
-    delete edgesMaxList;
-    
-    return rootsFound.select(NULL, NULL);
   }
 
   

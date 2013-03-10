@@ -44,11 +44,10 @@ const uint64_t glbSlowTestSize = 0x10000;
 
 
 int testHashTable() {
-  HashTable<uint64_t,uint64_t> *hashTable;
+  HashTable<uint64_t *,uint64_t> *hashTable;
   std::vector<uint64_t> verify;
-  hashTable = new HashTable<uint64_t,uint64_t>(glbTestSize);
-  uint64_t *tmpInt = new uint64_t;
-  uint64_t value;
+  hashTable = new HashTable<uint64_t *,uint64_t>(glbTestSize);
+  uint64_t *value;
   
   cout << "\nTesting HashTable.\n";
   
@@ -57,18 +56,18 @@ int testHashTable() {
   for (int ix = 0; ix < glbTestSize; ix++) {
     
     do {
-      value = random();
-    } while (!hashTable->get(value, tmpInt));
+      value = new uint64_t(random());
+    } while (!hashTable->get(*value));
     
-    hashTable->insert(value, value);
+    hashTable->insert(value, *value);
     
-    verify[ix] = value;
+    verify[ix] = *value;
   }
   
   for (int ix = 0; ix < glbTestSize; ix++) {
     
-    if (hashTable->get(verify[ix],tmpInt) || (*tmpInt != verify[ix])) {
-      hashTable->get(verify[ix], tmpInt);
+    if (*hashTable->get(verify[ix]) != verify[ix]) {
+      hashTable->get(verify[ix]);
       cout << "Index ";
       cout << ix;
       cout << " does not match!\n";
@@ -82,19 +81,20 @@ int testHashTable() {
   
   for (int ix = 0; ix < glbTestSize; ix++) {
     
-    if (hashTable->remove(verify[ix],tmpInt) || (*tmpInt != verify[ix])) {
+    if (*hashTable->get(verify[ix]) != verify[ix]) {
       cout << "Index ";
       cout << ix;
       cout << " does not match!\n";
       return -1;
     }
     
+    hashTable->remove(verify[ix]);
+    
     //if ((index % 4) != 3) {
     //  hashTable->remove(index);
     //}
   }
   
-  delete tmpInt;
   delete hashTable;
   
   cout << "HashTable:Done\n";
@@ -103,11 +103,10 @@ int testHashTable() {
 }
 
 int testSecureHashTable() {
-  SecureHashTable<uint64_t,uint64_t> *hashTable;
+  SecureHashTable<uint64_t *,uint64_t> *hashTable;
   std::vector<uint64_t> verify;
-  hashTable = new SecureHashTable<uint64_t,uint64_t>(glbSlowTestSize);
-  uint64_t *tmpInt = new uint64_t;
-  uint64_t value;
+  hashTable = new SecureHashTable<uint64_t *,uint64_t>(glbSlowTestSize);
+  uint64_t *value;
   
   verify.resize(glbSlowTestSize);
   
@@ -116,19 +115,17 @@ int testSecureHashTable() {
   for (uint64_t ix = 0; ix < glbSlowTestSize; ix++) {
     
     do {
-      value = random();
-    } while (!hashTable->get(value, tmpInt));
+      value = new uint64_t(random());
+    } while (!hashTable->get(*value));
     
-    hashTable->insert(value, value);
-    hashTable->get(value, tmpInt);
+    hashTable->insert(value, *value);
     
-    verify[ix] = value;
+    verify[ix] = *value;
   }
   
   for (uint64_t ix = 0; ix < glbSlowTestSize; ix++) {
     
-    if (hashTable->get(verify[ix],tmpInt) || (*tmpInt != verify[ix])) {
-      hashTable->get(verify[ix], tmpInt);
+    if (*hashTable->get(verify[ix]) != verify[ix]) {
       cout << "Index ";
       cout << ix;
       cout << " does not match!\n";
@@ -141,18 +138,19 @@ int testSecureHashTable() {
   
   for (uint64_t ix = 0; ix < glbSlowTestSize; ix++) {
     
-    if (hashTable->remove(verify[ix],tmpInt) || (*tmpInt != verify[ix])) {
+    if (*hashTable->get(verify[ix]) != verify[ix]) {
       cout << "Index ";
       cout << ix;
       cout << " does not match!\n";
     }
+    
+    hashTable->remove(verify[ix]);
     
     //if ((index % 4) != 3) {
     //  hashTable->remove(index);
     //}
   }
   
-  delete tmpInt;
   delete hashTable;
   
   cout << "SecureHashTable:Done\n";
@@ -469,7 +467,9 @@ int testNeuralNetwork() {
     thisExpect->insert(new double(), jx);
   }
   
-  NNetwork = new NeuralNetwork::NeuralNetwork(thisInput, thisOutput, thisExpect, hiddenInfo, thisOutput->size());
+  NNetwork = new NeuralNetwork::NeuralNetwork();
+  
+  NNetwork->initialize(thisInput, thisOutput, thisExpect, hiddenInfo, thisOutput->size());
   
   for (uint64_t jx = 0; jx < thisInput->size(); jx++) {
     *(thisInput->at(jx)) = (random() % precision) / (precision * 1.0);
@@ -672,6 +672,7 @@ int testNavigation() {
   }
   
   cout << "Navigation:Done\n";
+  
   
   return 0;
 }

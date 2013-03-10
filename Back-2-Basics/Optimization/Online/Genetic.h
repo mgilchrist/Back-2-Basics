@@ -360,7 +360,9 @@ namespace Optimization {
       }
     }
     
-    tmpHeuristic = new HeuristicType(childInputs,childTrusts,&childExpectations,childHiddenInfo,dad->hiddenWidth+mom->hiddenWidth);
+    tmpHeuristic = new HeuristicType();
+    tmpHeuristic->initialize(childInputs,childTrusts,&childExpectations,
+                             childHiddenInfo,dad->hiddenWidth+mom->hiddenWidth);
     
     tmpHeuristic->persistance = dad->persistance + mom->persistance;
     tmpHeuristic->energy *= childHiddenInfo->size() * glbEnergyCnst;

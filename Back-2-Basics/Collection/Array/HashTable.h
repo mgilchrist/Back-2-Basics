@@ -22,6 +22,7 @@
 #ifndef OpenSource_HashTable_h
 #define OpenSource_HashTable_h
 
+#include <assert.h>
 #include <vector>
 #include "Strings.h"
 #include "Array.h"
@@ -55,10 +56,10 @@ namespace Collection {
     HashTable(uint64_t);
     
     
-    int remove(KeyType, ElementType *);
-    int insert(ElementType, KeyType);
-    int get(KeyType, ElementType *);
-    int update(ElementType,KeyType,ElementType *);
+    void remove(KeyType);
+    void insert(ElementType, KeyType);
+    ElementType get(KeyType);
+    void update(KeyType, ElementType);
     //ElementType *clone();
   };
   
@@ -66,30 +67,22 @@ namespace Collection {
   /* Class: HashTable */
   
   template <class ElementType, class KeyType>
-  int HashTable<ElementType,KeyType>::get(KeyType key, ElementType *data) {
+  ElementType HashTable<ElementType,KeyType>::get(KeyType key) {
     uint64_t index = search(key);
     
-    if (!index) {
-      *data = 0;
-      return -1;
-    }
+    assert(index);
     
-    *data = elements[index];
+    return elements[index];
     
-    return 0;
   }
   
   template <class ElementType, class KeyType>
-  int HashTable<ElementType,KeyType>::update(ElementType data, KeyType key, ElementType *ret) {
+  void HashTable<ElementType,KeyType>::update(KeyType key, ElementType data) {
     uint64_t index = search(key);
     
-    if (index) {
-      *ret = elements[index];
-      elements[index] = data;
-      return 1;
-    }
+    assert(index);
     
-    return insert(data, key);
+    elements[index] = data;
     
   }
   
@@ -185,27 +178,20 @@ namespace Collection {
   }
   
   template <class ElementType, class KeyType>
-  int HashTable<ElementType,KeyType>::remove(KeyType key, ElementType *ret) {
+  void HashTable<ElementType,KeyType>::remove(KeyType key) {
     uint64_t index = search(key);
     
-    if ((index) && (keyMap[index] != NULL)) {
-      *ret = elements[index];
-      
-      delete keyMap[index];
-      
-      keyMap[index] = 0;
-      fullHashMap[index] = 0;
-      elements[index] = 0;
-      
-      return 0;
-    }
+    assert((index) && (keyMap[index] != NULL));
     
+    delete keyMap[index];
     
-    return -1;
+    keyMap[index] = 0;
+    fullHashMap[index] = 0;
+    elements[index] = 0;
   }
   
   template <class ElementType, class KeyType>
-  int HashTable<ElementType,KeyType>::insert(ElementType data, KeyType key) {
+  void HashTable<ElementType,KeyType>::insert(ElementType data, KeyType key) {
     
     uint8_t useHash;
     uint64_t index;
@@ -229,9 +215,7 @@ namespace Collection {
           
           break;
         }
-        if (*(keyMap[index]) == key) {
-          return -1;
-        }
+        assert(*(keyMap[index]) == key);
       }
       
       if (!useHash) {
@@ -242,8 +226,6 @@ namespace Collection {
       }
       
     }
-    
-    return 0;
     
   }
   
