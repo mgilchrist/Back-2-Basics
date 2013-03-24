@@ -467,9 +467,14 @@ int testNeuralNetwork() {
     thisExpect->insert(new double(), jx);
   }
   
-  NNetwork = new NeuralNetwork::NeuralNetwork();
-  
-  NNetwork->initialize(thisInput, thisOutput, thisExpect, hiddenInfo, thisOutput->size());
+  NNetwork = new NeuralNetwork::NeuralNetwork
+    (
+     thisInput,
+     thisOutput,
+     thisExpect,
+     hiddenInfo,
+     thisOutput->size()
+    );
   
   for (uint64_t jx = 0; jx < thisInput->size(); jx++) {
     *(thisInput->at(jx)) = (random() % precision) / (precision * 1.0);

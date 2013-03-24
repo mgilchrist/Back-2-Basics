@@ -62,6 +62,8 @@ namespace NeuralNetwork
     double powerDissipation = 0.0;
     Info *adjacency = NULL;
     
+    void initialize(Neuron *neuron, Neuron *input, Info *tree);
+    
   public:
     
     Axion();
@@ -73,7 +75,9 @@ namespace NeuralNetwork
       }
     }
     
-    void initialize(Neuron *neuron, Neuron *input, Info *tree);
+    Axion(Neuron *neuron, Neuron *input, Info *tree) {
+      initialize(neuron, input, tree);
+    }
     
     void changeInfluence(double capacity);
     
@@ -81,6 +85,9 @@ namespace NeuralNetwork
   };
   
   class Neuron : public Hub<Neuron,Axion> {
+    
+  private:
+    NeuralNetwork *nnetwork;
     
   protected:
     
@@ -105,7 +112,7 @@ namespace NeuralNetwork
       }
         
       if (input->discovered == input->references) {
-        input->forwardEdges.deletion(Neuron::optimalPruneEach, input);
+        input->forwardEdges->deletion(Neuron::optimalPruneEach, input);
         input->discovered = 0;
       }
       
@@ -129,7 +136,7 @@ namespace NeuralNetwork
       }
       
       if (input->discovered == input->references) {
-        input->forwardEdges.deletion(Neuron::probablisticPruneEach, input);
+        input->forwardEdges->deletion(Neuron::probablisticPruneEach, input);
         input->discovered = 0;
       }
       
@@ -190,6 +197,9 @@ namespace NeuralNetwork
       return current->key;
     }
     
+    void deinitialize();
+    void initialize(double *, double *, NeuralNetwork *);
+    
   public:
     
     double delta = 0.0;
@@ -197,9 +207,17 @@ namespace NeuralNetwork
     double *ptrInput = NULL;
     double totalInputs = 0.0;
     
-    Neuron();
+    Neuron() {
+      
+    }
     
-    void initialize(double *, double *);
+    ~Neuron() {
+      deinitialize();
+    }
+    
+    Neuron(double *inputData, double *expectation, NeuralNetwork *neuralNetwork) {
+      initialize(inputData, expectation, neuralNetwork);
+    }
     
     double probeActivation(uint64_t iteration);
     
@@ -224,6 +242,8 @@ namespace NeuralNetwork
     vector<Axion *> terminalEdges;
     
   protected:
+    
+    uint64_t numberOfNeurons = 0;
     
     static void changeInputInfluenceEach(Harmony<Neuron> *current) {
       Neuron *pCurrentNeuron = (Neuron *)(current->logicElement);
@@ -267,15 +287,31 @@ namespace NeuralNetwork
       return current->key;
     }
     
-  public:
-    
-    NeuralNetwork();
+    void deinitialize();
     
     void initialize(vector<double *> *input,
+                    vector<Trust<double> *> *output,
+                    LLRB_Tree<double *, uint64_t> *expectation,
+                    vector<Info *> *layers,
+                    uint64_t maxHiddenWidth);
+    
+  public:
+    
+    NeuralNetwork() {
+      
+    }
+    
+    ~NeuralNetwork() {
+      deinitialize();
+    }
+    
+    NeuralNetwork(vector<double *> *input,
                   vector<Trust<double> *> *output,
                   LLRB_Tree<double *, uint64_t> *expectation,
                   vector<Info *> *layers,
-                  uint64_t maxHiddenWidth);
+                  uint64_t maxHiddenWidth) {
+      initialize(input, output, expectation, layers, maxHiddenWidth);
+    }
     
     void calcExpectation(uint64_t);
     void doCorrection();
@@ -288,6 +324,8 @@ namespace NeuralNetwork
     
     void optimalPrune();
     void probablisticPrune();
+    
+    friend class Neuron;
     
   };
   

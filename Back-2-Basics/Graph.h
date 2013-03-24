@@ -58,13 +58,20 @@ namespace Graph {
     
     double      attrib = 0.0;
     
+    void initialize(NodeType *v, NodeType *u);
+    void deinitialize();
+    
   public:
     
     bool        blocked = false;
     
-    Edge();
-    Edge(NodeType *v, NodeType *u);
-    ~Edge();
+    Edge() {
+      
+    }
+    
+    Edge(NodeType *v, NodeType *u) {
+      initialize(v,u);
+    }
     
     NodeType *getForward();
     NodeType *getBackward();
@@ -79,7 +86,10 @@ namespace Graph {
   {
     
   protected:
-    LLRB_Tree<EdgeType *, uint64_t> forwardEdges;
+    LLRB_Tree<EdgeType *, uint64_t> *forwardEdges = NULL;
+    
+    void initialize();
+    void deinitialize();
     
   public:
     uint64_t    discovered = 0;
@@ -88,8 +98,13 @@ namespace Graph {
     
   public:
     
-    Node();
-    ~Node();
+    Node() {
+      initialize();
+    }
+    
+    ~Node() {
+      deinitialize();
+    }
     
     void addEdge(EdgeType *);
     void removeEdge(EdgeType *);
@@ -207,22 +222,26 @@ namespace Graph {
   
   /* Edge */
   
-  template <class NodeType, class EdgeType>
-  Edge<NodeType,EdgeType>::Edge() {
-    
-  }
   
   template <class NodeType, class EdgeType>
-  Edge<NodeType,EdgeType>::Edge(NodeType *v, NodeType *u) {
+  void Edge<NodeType,EdgeType>::initialize(NodeType *v, NodeType *u) {
+    assert(v != u);
+    assert(u != NULL);
+    assert(v != NULL);
+    
     this->u = u;
     this->v = v;
     
     v->references++;
     u->addEdge((EdgeType *)this);
+    
+    assert(v->references != 0);
   }
   
   template <class NodeType, class EdgeType>
-  Edge<NodeType,EdgeType>::~Edge() {
+  void Edge<NodeType,EdgeType>::deinitialize() {
+    assert(v != NULL);
+    assert(v->references != 0);
     
     v->references--;
     
@@ -245,33 +264,42 @@ namespace Graph {
   
   
   /* Node */
+
   
   template <class NodeType, class EdgeType>
-  Node<NodeType,EdgeType>::Node() {
-  
+  void Node<NodeType,EdgeType>::initialize() {
+    assert(forwardEdges == NULL);
+    
+    forwardEdges = new LLRB_Tree<EdgeType *, uint64_t>();
   }
   
-  
-  
   template <class NodeType, class EdgeType>
-  Node<NodeType,EdgeType>::~Node() {
-    forwardEdges.deletion(NULL,NULL);
+  void Node<NodeType,EdgeType>::deinitialize() {
+    assert(forwardEdges != NULL);
+    
+    forwardEdges->deletion(NULL,NULL);
+    
+    forwardEdges = NULL;
   }
   
   template <class NodeType, class EdgeType>
   void Node<NodeType,EdgeType>::addEdge(EdgeType *edge) {
-    forwardEdges.insert(edge, (uint64_t)edge);
+    assert(forwardEdges != NULL);
+    
+    forwardEdges->insert(edge, (uint64_t)edge);
   }
   
   template <class NodeType, class EdgeType>
   void Node<NodeType,EdgeType>::removeEdge(EdgeType *edge) {
-    forwardEdges.remove(edge, (uint64_t)edge);
+    assert(forwardEdges != NULL);
+    
+    forwardEdges->remove(edge, (uint64_t)edge);
   }
   
   template <class NodeType, class EdgeType>
   void Node<NodeType,EdgeType>::modifyAllAdjacent(uint64_t (*action)(LLRB_TreeNode<EdgeType *, uint64_t> *, void *), void *object) {
-    if (forwardEdges.size()) {
-      forwardEdges.modifyAll(action, object);
+    if (forwardEdges->size()) {
+      forwardEdges->modifyAll(action, object);
     }
   }
   

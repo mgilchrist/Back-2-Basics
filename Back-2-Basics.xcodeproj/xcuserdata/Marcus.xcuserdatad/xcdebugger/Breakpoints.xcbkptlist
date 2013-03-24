@@ -8,12 +8,12 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "Back-2-Basics/Optimization/Online/Genetic.h"
-         timestampString = "377414213.258078"
+         timestampString = "384653790.400337"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "104"
-         endingLineNumber = "104"
-         landmarkName = "reckoningEach(LLRB_TreeNode&lt;HeuristicType *,uint64_t&gt; *current, void *world)"
+         startingLineNumber = "112"
+         endingLineNumber = "112"
+         landmarkName = "checkSurvivalEach(LLRB_TreeNode&lt;HeuristicType *,uint64_t&gt; *current, void *world)"
          landmarkType = "7">
       </FileBreakpoint>
       <FileBreakpoint
@@ -21,12 +21,12 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "Back-2-Basics/Optimization/Online/Genetic.h"
-         timestampString = "377414205.148124"
+         timestampString = "384653790.400337"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "94"
-         endingLineNumber = "94"
-         landmarkName = "reckoningEach(LLRB_TreeNode&lt;HeuristicType *,uint64_t&gt; *current, void *world)"
+         startingLineNumber = "97"
+         endingLineNumber = "97"
+         landmarkName = "checkSurvivalEach(LLRB_TreeNode&lt;HeuristicType *,uint64_t&gt; *current, void *world)"
          landmarkType = "7">
       </FileBreakpoint>
       <FileBreakpoint
@@ -34,12 +34,25 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "Back-2-Basics/Optimization/Online/Genetic.h"
-         timestampString = "377505670.204155"
+         timestampString = "384653790.400337"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "107"
-         endingLineNumber = "107"
-         landmarkName = "reckoningEach(LLRB_TreeNode&lt;HeuristicType *,uint64_t&gt; *current, void *world)"
+         startingLineNumber = "115"
+         endingLineNumber = "115"
+         landmarkName = "checkSurvivalEach(LLRB_TreeNode&lt;HeuristicType *,uint64_t&gt; *current, void *world)"
+         landmarkType = "7">
+      </FileBreakpoint>
+      <FileBreakpoint
+         shouldBeEnabled = "No"
+         ignoreCount = "0"
+         continueAfterRunningActions = "No"
+         filePath = "Back-2-Basics/Graph/Tree.h"
+         timestampString = "384654017.087974"
+         startingColumnNumber = "9223372036854775807"
+         endingColumnNumber = "9223372036854775807"
+         startingLineNumber = "322"
+         endingLineNumber = "322"
+         landmarkName = "deletion(bool (*criteria)(TreeNodeType *, void *), void *object)"
          landmarkType = "7">
       </FileBreakpoint>
    </FileBreakpoints>

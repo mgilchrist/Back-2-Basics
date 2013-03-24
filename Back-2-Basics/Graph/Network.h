@@ -34,9 +34,18 @@ namespace Graph {
   class Pipe : public Edge<HubType,PipeType>
   {
     
+  protected:
+    
+    void initialize(HubType *v, HubType *u, double capacity);
+    
   public:
-    Pipe<HubType,PipeType>();
-    Pipe<HubType,PipeType>(HubType *v, HubType *u, double capacity);
+    Pipe<HubType,PipeType>() {
+      
+    }
+    
+    Pipe<HubType,PipeType>(HubType *v, HubType *u, double capacity) {
+      initialize(v,u,capacity);
+    }
     
     inline double capacity() {
       return this->attrib;
@@ -57,7 +66,9 @@ namespace Graph {
     
   public:
     
-    Hub();
+    Hub() {
+      this->initialize();
+    }
   };
   
   
@@ -67,28 +78,14 @@ namespace Graph {
   /* Pipe */
   
   template <class HubType, class PipeType>
-  Pipe<HubType,PipeType>::Pipe() {
-    
-  }
-  
-  template <class HubType, class PipeType>
-  Pipe<HubType,PipeType>::Pipe(HubType *v, HubType *u, double capacity) {
-    this->u = u;
-    this->v = v;
-    
-    v->references++;
-    u->addEdge((PipeType *)this);
+  void Pipe<HubType,PipeType>::initialize(HubType *v, HubType *u, double capacity) {
+    Edge<HubType,PipeType>::initialize(v,u);
     
     this->attrib = capacity;
   }
   
   
   /* Hub */
-  
-  template <class NodeType, class EdgeType>
-  Hub<NodeType,EdgeType>::Hub() {
-  
-  }
   
   
   /* Network */

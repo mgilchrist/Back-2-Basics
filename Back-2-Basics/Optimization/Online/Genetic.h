@@ -31,7 +31,7 @@ namespace Optimization {
   static uint64_t currentTime = -1;
   static const double glbToughness = 0.0;
   static const uint64_t ofAge = 1;
-  static const uint64_t maxAge = 10;
+  static const uint64_t maxAge = 100;
   
   template <class HeuristicType, class LogicType, class DataType>
   class Genetic : public Stoichastic<HeuristicType,DataType> {
@@ -39,7 +39,7 @@ namespace Optimization {
   protected:
     
     
-    static bool reckoningEach(LLRB_TreeNode<HeuristicType *,uint64_t> *current, void *world) {
+    static bool checkSurvivalEach(LLRB_TreeNode<HeuristicType *,uint64_t> *current, void *world) {
       Heuristic<HeuristicType,LogicType,DataType> *candidate = current->data;
       LLRB_Tree<Trust<DataType> *, uint64_t> *cia = &(((Genetic *)world)->active);
       vector<Harmony<LogicType> *> *harmony = candidate->getHarmony();
@@ -59,12 +59,15 @@ namespace Optimization {
           if (harmony->at(ix)->logicElement == NULL) {
             Trust<double> *localComp = cia->search((uint64_t)harmony->at(ix)->reality);
             localComp->prediction->predictions.remove(harmony->at(ix)->expectation, (uint64_t)harmony->at(ix)->expectation);
+            delete harmony->at(ix)->expectation;
+            harmony->at(ix)->expectation = NULL;
             
             if (!localComp->prediction->predictions.size()) {
               cia->remove(localComp, (uint64_t)harmony->at(ix)->reality);
-              //delete localComp->prediction;
+              delete localComp->prediction;
+              localComp->prediction = NULL;
             }
-            //delete harmony->at(ix);
+            delete harmony->at(ix);
             harmony->at(ix) = NULL;
             continue;
           }
@@ -93,11 +96,16 @@ namespace Optimization {
           if (localComp == NULL) {
             continue;
           }
-          localComp->prediction->predictions.remove(harmony->at(ix)->expectation, (uint64_t)harmony->at(ix)->expectation);
+          if (localComp->prediction->predictions.search((uint64_t)harmony->at(ix)->expectation)) {
+            localComp->prediction->predictions.remove(harmony->at(ix)->expectation, (uint64_t)harmony->at(ix)->expectation);
+            delete harmony->at(ix)->expectation;
+            harmony->at(ix)->expectation = NULL;
+          }
           
           if (!localComp->prediction->predictions.size()) {
             cia->remove(localComp, (uint64_t)harmony->at(ix)->reality);
-            //delete localComp->prediction;
+            delete localComp->prediction;
+            localComp->prediction = NULL;
           }
         }
         
@@ -129,6 +137,9 @@ namespace Optimization {
       if ((candidate->experiencedEpochs > (pow(candidate->hiddenWidth, 2) * ofAge)) && (!candidate->registered)) {
         for (uint64_t ix = 0; ix < harmony->size(); ix++) {
           Trust<double> *localComp = ((Genetic *)world)->answer.search((uint64_t)harmony->at(ix)->reality);
+          if (localComp->prediction == NULL) {
+            continue;
+          }
           localComp->prediction->predictions.insert(harmony->at(ix)->expectation, (uint64_t)harmony->at(ix)->expectation);
           ((Genetic *)world)->active.insert(localComp, (uint64_t)harmony->at(ix)->reality);
         }
@@ -157,8 +168,8 @@ namespace Optimization {
     vector<DataType *> *crossover(vector<DataType *> *dad, vector<DataType *> *mom);
     
     void add();
-    void doEvaluation();
-    void doReckoning();
+    void evaluateFitness();
+    void checkSurvival();
     void doMeditation();
     void doGeneration();
     HeuristicType *reproduce(HeuristicType *father, HeuristicType *mother);
@@ -174,8 +185,8 @@ namespace Optimization {
   void Genetic<HeuristicType,LogicType,DataType>::doGeneration() {
     vector<HeuristicType *> *mates;
     
-    doEvaluation();
-    doReckoning();
+    evaluateFitness();
+    checkSurvival();
     
     mates = this->candidates.select(NULL, NULL);
     
@@ -215,13 +226,13 @@ namespace Optimization {
   
   
   template <class HeuristicType, class LogicType, class DataType>
-  void Genetic<HeuristicType,LogicType,DataType>::doEvaluation() {
+  void Genetic<HeuristicType,LogicType,DataType>::evaluateFitness() {
     this->candidates.modifyAll(calcFitnessEach, this);
   }
   
   template <class HeuristicType, class LogicType, class DataType>
-  void Genetic<HeuristicType,LogicType,DataType>::doReckoning() {
-    this->candidates.removal(reckoningEach, this);
+  void Genetic<HeuristicType,LogicType,DataType>::checkSurvival() {
+    this->candidates.removal(checkSurvivalEach, this);
   }
   
   template <class HeuristicType, class LogicType, class DataType>
@@ -360,9 +371,14 @@ namespace Optimization {
       }
     }
     
-    tmpHeuristic = new HeuristicType();
-    tmpHeuristic->initialize(childInputs,childTrusts,&childExpectations,
-                             childHiddenInfo,dad->hiddenWidth+mom->hiddenWidth);
+    tmpHeuristic = new HeuristicType
+      (
+       childInputs,
+       childTrusts,
+       &childExpectations,
+       childHiddenInfo,
+       dad->hiddenWidth+mom->hiddenWidth
+       );
     
     tmpHeuristic->persistance = dad->persistance + mom->persistance;
     tmpHeuristic->energy *= childHiddenInfo->size() * glbEnergyCnst;

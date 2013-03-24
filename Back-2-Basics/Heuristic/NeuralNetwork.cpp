@@ -37,12 +37,8 @@ namespace NeuralNetwork
   }
   
   void Axion::initialize(Neuron *input, Neuron *neuron, Info *info) {
-    this->u = neuron;
-    this->v = input;
+    Pipe::initialize(input, neuron, RANDOM_INFLUENCE);
     
-    input->references++;
-    neuron->addEdge(this);
-    this->attrib = RANDOM_INFLUENCE;
     mFlux = 0.0;
     
     adjacency = info;
@@ -54,11 +50,11 @@ namespace NeuralNetwork
     mFlux = (correction * glbElecConductivity) + (glbMagConductivity * mFlux);
   }
   
-  Neuron::Neuron() {
+  void Neuron::initialize(double *inputData, double *expectation, NeuralNetwork *neuralNetwork) {
     
-  }
-  
-  void Neuron::initialize(double *inputData, double *expectation) {
+    Hub::initialize();
+    
+    nnetwork = neuralNetwork;
     
     if (inputData != NULL) {
       this->ptrInput = inputData;
@@ -76,6 +72,12 @@ namespace NeuralNetwork
     iteration = 0;
     delta = 0.0;
     
+    neuralNetwork->numberOfNeurons++;
+    nnetwork = neuralNetwork;
+  }
+  
+  void Neuron::deinitialize() {
+    nnetwork->numberOfNeurons--;
   }
   
   double Neuron::probeActivation(uint64_t iteration) {
@@ -103,7 +105,16 @@ namespace NeuralNetwork
     return *memory;
   }
   
-  NeuralNetwork::NeuralNetwork() {
+  void NeuralNetwork::deinitialize() {
+    
+    for (uint64_t ix = 0; ix < outputs.size(); ix++) {
+      if (outputs[ix] != NULL) {
+        delete outputs[ix];
+        outputs[ix] = NULL;
+      }
+    }
+    
+    assert(!numberOfNeurons);
   }
   
   void NeuralNetwork::initialize(std::vector<double *> *input,
@@ -134,8 +145,7 @@ namespace NeuralNetwork
       neuronArray[7][jx] = NULL;
     }
     
-    bias = new Neuron();
-    bias->initialize(&networkBias,NULL);
+    bias = new Neuron(&networkBias,NULL,this);
     
     
     for (int64_t ix = connectivity->size()-1; ix >= 0; ix--) {
@@ -149,8 +159,7 @@ namespace NeuralNetwork
         uint32_t pos = outPosition;
         double *reality = output->at(pos)->actual;
         double *expect = expectation->search((uint64_t)reality);
-        currentNeuron = new Neuron();
-        currentNeuron->initialize(&zero, expect);
+        currentNeuron = new Neuron(&zero, expect, this);
         
         Harmony<Neuron> *tmp = new Harmony<Neuron>;
         tmp->logicElement = currentNeuron;
@@ -159,8 +168,7 @@ namespace NeuralNetwork
         outputs.push_back(tmp);
         neuronArray[7][pos] = currentNeuron;
         
-        tmpAxion = new Axion();
-        tmpAxion->initialize(bias, currentNeuron, NULL);
+        tmpAxion = new Axion(bias, currentNeuron, NULL);
         
         neuronArray[7][pos]->references = 1;
       }
@@ -172,20 +180,18 @@ namespace NeuralNetwork
       
       if (neuronArray[inLayer][inPosition] == NULL) {
         if (inLayer == 0) {
-          currentNeuron = new Neuron();
-          currentNeuron->initialize(input->at(inPosition), NULL);
+          currentNeuron = new Neuron(input->at(inPosition), NULL, this);
+          numberOfNeurons++;
           this->inputs.push_back(currentNeuron);
         } else {
-          currentNeuron = new Neuron();
-          currentNeuron->initialize(&zero, NULL);
+          currentNeuron = new Neuron(&zero, NULL, this);
+          numberOfNeurons++;
         }
         neuronArray[inLayer][inPosition] = currentNeuron;
-        tmpAxion = new Axion();
-        tmpAxion->initialize(bias, currentNeuron, NULL);
+        tmpAxion = new Axion(bias, currentNeuron, NULL);
       }
                                        
-      tmpAxion = new Axion();
-      tmpAxion->initialize(neuronArray[inLayer][inPosition],
+      tmpAxion = new Axion(neuronArray[inLayer][inPosition],
                   neuronArray[outLayer][outPosition], conn);
       
       hiddenInfo.push_back(conn);
@@ -233,9 +239,10 @@ namespace NeuralNetwork
     for (uint64_t kx = 0; kx < outputs.size(); kx++) {
       if ((outputs[kx] != NULL) && (outputs[kx]->logicElement != NULL)) {
         Neuron *tmpNeuron = outputs[kx]->logicElement;
-        tmpNeuron->forwardEdges.deletion(Neuron::optimalPruneEach, tmpNeuron);
-        if ((!tmpNeuron->forwardEdges.size()) && (tmpNeuron->ptrInput == &zero)) {
+        tmpNeuron->forwardEdges->deletion(Neuron::optimalPruneEach, tmpNeuron);
+        if ((!tmpNeuron->forwardEdges->size()) && (tmpNeuron->ptrInput == &zero)) {
           delete outputs[kx]->logicElement;
+          numberOfNeurons--;
           outputs[kx]->logicElement = NULL;
         }
       }
@@ -250,7 +257,7 @@ namespace NeuralNetwork
     
     
     for (uint64_t kx = 0; kx < outputs.size(); kx++) {
-      outputs[kx]->logicElement->forwardEdges.deletion(Neuron::probablisticPruneEach, outputs[kx]->logicElement);
+      outputs[kx]->logicElement->forwardEdges->deletion(Neuron::probablisticPruneEach, outputs[kx]->logicElement);
     }
     
   }

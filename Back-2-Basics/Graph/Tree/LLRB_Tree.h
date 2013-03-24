@@ -22,6 +22,8 @@
 #ifndef Back_2_Basics_LLRB_Tree_h
 #define Back_2_Basics_LLRB_Tree_h
 
+#define NDEBUG
+
 #include <assert.h>
 #include "Tree.h"
 
@@ -90,13 +92,20 @@ namespace Tree {
     //void updateKey(KeyType, KeyType, uint64_t);
     //void update(EntryType, KeyType, uint64_t);
     
+    static int rRules(TreeNodeType *current);
+    static int rules(TreeNodeType *root);
+    
   };
   
   
   template <class EntryType, class KeyType, class TreeNodeType>
   void LLRB_Tree<EntryType,KeyType,TreeNodeType>::insert(EntryType data, KeyType key) {
+        
     this->treeRoot = insert(this->treeRoot, data, key);
     this->treeRoot->color = BLACK;
+    
+    assert(rules(this->treeRoot));
+
   }
   
   
@@ -304,9 +313,10 @@ namespace Tree {
       if ((!isRed(TreeType::leftOf(node))) &&
           (!isRed(TreeType::leftOf(TreeType::leftOf(node))))) {
         node = moveViolationLeft(node);
-        
-        assert(node != this->nullNode);
       }
+      
+      assert(node != this->nullNode);
+      
       TreeType::setLeft(node, remove(TreeType::leftOf(node), victimData, key));
     } else {
       if (isRed(TreeType::leftOf(node))) {
@@ -351,12 +361,57 @@ namespace Tree {
   
   template <class EntryType, class KeyType, class TreeNodeType>
   void LLRB_Tree<EntryType,KeyType,TreeNodeType>::remove(EntryType data, KeyType key) {
-    assert(this->treeRoot != this->nullNode);
-    
     this->treeRoot = remove(this->treeRoot, data, key);
     this->treeRoot->color = BLACK;
+    
+    assert(rules(this->treeRoot));
+
   }
   
+  template <class EntryType, class KeyType, class TreeNodeType>
+  int LLRB_Tree<EntryType,KeyType,TreeNodeType>::rRules(TreeNodeType *current) {
+    int leftCount = 0, isBlack = 0;
+    
+    if (current->color == RED) {
+      /* Neither child can be red if parent is red */
+      if (TreeType::leftOf(current)->color == RED) {
+        return 0;
+      }
+      
+      if (TreeType::rightOf(current)->color == RED) {
+        return 0;
+      }
+    } else {
+      /* Must lean left given opportunity */
+      if (TreeType::rightOf(current)->color == RED) {
+        if (TreeType::leftOf(current)->color != RED) {
+          return 0;
+        }
+      }
+      isBlack = 1;
+    }
+    
+    if (current != TreeType::leftOf(current)) {
+      if (((leftCount = rRules(TreeType::leftOf(current))) != rRules(TreeType::rightOf(current))) ||
+          (!leftCount)) {
+        return 0;
+      }
+    }
+    
+    return leftCount+isBlack;
+  }
+
+  template <class EntryType, class KeyType, class TreeNodeType>
+  int LLRB_Tree<EntryType,KeyType,TreeNodeType>::rules(TreeNodeType *root) {
+    
+    if (root->color != BLACK)
+      return 0;
+    
+    return rRules(root);
+    
+  }
+
+
   
 }
 

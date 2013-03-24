@@ -36,9 +36,26 @@ namespace Graph {
   template <class LocationType, class ViaType>
   class Via : public Edge<LocationType,ViaType>
   {
+    
+  protected:
+    void initialize(Location<LocationType,Via> *v, Location<LocationType,Via> *u, double length) {
+      this->u = u;
+      this->v = v;
+      
+      v->references++;
+      u->addEdge((ViaType *)this);
+      
+      this->length = length;
+    }
+    
   public:
-    Via<LocationType>();
-    Via<LocationType>(Location<LocationType,Via> *v, Location<LocationType,Via> *u, double length);
+    Via<LocationType>() {
+      
+    }
+    
+    Via<LocationType>(Location<LocationType,Via> *v, Location<LocationType,Via> *u, double length) {
+      initialize(v,u,length);
+    }
     
     inline double length() {
       return this->attrib;
@@ -62,37 +79,16 @@ namespace Graph {
     
   public:
     
-    Location();
+    Location() {
+      
+    }
     
   };
   
   
   /* Via */
   
-  template <class LocationType, class ViaType>
-  Via<LocationType,ViaType>::Via() {
-    
-  }
-  
-  template <class LocationType, class ViaType>
-  Via<LocationType,ViaType>::Via(Location<LocationType,Via> *v, Location<LocationType,Via> *u, double length) {
-    this->u = u;
-    this->v = v;
-    
-    v->references++;
-    u->addEdge((ViaType *)this);
-    
-    this->length = length;
-  }
-  
-  
   /* Location */
-  
-  template <class NodeType, class EdgeType>
-  Location<NodeType,EdgeType>::Location() {
-    
-  }
-  
   
   template <class NodeType, class EdgeType>
   class Map : public Graph<NodeType, EdgeType>

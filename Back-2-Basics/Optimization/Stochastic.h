@@ -31,7 +31,7 @@ using namespace Collection;
 namespace Optimization {
   
   static double glbEnergyCnst = 1.0 / 128.0;
-  static double glbAreaCapacity = 1.0;
+  static double glbAreaCapacity = 2.0;
   
   /*  typedef struct TotalCompetition {
    double competition = 0.0;
@@ -294,8 +294,14 @@ namespace Optimization {
     
     hiddenInfo = infoTree.select(NULL, NULL);
      
-    tmp = new HeuristicType();
-    tmp->initialize(inputEnv, trusts, expectation, hiddenInfo, hiddenWidth);
+    tmp = new HeuristicType
+        (
+         inputEnv,
+         trusts,
+         expectation,
+         hiddenInfo,
+         hiddenWidth
+        );
     
     this->candidates.insert(tmp, (uint64_t)tmp);
     
