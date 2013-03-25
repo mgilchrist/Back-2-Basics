@@ -181,11 +181,9 @@ namespace NeuralNetwork
       if (neuronArray[inLayer][inPosition] == NULL) {
         if (inLayer == 0) {
           currentNeuron = new Neuron(input->at(inPosition), NULL, this);
-          numberOfNeurons++;
           this->inputs.push_back(currentNeuron);
         } else {
           currentNeuron = new Neuron(&zero, NULL, this);
-          numberOfNeurons++;
         }
         neuronArray[inLayer][inPosition] = currentNeuron;
         tmpAxion = new Axion(bias, currentNeuron, NULL);

@@ -296,17 +296,17 @@ namespace Optimization {
         pos = entry->c.position ^ (1 << (rand() % LAYER_SHIFT));
         
         if (INFO_LAYER(entry->c.position) == 7) {
-          entry->c.position = (pos & LAYER_MASK) | pos % outputWidth;
+          entry->c.position = (pos & LAYER_MASK) | ((pos & POSITION_MASK) % outputWidth);
         } else {
-          entry->c.position = (pos & LAYER_MASK) | pos % hiddenWidth;
+          entry->c.position = (pos & LAYER_MASK) | ((pos & POSITION_MASK) % hiddenWidth);
         }
       } else {
         pos = entry->c.inputPosition ^ (1 << (rand() % LAYER_SHIFT));
         
         if (INFO_LAYER(entry->c.inputPosition)) {
-          entry->c.inputPosition = (pos & LAYER_MASK) | pos % hiddenWidth;
+          entry->c.inputPosition = (pos & LAYER_MASK) | ((pos & POSITION_MASK) % hiddenWidth);
         } else {
-          entry->c.inputPosition = (pos & LAYER_MASK) | pos % inputWidth;
+          entry->c.inputPosition = (pos & LAYER_MASK) | ((pos & POSITION_MASK) % inputWidth);
         }
       }
       randVal >>= 1;
