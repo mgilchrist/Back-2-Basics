@@ -96,10 +96,13 @@ namespace Optimization {
           if (localComp == NULL) {
             continue;
           }
+
           if (localComp->prediction->predictions.search((uint64_t)harmony->at(ix)->expectation)) {
             localComp->prediction->predictions.remove(harmony->at(ix)->expectation, (uint64_t)harmony->at(ix)->expectation);
             delete harmony->at(ix)->expectation;
             harmony->at(ix)->expectation = NULL;
+            //delete harmony->at(ix)->logicElement;
+            //harmony->at(ix)->logicElement = NULL;
           }
           
           if (!localComp->prediction->predictions.size()) {
@@ -109,6 +112,7 @@ namespace Optimization {
           }
         }
         
+        candidate->deinitialize();
         return true;
       }
       
@@ -176,6 +180,10 @@ namespace Optimization {
     
   public:
     Genetic();
+    
+    ~Genetic() {
+      
+    }
     
     
   };

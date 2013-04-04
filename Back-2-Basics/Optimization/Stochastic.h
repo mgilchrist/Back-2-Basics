@@ -108,6 +108,10 @@ namespace Optimization {
       
     }
     
+    ~Stoichastic() {
+      
+    }
+    
     void initInternals();
   };
   

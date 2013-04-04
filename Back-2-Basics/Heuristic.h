@@ -79,11 +79,17 @@ public:
   uint64_t hiddenWidth = 0;
   //LLRB_Tree<Info *, uint64_t> *hiddenInfo;
   
+  virtual void deinitialize() =0;
+  
 public:
   
   Heuristic() {
     
   }
+  
+  //~Heuristic() {
+  //  deinitialize();
+  //}
   
   virtual void calcExpectation(uint64_t) =0;
   virtual void doCorrection() =0;

@@ -60,6 +60,10 @@ namespace Optimization {
     
     Optimization();
     
+    ~Optimization() {
+      
+    }
+    
     void addInput(DataType *);
     void addOutput(DataType *);
     

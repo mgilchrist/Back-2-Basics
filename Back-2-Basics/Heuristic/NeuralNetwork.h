@@ -297,6 +297,7 @@ namespace NeuralNetwork
     
   public:
     
+    
     NeuralNetwork() {
       
     }
