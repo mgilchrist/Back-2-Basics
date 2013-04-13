@@ -30,7 +30,8 @@
 
 /* Need to correct KeyType */
 
-namespace Collection {
+namespace Collection
+{
   
   
   /* Class: HashTable */
@@ -67,7 +68,8 @@ namespace Collection {
   /* Class: HashTable */
   
   template <class ElementType, class KeyType>
-  ElementType HashTable<ElementType,KeyType>::get(KeyType key) {
+  ElementType HashTable<ElementType,KeyType>::get(KeyType key)
+  {
     uint64_t index = search(key);
     
     assert(index);
@@ -77,7 +79,8 @@ namespace Collection {
   }
   
   template <class ElementType, class KeyType>
-  void HashTable<ElementType,KeyType>::update(KeyType key, ElementType data) {
+  void HashTable<ElementType,KeyType>::update(KeyType key, ElementType data)
+  {
     uint64_t index = search(key);
     
     assert(index);
@@ -88,20 +91,24 @@ namespace Collection {
   
   
   template <class ElementType, class KeyType>
-  HashTable<ElementType,KeyType>::HashTable() : seed(random()) {
+  HashTable<ElementType,KeyType>::HashTable() : seed(random())
+  {
     
     HashTable(1024);
     
   }
   
   template <class ElementType, class KeyType>
-  HashTable<ElementType,KeyType>::HashTable(uint64_t size) : seed(random()) {
-    
+  HashTable<ElementType,KeyType>::HashTable(uint64_t size) : seed(random())
+  {
     uint8_t actualSize;
     
-    if (size > 16) {
+    if (size > 16)
+    {
       actualSize = exp2(log2(size)+1);
-    } else {
+    }
+    else
+    {
       actualSize = 4;
     }
     
@@ -124,14 +131,17 @@ namespace Collection {
     fullHashMap.resize(newCapacity, 0);
     
     
-    for (uint64_t ix = 1; ix < capacity; ix++) {
-      if (!fullHashMap[ix]) {
+    for (uint64_t ix = 1; ix < capacity; ix++)
+    {
+      if (!fullHashMap[ix])
+      {
         continue;
       }
       
       newIndex = fullHashMap[ix] & (newCapacity-1);
       
-      if (newIndex == ix) {
+      if (newIndex == ix)
+      {
         continue;
       }
       
@@ -149,8 +159,8 @@ namespace Collection {
   }
   
   template <class ElementType, class KeyType>
-  uint64_t HashTable<ElementType,KeyType>::search(KeyType key) {
-    
+  uint64_t HashTable<ElementType,KeyType>::search(KeyType key)
+  {
     uint8_t useHash;
     uint64_t index;
     uint64_t hash;
@@ -159,14 +169,17 @@ namespace Collection {
     
     useHash = 8;
     
-    while (useHash) {
+    while (useHash)
+    {
       useHash--;
       hash = murmurHash64A((uint8_t *)&key, sizeof(key), seed);
       seed = hash;
       index = hash & indexMask;
-      if (index) {
+      if (index)
+      {
         if ((keyMap[index] != NULL) &&
-            (*(keyMap[index]) == key)) {
+            (*(keyMap[index]) == key))
+        {
           return index;
         }
         
@@ -178,7 +191,8 @@ namespace Collection {
   }
   
   template <class ElementType, class KeyType>
-  void HashTable<ElementType,KeyType>::remove(KeyType key) {
+  void HashTable<ElementType,KeyType>::remove(KeyType key)
+  {
     uint64_t index = search(key);
     
     assert((index) && (keyMap[index] != NULL));
@@ -191,8 +205,8 @@ namespace Collection {
   }
   
   template <class ElementType, class KeyType>
-  void HashTable<ElementType,KeyType>::insert(ElementType data, KeyType key) {
-    
+  void HashTable<ElementType,KeyType>::insert(ElementType data, KeyType key)
+  {
     uint8_t useHash;
     uint64_t index;
     uint64_t hash;
@@ -201,14 +215,17 @@ namespace Collection {
     
     useHash = 8;
     
-    while (useHash) {
+    while (useHash)
+    {
       useHash--;
       hash = murmurHash64A((uint8_t *)&key, sizeof(key), seed);
       seed = hash;
       index = hash & indexMask;
       
-      if (index) {
-        if (keyMap[index] == NULL) {
+      if (index)
+      {
+        if (keyMap[index] == NULL)
+        {
           keyMap[index] = new Key<KeyType>(key);
           fullHashMap[index] = hash;
           elements[index] = data;
@@ -218,7 +235,8 @@ namespace Collection {
         assert(*(keyMap[index]) == key);
       }
       
-      if (!useHash) {
+      if (!useHash)
+      {
         this->grow();
         useHash = 8;
         seed = this->seed;
@@ -249,7 +267,8 @@ namespace Collection {
     
     memcpy(cond, key, size);
     
-    if (len-size) {
+    if (len-size)
+    {
       memset(cond+size, 0, len-size);
     }
     

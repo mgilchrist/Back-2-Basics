@@ -47,7 +47,8 @@ namespace NeuralNetwork
   static const double glbMagConductivity = 0.8928; // (1/30)^-30 = .8928; (1/90)^-90 = .95123
 
   
-  enum SIG_FNCT_TYPE {
+  enum SIG_FNCT_TYPE
+  {
     NORMAL,
     PULSE
   };
@@ -55,7 +56,8 @@ namespace NeuralNetwork
   const double irrelevant = 10000.0 * PPM;
   static unsigned long currentIteration = -1;
   
-  class Axion : public Pipe<Neuron,Axion> {
+  class Axion : public Pipe<Neuron,Axion>
+  {
     
   protected:
     double mFlux = 0.0;
@@ -68,14 +70,17 @@ namespace NeuralNetwork
     
     Axion();
     
-    ~Axion() {
-      if (adjacency != NULL) {
+    ~Axion()
+    {
+      if (adjacency != NULL)
+      {
         //delete adjacency;
         adjacency = NULL;
       }
     }
     
-    Axion(Neuron *neuron, Neuron *input, Info *tree) {
+    Axion(Neuron *neuron, Neuron *input, Info *tree)
+    {
       initialize(neuron, input, tree);
     }
     
@@ -84,7 +89,8 @@ namespace NeuralNetwork
     friend Neuron;
   };
   
-  class Neuron : public Hub<Neuron,Axion> {
+  class Neuron : public Hub<Neuron,Axion>
+  {
     
   private:
     NeuralNetwork *nnetwork;
@@ -97,21 +103,24 @@ namespace NeuralNetwork
     SIG_FNCT_TYPE sigmoidFunctionType = NORMAL;
 
     
-    static bool optimalPruneEach(LLRB_TreeNode<Axion *, uint64_t> *current, void *neuron) {
-      
+    static bool optimalPruneEach(LLRB_TreeNode<Axion *, uint64_t> *current, void *neuron)
+    {
       Neuron *input = current->data->getForward();
       double tVal = sqrt(pow(current->data->capacity(),2) + pow(current->data->mFlux,2));
       bool ret = false;
       
-      if (tVal < irrelevant) /*|| (current->data->powerDissipation > 0.01)) */ {
+      if (tVal < irrelevant) /*|| (current->data->powerDissipation > 0.01)) */
+      {
         ret = true;
       }
       
-      if (input->discovered < input->references) {
+      if (input->discovered < input->references)
+      {
         input->discovered++;
       }
         
-      if (input->discovered == input->references) {
+      if (input->discovered == input->references)
+      {
         input->forwardEdges->deletion(Neuron::optimalPruneEach, input);
         input->discovered = 0;
       }
@@ -120,22 +129,26 @@ namespace NeuralNetwork
       return ret;
     }
     
-    static bool probablisticPruneEach(LLRB_TreeNode<Axion *, uint64_t> *current, void *neuron) {
+    static bool probablisticPruneEach(LLRB_TreeNode<Axion *, uint64_t> *current, void *neuron)
+    {
       
       Neuron *input = current->data->getForward();
       double tVal = sqrt(pow(current->data->capacity(),2) + pow(current->data->mFlux,2));
       double cutoff = pow(rand() / RAND_MAX, 2);
       bool ret = false;
       
-      if ((tVal < cutoff) || (current->data->mFlux > 0.7))  {
+      if ((tVal < cutoff) || (current->data->mFlux > 0.7))
+      {
         ret = true;
       }
       
-      if (input->discovered < input->references) {
+      if (input->discovered < input->references)
+      {
         input->discovered++;
       }
       
-      if (input->discovered == input->references) {
+      if (input->discovered == input->references)
+      {
         input->forwardEdges->deletion(Neuron::probablisticPruneEach, input);
         input->discovered = 0;
       }
@@ -143,33 +156,39 @@ namespace NeuralNetwork
       return ret;
     }
     
-    static uint64_t probeActivationEach(LLRB_TreeNode<Axion *, uint64_t> *current, void *neuron) {
-      
+    static uint64_t probeActivationEach(LLRB_TreeNode<Axion *, uint64_t> *current, void *neuron)
+    {
       Axion *synapse = current->data;
       Neuron *input = synapse->getForward();
       
-      if ((synapse != NULL) && (input != NULL)) {
+      if ((synapse != NULL) && (input != NULL))
+      {
         *(((Neuron *)neuron)->memory) += input->probeActivation(currentIteration) * synapse->capacity();
       }
+      
       return current->key;
     }
     
-    static uint64_t calcDeltaEach(LLRB_TreeNode<Axion *, uint64_t> *current, void *neuron) {
+    static uint64_t calcDeltaEach(LLRB_TreeNode<Axion *, uint64_t> *current, void *neuron)
+    {
       Axion *synapse = current->data;
       Neuron *input = current->data->getForward();
       
-      if (input->discovered < input->references) {
+      if (input->discovered < input->references)
+      {
         input->delta += synapse->capacity() * ((Neuron *)neuron)->delta;
         input->discovered++;
       }
       
-      if (input->discovered == input->references) {
+      if (input->discovered == input->references)
+      {
         double nCurrentOutput = *(input->memory);
         
         input->delta = (nCurrentOutput * (1.0 - nCurrentOutput) * input->delta);
         
         /* TODO don't go deeper if error is small */
-        if (pow(input->delta, 2) > irrelevant) {
+        if (pow(input->delta, 2) > irrelevant)
+        {
           input->modifyAllAdjacent(calcDeltaEach, input);
         }
       }
@@ -177,13 +196,15 @@ namespace NeuralNetwork
       return current->key;
     }
     
-    static uint64_t changeInputInfluenceEach(LLRB_TreeNode<Axion *, uint64_t> *current, void *neuron) {
+    static uint64_t changeInputInfluenceEach(LLRB_TreeNode<Axion *, uint64_t> *current, void *neuron)
+    {
       double correction;
       Axion *synapse = current->data;
       Neuron *input = synapse->getForward();
       Neuron *pCurrentNeuron = ((Neuron *)neuron);
       
-      if (pCurrentNeuron->discovered) {
+      if (pCurrentNeuron->discovered)
+      {
         correction = (pCurrentNeuron->delta * *(pCurrentNeuron->memory));
         
         synapse->changeInfluence(correction);
@@ -207,15 +228,18 @@ namespace NeuralNetwork
     double *ptrInput = NULL;
     double totalInputs = 0.0;
     
-    Neuron() {
+    Neuron()
+    {
       
     }
     
-    ~Neuron() {
+    ~Neuron()
+    {
       deinitialize();
     }
     
-    Neuron(double *inputData, double *expectation, NeuralNetwork *neuralNetwork) {
+    Neuron(double *inputData, double *expectation, NeuralNetwork *neuralNetwork)
+    {
       initialize(inputData, expectation, neuralNetwork);
     }
     
@@ -245,10 +269,12 @@ namespace NeuralNetwork
     
     uint64_t numberOfNeurons = 0;
     
-    static void changeInputInfluenceEach(Harmony<Neuron> *current) {
+    static void changeInputInfluenceEach(Harmony<Neuron> *current)
+    {
       Neuron *pCurrentNeuron = (Neuron *)(current->logicElement);
       
-      if (pCurrentNeuron->discovered) {
+      if (pCurrentNeuron->discovered)
+      {
         pCurrentNeuron->modifyAllAdjacent(Neuron::changeInputInfluenceEach, pCurrentNeuron);
         
         pCurrentNeuron->discovered = 0;
@@ -256,12 +282,14 @@ namespace NeuralNetwork
       }
     }
     
-    static uint64_t calcExpectationEach(LLRB_TreeNode<Harmony<Neuron> *, uint64_t> *current, void *iteration) {
+    static uint64_t calcExpectationEach(LLRB_TreeNode<Harmony<Neuron> *, uint64_t> *current, void *iteration)
+    {
       current->data->logicElement->probeActivation((uint64_t)iteration);
       return current->key;
     }
     
-    static void doCorrectionEach(Harmony<Neuron> *current) {
+    static void doCorrectionEach(Harmony<Neuron> *current)
+    {
       Neuron *pCurrentNeuron = (Neuron *)(current->logicElement);
       double reality = *(current->reality);
       double expectation = *(pCurrentNeuron->memory);
@@ -272,7 +300,8 @@ namespace NeuralNetwork
                                  (1.0 - expectation) *
                                  (reality - expectation));
         
-        if (pow(pCurrentNeuron->delta, 2) > irrelevant) {
+        if (pow(pCurrentNeuron->delta, 2) > irrelevant)
+        {
           pCurrentNeuron->modifyAllAdjacent(Neuron::calcDeltaEach, pCurrentNeuron);
         }
         
@@ -280,8 +309,8 @@ namespace NeuralNetwork
       }
     }
     
-    static uint64_t addInputToVectorEach(LLRB_TreeNode<Neuron *, uint64_t> *current, void *vect) {
-      
+    static uint64_t addInputToVectorEach(LLRB_TreeNode<Neuron *, uint64_t> *current, void *vect)
+    {
       ((vector<double *> *)vect)->push_back(current->data->ptrInput);
       
       return current->key;
@@ -298,11 +327,13 @@ namespace NeuralNetwork
   public:
     
     
-    NeuralNetwork() {
+    NeuralNetwork()
+    {
       
     }
     
-    ~NeuralNetwork() {
+    ~NeuralNetwork()
+    {
       deinitialize();
     }
     
@@ -310,7 +341,8 @@ namespace NeuralNetwork
                   vector<Trust<double> *> *output,
                   LLRB_Tree<double *, uint64_t> *expectation,
                   vector<Info *> *layers,
-                  uint64_t maxHiddenWidth) {
+                  uint64_t maxHiddenWidth)
+    {
       initialize(input, output, expectation, layers, maxHiddenWidth);
     }
     

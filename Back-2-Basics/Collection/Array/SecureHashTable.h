@@ -82,7 +82,8 @@ namespace Collection {
   /* Class: SecureHashTable */
   
   template <class ElementType, class KeyType>
-  ElementType SecureHashTable<ElementType,KeyType>::get(KeyType &key) {
+  ElementType SecureHashTable<ElementType,KeyType>::get(KeyType &key)
+  {
     uint64_t index = search(key);
     
     assert(index);
@@ -92,25 +93,25 @@ namespace Collection {
   }
   
   template <class ElementType, class KeyType>
-  void SecureHashTable<ElementType,KeyType>::update(KeyType &key, ElementType *data) {
+  void SecureHashTable<ElementType,KeyType>::update(KeyType &key, ElementType *data)
+  {
     uint64_t index = search(key);
     
     assert(index);
     
     elements[index] = data;
-    
   }
   
   
   template <class ElementType, class KeyType>
-  SecureHashTable<ElementType,KeyType>::SecureHashTable() : seed(random()) {
-    
+  SecureHashTable<ElementType,KeyType>::SecureHashTable() : seed(random())
+  {
     SecureHashTable(1024);
   }
   
   template <class ElementType, class KeyType>
-  SecureHashTable<ElementType,KeyType>::SecureHashTable(uint64_t size) : seed(random()) {
-    
+  SecureHashTable<ElementType,KeyType>::SecureHashTable(uint64_t size) : seed(random())
+  {
     uint64_t actualSize;
     
     if (size > 16) {
@@ -124,11 +125,11 @@ namespace Collection {
     fullHashMap.resize(1 << actualSize, 0);
     
     this->size = actualSize;
-    
   }
   
   template <class ElementType, class KeyType>
-  void SecureHashTable<ElementType,KeyType>::grow() {
+  void SecureHashTable<ElementType,KeyType>::grow()
+  {
     uint64_t newIndex;
     uint64_t capacity = 1 << this->size;
     uint64_t newCapacity = 2 << this->size;
@@ -137,14 +138,17 @@ namespace Collection {
     keyMap.resize(newCapacity, (uint64_t *)0);
     fullHashMap.resize(newCapacity, 0);
     
-    for (uint64_t ix = 1; ix < capacity; ix++) {
-      if (!fullHashMap[ix]) {
+    for (uint64_t ix = 1; ix < capacity; ix++)
+    {
+      if (!fullHashMap[ix])
+      {
         continue;
       }
       
       newIndex = fullHashMap[ix] & (newCapacity-1);
       
-      if (newIndex == ix) {
+      if (newIndex == ix)
+      {
         continue;
       }
       
@@ -162,8 +166,8 @@ namespace Collection {
   }
   
   template <class ElementType, class KeyType>
-  uint64_t SecureHashTable<ElementType,KeyType>::search(KeyType &key) {
-    
+  uint64_t SecureHashTable<ElementType,KeyType>::search(KeyType &key)
+  {
     uint8_t useHash;
     uint64_t index;
     uint64_t *hash;
@@ -177,11 +181,14 @@ namespace Collection {
     
     useHash = 8;
     
-    while (useHash) {
+    while (useHash)
+    {
       useHash--;
       index = hash[useHash] & indexMask;
-      if (index) {
-        if ((keyMap[index] != NULL) && (!memcmp(keyMap[index], hash, 64))) {
+      if (index)
+      {
+        if ((keyMap[index] != NULL) && (!memcmp(keyMap[index], hash, 64)))
+        {
           ret = index;
           break;
         }
@@ -195,7 +202,8 @@ namespace Collection {
   }
   
   template <class ElementType, class KeyType>
-  void SecureHashTable<ElementType,KeyType>::remove(KeyType &key) {
+  void SecureHashTable<ElementType,KeyType>::remove(KeyType &key)
+  {
     uint64_t index = search(key);
     
     assert((index) && (keyMap[index] != NULL));
@@ -208,8 +216,8 @@ namespace Collection {
   }
   
   template <class ElementType, class KeyType>
-  void SecureHashTable<ElementType,KeyType>::insert(ElementType data, KeyType &key) {
-    
+  void SecureHashTable<ElementType,KeyType>::insert(ElementType data, KeyType &key)
+  {
     uint8_t useHash;
     uint64_t index;
     uint64_t *hash;
@@ -221,24 +229,29 @@ namespace Collection {
     
     useHash = 8;
     
-    while (useHash) {
+    while (useHash)
+    {
       useHash--;
       index = hash[useHash] & indexMask;
-      if (index) {
-        if (keyMap[index] == NULL) {
+      if (index)
+      {
+        if (keyMap[index] == NULL)
+        {
           keyMap[index] = hash;
           fullHashMap[index] = hash[useHash];
           elements[index] = data;
           
           break;
         }
-        if (!memcmp(keyMap[index], hash, 64)) {
+        if (!memcmp(keyMap[index], hash, 64))
+        {
           delete hash;
           break;
         }
       }
       
-      if (!useHash) {
+      if (!useHash)
+      {
         this->grow();
         useHash = 8;
         indexMask = (1 << this->size) - 1;
@@ -248,7 +261,8 @@ namespace Collection {
   
   
   template <class ElementType, class KeyType>
-  uint64_t *SecureHashTable<ElementType,KeyType>::SHA_2(uint8_t *key, uint64_t size) {
+  uint64_t *SecureHashTable<ElementType,KeyType>::SHA_2(uint8_t *key, uint64_t size)
+  {
     vector<uint64_t> conditionedMsg;
     uint64_t subArray[80];
     uint64_t tmpHash[8];
@@ -256,7 +270,8 @@ namespace Collection {
     uint64_t tmpInt0, tmpInt1, condSize;
     uint64_t tap0, tap1, majority, change;
     
-    if (key == NULL) {
+    if (key == NULL)
+    {
       return NULL;
     }
     
@@ -274,16 +289,20 @@ namespace Collection {
     
     conditionedMsg[(condSize/8)-1] = dataSize;
     
-    for (int jx = 0; jx < 8; jx++) {
+    for (int jx = 0; jx < 8; jx++)
+    {
       hash[jx] = 0;
     }
     
-    for (int ix = 0; ix < condSize/8; ix += 16) {
-      for (int jx = 0; jx < 16; jx++) {
+    for (int ix = 0; ix < condSize/8; ix += 16)
+    {
+      for (int jx = 0; jx < 16; jx++)
+      {
         subArray[jx] = conditionedMsg[ix+jx];
       }
       
-      for (int jx = 16; jx < 80; jx++) {
+      for (int jx = 16; jx < 80; jx++)
+      {
         /* 4.6 or 4.12 */
         tmpInt0 = (((subArray[jx-15] >> 1) | (subArray[jx-15] << 63)) ^
                    ((subArray[jx-15] >> 8) | (subArray[jx-15] << 56)) ^
@@ -295,11 +314,13 @@ namespace Collection {
         subArray[jx] = subArray[jx-16] + tmpInt0 + subArray[jx-7] + tmpInt1;
       }
       
-      for (int jx = 0; jx < 8; jx++) {
+      for (int jx = 0; jx < 8; jx++)
+      {
         tmpHash[jx] = sha_2_h[jx];
       }
       
-      for (int jx = 0; jx < 80; jx++) {
+      for (int jx = 0; jx < 80; jx++)
+      {
         /* 4.4 and 4.10 */
         tap0 = (((tmpHash[0] >> 28) | (tmpHash[0] << 36)) ^
                 ((tmpHash[0] >> 34) | (tmpHash[0] << 30)) ^
@@ -324,10 +345,10 @@ namespace Collection {
         tmpHash[2] = tmpHash[1];
         tmpHash[1] = tmpHash[0];
         tmpHash[0] = tmpInt0 + tmpInt1;
-        
       }
       
-      for (int jx = 0; jx < 8; jx++) {
+      for (int jx = 0; jx < 8; jx++)
+      {
         hash[jx] += tmpHash[jx];
       }
     }

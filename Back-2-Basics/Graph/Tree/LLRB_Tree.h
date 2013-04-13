@@ -116,7 +116,9 @@ namespace Tree {
       node = new LLRB_TreeNode<EntryType, KeyType>(data, key);
       TreeType::setLeft(node, this->nullNode);
       TreeType::setRight(node, this->nullNode);
+      
       this->numNodes++;
+      assert(this->numNodes);
       
       return node;
     }
@@ -257,6 +259,8 @@ namespace Tree {
     }
     
     if (TreeType::rightOf(node) == this->nullNode) {
+      assert(this->numNodes);
+      
       this->numNodes--;
       delete node;
       
@@ -287,6 +291,8 @@ namespace Tree {
   TreeNodeType *LLRB_Tree<EntryType,KeyType,TreeNodeType>::removeMin(TreeNodeType *node) {
     
     if (TreeType::leftOf(node) == this->nullNode) {
+      assert(this->numNodes);
+      
       this->numNodes--;
 
       delete node;
@@ -327,6 +333,8 @@ namespace Tree {
       
       if ((key == node->key) && (TreeType::rightOf(node) == this->nullNode)) {
         if (uniqueKeys || (victimData == node->data)) {
+          assert(this->numNodes);
+          
           this->numNodes--;
 
           delete node;

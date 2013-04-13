@@ -31,7 +31,7 @@ namespace Optimization {
   static uint64_t currentTime = -1;
   static const double glbToughness = 0.0;
   static const uint64_t ofAge = 1;
-  static const uint64_t maxAge = 100;
+  static const uint64_t maxAge = 1000;
   
   template <class HeuristicType, class LogicType, class DataType>
   class Genetic : public Stoichastic<HeuristicType,DataType> {

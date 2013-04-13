@@ -39,7 +39,7 @@ using namespace Graph;
 const uint64_t glbInputSize = 0x1000;
 const uint64_t glbOutputSize = 0x1000;
 const uint64_t glbIterations = 0x10000;
-const uint64_t glbTestSize = 0x10000;
+const uint64_t glbTestSize = 0x100000;
 const uint64_t glbSlowTestSize = 0x10000;
 
 
@@ -199,32 +199,50 @@ int testHeap() {
 
 int testLLRBTree() {
   LLRB_Tree<uint64_t,uint64_t> *rbTree;
-  vector<uint64_t> *arrayList;
+  vector<uint64_t> *addList;
   LLRB_TreeNode<uint64_t,uint64_t> *current;
   uint64_t tmp;
   
   cout << "\nTesting LLRB_Tree\n";
   
   rbTree = new LLRB_Tree<u_int64_t, uint64_t>();
-  arrayList = new vector<uint64_t>();
+  addList = new vector<uint64_t>();
   
-  for (uint64_t ix = 0; ix < glbTestSize; ix++) {
-    uint64_t value;
-    do {
-      value = random();
-      tmp = rbTree->size();
-      rbTree->insert(value, value);
-    } while (rbTree->size() == tmp);
+  
+  for (uint64_t iter = 0; iter < 64; iter++)
+  {
+    /* Add items to the tree */
+    for (uint64_t ix = 0; ix < glbTestSize; ix++)
+    {
+      uint64_t value;
+      do
+      {
+        value = random();
+        if (!value)
+        {
+          continue;
+        }
+        tmp = rbTree->size();
+        rbTree->insert(value, value);
+      } while (rbTree->size() == tmp);
+      
+      addList->push_back(value);
+      
+    }
     
-    arrayList->push_back(value);
-#if 0
+    /* Make sure things are in order */
     current = rbTree->min(rbTree->treeRoot);
     tmp = current->key;
     
-    for (uint64_t ix = 0; ix < rbTree->size()-1; ix++) {
+    cout << rbTree->size();
+    cout << ":size\n";
+    
+    for (uint64_t ix = 0; ix < rbTree->size()-1; ix++)
+    {
       current = rbTree->next(current);
       
-      if (current->key < tmp) {
+      if (current->key < tmp)
+      {
         cout << "Index/Key:";
         cout << ix;
         cout << "/";
@@ -236,53 +254,48 @@ int testLLRBTree() {
       
     }
     
-#endif
-  }
-  
-  current = rbTree->min(rbTree->treeRoot);
-  tmp = current->key;
-  
-  cout << rbTree->size();
-  cout << ":size\n";
-  
-  for (uint64_t ix = 0; ix < rbTree->size()-1; ix++) {
-    current = rbTree->next(current);
-    
-    if (current->key < tmp) {
-      cout << "Index/Key:";
-      cout << ix;
-      cout << "/";
-      cout << tmp;
-      cout << " not sorted!\n";
+    /* Remove random items */
+    for (uint64_t ix = 0; ix < addList->size(); ix++)
+    {
+      if (random() % 2)
+      {
+        continue;
+      }
+      uint64_t curr = addList->at(ix);
+      
+      if (!curr)
+      {
+        continue;
+      }
+      
+      tmp = rbTree->size();
+      
+      rbTree->remove(curr,curr);
+      
+      if (tmp == rbTree->size())
+      {
+        cout << "Nothing Removed!\n";
+      }
+      else
+      {
+        addList->at(ix) = 0;
+      }
     }
     
-    tmp = current->key;
-    
-  }
-  
-  for (uint64_t ix = 0; ix < arrayList->size(); ix+=log2(arrayList->size())) {
-    
-    uint64_t curr = arrayList->at(ix);
-    
-    tmp = rbTree->size();
-    
-    rbTree->remove(curr,curr);
-    
-    if (tmp == rbTree->size()) {
-      cout << "Nothing Removed!\n";
-    }
-#if 0
     current = rbTree->min(rbTree->treeRoot);
     tmp = current->key;
     
-    for (uint64_t jx = 0; jx < rbTree->size()-1; jx++) {
+    cout << rbTree->size();
+    cout << ":size\n";
+    
+    for (uint64_t ix = 0; ix < rbTree->size()-1; ix++)
+    {
       current = rbTree->next(current);
       
-      if (current->key < tmp) {
-        cout << "Removal/Index/Key:";
+      if (current->key < tmp)
+      {
+        cout << "Index/Key:";
         cout << ix;
-        cout << "/";
-        cout << jx;
         cout << "/";
         cout << tmp;
         cout << " not sorted!\n";
@@ -291,29 +304,29 @@ int testLLRBTree() {
       tmp = current->key;
       
     }
-    
-#endif
   }
   
-  current = rbTree->min(rbTree->treeRoot);
-  tmp = current->key;
-  
-  cout << rbTree->size();
-  cout << ":size\n";
-  
-  for (uint64_t ix = 0; ix < rbTree->size()-1; ix++) {
-    current = rbTree->next(current);
+  for (uint64_t ix = 0; ix < addList->size(); ix++)
+  {
+    uint64_t curr = addList->at(ix);
     
-    if (current->key < tmp) {
-      cout << "Index/Key:";
-      cout << ix;
-      cout << "/";
-      cout << tmp;
-      cout << " not sorted!\n";
+    if (!curr)
+    {
+      continue;
     }
     
-    tmp = current->key;
+    tmp = rbTree->size();
     
+    rbTree->remove(curr,curr);
+    
+    if (tmp == rbTree->size())
+    {
+      cout << "Nothing Removed!\n";
+    }
+    else
+    {
+      addList->at(ix) = 0;
+    }
   }
   
   cout << "LLRB_Tree:Done\n";
