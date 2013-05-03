@@ -41,7 +41,7 @@ namespace Optimization {
   protected:
     
     virtual void doEpoch() =0;
-    uint64_t spawnHiddenWidth;
+    uint32_t spawnHiddenWidth;
     
     vector<DataType *> *questionCache = NULL;
     vector<Trust<DataType> *> *answerCache = NULL;

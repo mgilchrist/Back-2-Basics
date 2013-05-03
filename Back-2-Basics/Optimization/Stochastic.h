@@ -30,8 +30,8 @@ using namespace Collection;
 
 namespace Optimization {
   
-  static double glbEnergyCnst = 1.0 / 128.0;
-  static double glbAreaCapacity = 2.0;
+  static double glbEnergyCnst = 0.01;
+  static double glbAreaCapacity = 4.0;
   
   /*  typedef struct TotalCompetition {
    double competition = 0.0;
@@ -101,7 +101,7 @@ namespace Optimization {
     
     vector<DataType *> *pickRandoms(LLRB_Tree<DataType *, uint64_t> *, vector<DataType *> *originals, uint64_t);
     vector<Trust<DataType> *> *pickRandomTrusts(LLRB_Tree<Trust<DataType> *, uint64_t> *, vector<Trust<DataType> *> *originals, uint64_t);
-    HeuristicType *spawn(uint64_t, uint64_t);
+    HeuristicType *spawn(uint32_t, uint32_t);
     
   public:
     Stoichastic() {
@@ -240,14 +240,15 @@ namespace Optimization {
   }
   
   template <class HeuristicType, class DataType>
-  HeuristicType *Stoichastic<HeuristicType,DataType>::spawn(uint64_t spawnNum, uint64_t hiddenWidth) {
+  HeuristicType *Stoichastic<HeuristicType,DataType>::spawn(uint32_t spawnNum, uint32_t hiddenWidth) {
     vector<DataType *> *inputEnv;
     LLRB_Tree<double *, uint64_t> *expectation;
     vector<Trust<DataType> *> *trusts;
-    LLRB_Tree<Info *, uint64_t> infoTree;
+    LLRB_Tree<Info *, Info> infoTree;
     vector<Info *> *hiddenInfo = new vector<Info *>();
     HeuristicType *tmp;
-    uint64_t layer, tmpNum, incVal, inIncVal, inSOffset, sOffset;
+    uint32_t layer, tmpNum;
+    uint32_t incVal, inIncVal, inSOffset, sOffset;
     
     if (this->questionCache == NULL) {
       this->questionCache = this->question.select(NULL,NULL);
@@ -267,7 +268,7 @@ namespace Optimization {
     
     expectation = new LLRB_Tree<double *, uint64_t>();
     
-    for (uint64_t ix = 0; ix < incVal; ix++) {
+    for (uint32_t ix = 0; ix < incVal; ix++) {
       tmpNum = (sOffset + ix) % trusts->size();
       double *spawnExpect = new double(0.0);
       expectation->insert(spawnExpect, (uint64_t)(trusts->at(tmpNum)->actual));
@@ -277,22 +278,27 @@ namespace Optimization {
       }
     }
     
-    for (uint64_t ix = 0; ix < incVal; ix++) {
+    for (uint32_t ix = 0; ix < incVal; ix++) {
       layer = 7;
       tmpNum = (sOffset + ix) % trusts->size();
       
       while (layer != 0) {
         Info *newConn = new Info;
-        newConn->c.position = ((uint32_t)layer << LAYER_SHIFT) | (uint32_t)tmpNum;
+        newConn->c.layer = layer;
+        newConn->c.position = tmpNum;
         layer -= log2((rand() % (1 << layer))) + 1;
+        
+        assert(layer < 7);
+        
         if (layer) {
           tmpNum = rand() % hiddenWidth;
         } else {
           tmpNum = (inSOffset - (inSOffset/2) + (rand() % (inIncVal*2))) % inputEnv->size();
         }
-        newConn->c.inputPosition = ((uint32_t)layer << LAYER_SHIFT) |  (uint32_t)tmpNum;
+        newConn->c.inputLayer = layer;
+        newConn->c.inputPosition = tmpNum;
         
-        infoTree.insert(newConn, newConn->k);
+        infoTree.insert(newConn, *newConn);
       }
     }
     
@@ -324,7 +330,7 @@ namespace Optimization {
   void Stoichastic<HeuristicType,DataType>::initInternals() {
     uint64_t numSpawn = (this->answer.size() / log2(this->answer.size())) + 1;
     
-    for (uint64_t ix = 0; ix < numSpawn; ix++) {
+    for (uint32_t ix = 0; ix < numSpawn; ix++) {
       spawn(ix, this->spawnHiddenWidth);
     }
     

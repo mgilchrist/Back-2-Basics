@@ -22,6 +22,7 @@
 #ifndef OpenSource_Network_h
 #define OpenSource_Network_h
 
+#include "config.h"
 #include <vector>
 #include "Graph.h"
 
@@ -33,10 +34,15 @@ namespace Graph {
   template <class HubType, class PipeType>
   class Pipe : public Edge<HubType,PipeType>
   {
+  private:
+#if (DEBUG == 1)
+    bool initialized = false;
+#endif
     
   protected:
     
     void initialize(HubType *v, HubType *u, double capacity);
+    void deinitialize();
     
   public:
     Pipe<HubType,PipeType>() {
@@ -60,6 +66,15 @@ namespace Graph {
   template <class NodeType, class EdgeType>
   class Hub : public Node<NodeType,EdgeType>
   {
+  private:
+#if (DEBUG == 1)
+    bool initialized = false;
+#endif
+    
+  protected:
+    void initialize();
+    void deinitialize();
+
     
   public:
     double capacity = 0.0;
@@ -67,7 +82,7 @@ namespace Graph {
   public:
     
     Hub() {
-      this->initialize();
+      initialize();
     }
   };
   
@@ -78,14 +93,45 @@ namespace Graph {
   /* Pipe */
   
   template <class HubType, class PipeType>
-  void Pipe<HubType,PipeType>::initialize(HubType *v, HubType *u, double capacity) {
+  void Pipe<HubType,PipeType>::initialize(HubType *v, HubType *u, double capacity)
+  {
+    assert(!initialized);
+    initialized = true;
+    
     Edge<HubType,PipeType>::initialize(v,u);
     
     this->attrib = capacity;
   }
   
+  template <class HubType, class PipeType>
+  void Pipe<HubType,PipeType>::deinitialize()
+  {
+    assert(initialized);
+    initialized = false;
+
+    Edge<HubType,PipeType>::deinitialize();
+  }
+  
   
   /* Hub */
+  
+  template <class HubType, class PipeType>
+  void Hub<HubType,PipeType>::initialize()
+  {
+    assert(!initialized);
+    initialized = true;
+    
+    Node<HubType,PipeType>::initialize();
+  }
+  
+  template <class HubType, class PipeType>
+  void Hub<HubType,PipeType>::deinitialize()
+  {
+    assert(initialized);
+    initialized = false;
+    
+    Node<HubType,PipeType>::deinitialize();
+  }
   
   
   /* Network */

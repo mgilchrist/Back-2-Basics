@@ -22,6 +22,7 @@
 #ifndef __Algorithms__NeuralNetwork__
 #define __Algorithms__NeuralNetwork__
 
+#include "config.h"
 #include "Heuristic.h"
 #include "Network.h"
 #include "Stack.h"
@@ -58,6 +59,10 @@ namespace NeuralNetwork
   
   class Axion : public Pipe<Neuron,Axion>
   {
+  private:
+#if (DEBUG == 1)
+    bool initialized = false;
+#endif
     
   protected:
     double mFlux = 0.0;
@@ -95,6 +100,10 @@ namespace NeuralNetwork
   private:
     NeuralNetwork *nnetwork;
     
+#if (DEBUG == 1)
+    bool initialized = false;
+#endif
+    
   protected:
     
     uint64_t iteration = 0;
@@ -125,7 +134,6 @@ namespace NeuralNetwork
         input->discovered = 0;
       }
       
-
       return ret;
     }
     
@@ -227,6 +235,7 @@ namespace NeuralNetwork
     double *memory = NULL;
     double *ptrInput = NULL;
     double totalInputs = 0.0;
+    bool privateMemory, privateInput;
     
     Neuron()
     {
@@ -254,7 +263,9 @@ namespace NeuralNetwork
   {
     
   private:
-    
+#if (DEBUG == 1)
+    bool initialized = false;
+#endif
     vector<Neuron *> inputs;
     vector<Harmony<Neuron> *> outputs;
     Neuron *bias;
@@ -322,7 +333,7 @@ namespace NeuralNetwork
                     vector<Trust<double> *> *output,
                     LLRB_Tree<double *, uint64_t> *expectation,
                     vector<Info *> *layers,
-                    uint64_t maxHiddenWidth);
+                    uint32_t maxHiddenWidth);
     
   public:
     
@@ -341,7 +352,7 @@ namespace NeuralNetwork
                   vector<Trust<double> *> *output,
                   LLRB_Tree<double *, uint64_t> *expectation,
                   vector<Info *> *layers,
-                  uint64_t maxHiddenWidth)
+                  uint32_t maxHiddenWidth)
     {
       initialize(input, output, expectation, layers, maxHiddenWidth);
     }

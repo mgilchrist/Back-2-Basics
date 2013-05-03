@@ -36,22 +36,94 @@ struct Harmony {
   double *expectation = NULL;
 };
 
-#define LAYER_SHIFT 28
+//#define LAYER_SHIFT 28
 
-#define POSITION_MASK (((uint32_t)1 << LAYER_SHIFT) - 1)
-#define LAYER_MASK    ((uint32_t)(0xFFFFFFFF << LAYER_SHIFT))
+//#define POSITION_MASK (((uint32_t)1 << LAYER_SHIFT) - 1)
+//#define LAYER_MASK    ((uint32_t)(0xFFFFFFFF << LAYER_SHIFT))
 
-#define INFO_LAYER(x) (x >> LAYER_SHIFT)
-#define INFO_POSITION(x) (x & POSITION_MASK)
+//#define INFO_LAYER(x) (x >> LAYER_SHIFT)
+//#define INFO_POSITION(x) (x & POSITION_MASK)
 
 struct Connection {
   uint32_t inputPosition;
+  uint32_t inputLayer;
   uint32_t position;
+  uint32_t layer;
 };
 
-union Info { /* NOT RIGHT!! TODO */
-  Connection c;
-  uint64_t k;
+union Info_union {
+  struct
+  {
+    uint32_t inputPosition;
+    uint32_t inputLayer;
+    uint32_t position;
+    uint32_t layer;
+  };
+  uint32_t ca[4];
+};
+
+class Info { /* NOT RIGHT!! TODO */
+  
+public:
+  Info_union c;
+  
+  bool operator== (Info &param) {
+    for (int ix = 0; ix < 4; ix++) {
+      if (c.ca[ix] != param.c.ca[ix]) {
+        return false;
+      }
+    }
+    
+    return true;
+  }
+  
+  bool operator< (Info &param) {
+    for (int ix = 0; ix < 4; ix++) {
+      if (c.ca[ix] < param.c.ca[ix]) {
+        return true;
+      } else if (c.ca[ix] > param.c.ca[ix]) {
+        break;
+      }
+    }
+    
+    return false;
+  }
+  
+  bool operator> (Info &param) {
+    for (int ix = 3; ix >= 0; ix++) {
+      if (c.ca[ix] > param.c.ca[ix]) {
+        return true;
+      } else if (c.ca[ix] < param.c.ca[ix]) {
+        break;
+      }
+    }
+    
+    return false;
+  }
+  
+  bool operator<= (Info &param) {
+    for (int ix = 0; ix < 4; ix++) {
+      if (c.ca[ix] < param.c.ca[ix]) {
+        return true;
+      } else if (c.ca[ix] > param.c.ca[ix]) {
+        return false;
+      }
+    }
+    
+    return true;
+  }
+  
+  bool operator>= (Info &param) {
+    for (int ix = 3; ix >= 0; ix++) {
+      if (c.ca[ix] > param.c.ca[ix]) {
+        return true;
+      } else if (c.ca[ix] < param.c.ca[ix]) {
+        return false;
+      }
+    }
+    
+    return true;
+  }
 };
 
 template <class DataType>
@@ -76,7 +148,7 @@ public:
   double energy = 0.0;
   uint64_t experiencedEpochs = 0;
   bool registered = false;
-  uint64_t hiddenWidth = 0;
+  uint32_t hiddenWidth = 0;
   //LLRB_Tree<Info *, uint64_t> *hiddenInfo;
   
   virtual void deinitialize() =0;

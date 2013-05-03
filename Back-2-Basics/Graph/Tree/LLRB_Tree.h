@@ -27,6 +27,8 @@
 #include <assert.h>
 #include "Tree.h"
 
+#define LLRB_EXT_DEBUG 0
+
 namespace Tree {
   
 #define TreeType Tree<TreeNodeType,EntryType,KeyType>
@@ -41,6 +43,11 @@ namespace Tree {
   public:
     
     bool color;
+    
+    LLRB_TreeNode() {
+      this->data = NULL;
+      color = RED;
+    }
     
     LLRB_TreeNode(DataType data, KeyType key) {
       this->data = data;
@@ -92,8 +99,10 @@ namespace Tree {
     //void updateKey(KeyType, KeyType, uint64_t);
     //void update(EntryType, KeyType, uint64_t);
     
+#if (LLRB_EXT_DEBUG == 1)
     static int rRules(TreeNodeType *current);
     static int rules(TreeNodeType *root);
+#endif
     
   };
   
@@ -104,8 +113,9 @@ namespace Tree {
     this->treeRoot = insert(this->treeRoot, data, key);
     this->treeRoot->color = BLACK;
     
+#if (LLRB_EXT_DEBUG == 1)
     assert(rules(this->treeRoot));
-
+#endif
   }
   
   
@@ -371,11 +381,13 @@ namespace Tree {
   void LLRB_Tree<EntryType,KeyType,TreeNodeType>::remove(EntryType data, KeyType key) {
     this->treeRoot = remove(this->treeRoot, data, key);
     this->treeRoot->color = BLACK;
-    
+#if (LLRB_EXT_DEBUG == 1)    
     assert(rules(this->treeRoot));
+#endif
 
   }
   
+#if (LLRB_EXT_DEBUG == 1)
   template <class EntryType, class KeyType, class TreeNodeType>
   int LLRB_Tree<EntryType,KeyType,TreeNodeType>::rRules(TreeNodeType *current) {
     int leftCount = 0, isBlack = 0;
@@ -409,6 +421,7 @@ namespace Tree {
     return leftCount+isBlack;
   }
 
+  
   template <class EntryType, class KeyType, class TreeNodeType>
   int LLRB_Tree<EntryType,KeyType,TreeNodeType>::rules(TreeNodeType *root) {
     
@@ -418,7 +431,7 @@ namespace Tree {
     return rRules(root);
     
   }
-
+#endif
 
   
 }

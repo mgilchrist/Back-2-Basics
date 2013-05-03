@@ -205,11 +205,11 @@ int testLLRBTree() {
   
   cout << "\nTesting LLRB_Tree\n";
   
-  rbTree = new LLRB_Tree<u_int64_t, uint64_t>();
+  rbTree = new LLRB_Tree<uint64_t, uint64_t>();
   addList = new vector<uint64_t>();
   
   
-  for (uint64_t iter = 0; iter < 64; iter++)
+  for (uint64_t iter = 0; iter < 4; iter++)
   {
     /* Add items to the tree */
     for (uint64_t ix = 0; ix < glbTestSize; ix++)
@@ -448,7 +448,8 @@ int testNeuralNetwork() {
     for (uint32_t jx = 0; jx < log2(glbOutputSize); jx++) {
       Info *info = new Info;
       info->c.inputPosition = ix;
-      info->c.position = (4 << LAYER_SHIFT) | jx;
+      info->c.layer = 4;
+      info->c.position = jx;
       hiddenInfo->push_back(info);
     }
   }
@@ -456,8 +457,10 @@ int testNeuralNetwork() {
   for (uint32_t ix = 0; ix < log2(glbOutputSize); ix++) {
     for (uint32_t jx = 0; jx < glbOutputSize; jx++) {
       Info *info = new Info;
-      info->c.inputPosition = (4 << LAYER_SHIFT) | jx;
-      info->c.position = (7 << LAYER_SHIFT) | jx;
+      info->c.inputLayer = 4;
+      info->c.inputPosition = jx;
+      info->c.layer = 7;
+      info->c.position = jx;
       hiddenInfo->push_back(info);
     }
   }
@@ -486,7 +489,7 @@ int testNeuralNetwork() {
      thisOutput,
      thisExpect,
      hiddenInfo,
-     thisOutput->size()
+     (uint32_t)thisOutput->size()
     );
   
   for (uint64_t jx = 0; jx < thisInput->size(); jx++) {
@@ -893,7 +896,7 @@ int main(int argc, const char * argv[])
   //ret |= testArrayList();
   //ret |= testHeap();
   //ret |= testRBTree();
-  ret |= testLLRBTree();
+  //ret |= testLLRBTree();
   //ret |= testStack();
   //ret |= testNeuralNetwork();
   ret |= testGenetic();

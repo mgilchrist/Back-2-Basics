@@ -23,6 +23,7 @@
 #include <iostream>
 using namespace std;
 
+#include "config.h"
 #include "NeuralNetwork.h"
 
 //#define NEURALNETWORK_DEBUG
@@ -38,6 +39,9 @@ namespace NeuralNetwork
   
   void Axion::initialize(Neuron *input, Neuron *neuron, Info *info)
   {
+    assert(!initialized);
+    initialized = true;
+    
     Pipe::initialize(input, neuron, RANDOM_INFLUENCE);
     
     mFlux = 0.0;
@@ -54,27 +58,34 @@ namespace NeuralNetwork
   
   void Neuron::initialize(double *inputData, double *expectation, NeuralNetwork *neuralNetwork)
   {
-    Hub::initialize();
+    assert(inputData);
+    assert(!initialized);
+    
+    initialized = true;
     
     nnetwork = neuralNetwork;
     
     if (inputData != NULL)
     {
       this->ptrInput = inputData;
+      privateInput = false;
     }
     else
     {
       this->ptrInput = new double();
+      privateInput = true;
       *(this->ptrInput) = 0.0;
     }
     
-    if (expectation == NULL)
+    if (expectation != NULL)
     {
-      memory = new double();
+      memory = expectation;
+      privateMemory = false;
     }
     else
     {
-      memory = expectation;
+      memory = new double();
+      privateMemory = true;
     }
     
     iteration = 0;
@@ -86,7 +97,22 @@ namespace NeuralNetwork
   
   void Neuron::deinitialize()
   {
+    if (privateMemory)
+    {
+      delete memory;
+    }
+    
+    if (privateInput)
+    {
+      delete ptrInput;
+    }
+    
     nnetwork->numberOfNeurons--;
+    
+    assert(initialized);
+    initialized = false;
+    
+    //Hub::deinitialize();
   }
   
   double Neuron::probeActivation(uint64_t iteration)
@@ -118,6 +144,9 @@ namespace NeuralNetwork
   
   void NeuralNetwork::deinitialize()
   {
+    assert(initialized);
+    initialized = false;
+    
     for (uint64_t ix = 0; ix < outputs.size(); ix++)
     {
       if (outputs[ix] != NULL)
@@ -134,12 +163,15 @@ namespace NeuralNetwork
                                std::vector<Trust<double> *> *output,
                                LLRB_Tree<double *, uint64_t> *expectation,
                                std::vector<Info *> *connectivity,
-                               uint64_t maxHiddenWidth)
+                               uint32_t maxHiddenWidth)
   {
     
     Neuron *currentNeuron;
     Neuron **neuronArray[8];
     Axion *tmpAxion;
+    
+    assert(!initialized);
+    initialized = true;
     
     this->hiddenWidth = maxHiddenWidth;
     
@@ -172,10 +204,10 @@ namespace NeuralNetwork
     for (int64_t ix = connectivity->size()-1; ix >= 0; ix--)
     {
       Info *conn = connectivity->at(ix);
-      uint8_t inLayer = INFO_LAYER(conn->c.inputPosition);
-      uint8_t outLayer = INFO_LAYER(conn->c.position);
-      uint32_t inPosition = INFO_POSITION(conn->c.inputPosition);
-      uint32_t outPosition = INFO_POSITION(conn->c.position);
+      uint32_t inLayer = conn->c.inputLayer;
+      uint32_t outLayer = conn->c.layer;
+      uint32_t inPosition = conn->c.inputPosition;
+      uint32_t outPosition = conn->c.position;
       
       if (outLayer == 7)
       {
@@ -273,15 +305,16 @@ namespace NeuralNetwork
     
     for (uint64_t kx = 0; kx < outputs.size(); kx++)
     {
-      if ((outputs[kx] != NULL) && (outputs[kx]->logicElement != NULL))
+      Harmony<Neuron> *currentNeuron = outputs[kx];
+      if ((currentNeuron != NULL) && (currentNeuron->logicElement != NULL))
       {
-        Neuron *tmpNeuron = outputs[kx]->logicElement;
+        Neuron *tmpNeuron = currentNeuron->logicElement;
         tmpNeuron->forwardEdges->deletion(Neuron::optimalPruneEach, tmpNeuron);
         if ((!tmpNeuron->forwardEdges->size()) && (tmpNeuron->ptrInput == &zero))
         {
-          delete outputs[kx]->logicElement;
+          delete currentNeuron->logicElement;
           numberOfNeurons--;
-          outputs[kx]->logicElement = NULL;
+          currentNeuron->logicElement = NULL;
         }
       }
     }
@@ -338,6 +371,8 @@ namespace NeuralNetwork
       {
         Info *tmp = new Info;
         Info *thisInfo = hiddenInfo[ix];
+        tmp->c.inputLayer = thisInfo->c.inputLayer;
+        tmp->c.layer = thisInfo->c.layer;
         tmp->c.inputPosition = thisInfo->c.inputPosition;
         tmp->c.position = thisInfo->c.position;
         ret->push_back(tmp);

@@ -31,7 +31,7 @@ namespace Optimization {
   static uint64_t currentTime = -1;
   static const double glbToughness = 0.0;
   static const uint64_t ofAge = 1;
-  static const uint64_t maxAge = 1000;
+  static const uint64_t maxAge = 100000;
   
   template <class HeuristicType, class LogicType, class DataType>
   class Genetic : public Stoichastic<HeuristicType,DataType> {
@@ -81,9 +81,7 @@ namespace Optimization {
         uint64_t envSize = localComp->prediction->predictions.size();
         double toughness = (localComp->prediction->confidence * envSize) - glbAreaCapacity;
         
-        if (toughness > 0.0) {
-          toughness /= envSize;
-        } else {
+        if (toughness < 0.0) {
           toughness = 0.0;
         }
         
@@ -301,22 +299,24 @@ namespace Optimization {
       entry = vect->at(rand()%vect->size());
       
       if (randVal & 0x01) {;
-        pos = entry->c.position ^ (1 << (rand() % LAYER_SHIFT));
+        pos = entry->c.position ^ (1 << (rand() % 32));
         
-        if (INFO_LAYER(entry->c.position) == 7) {
-          entry->c.position = (pos & LAYER_MASK) | ((pos & POSITION_MASK) % outputWidth);
+        if (entry->c.layer == 7) {
+          entry->c.position = pos % outputWidth;
         } else {
-          entry->c.position = (pos & LAYER_MASK) | ((pos & POSITION_MASK) % hiddenWidth);
+          entry->c.position = pos % hiddenWidth;
         }
       } else {
-        pos = entry->c.inputPosition ^ (1 << (rand() % LAYER_SHIFT));
+        pos = entry->c.inputPosition ^ (1 << (rand() % 32));
         
-        if (INFO_LAYER(entry->c.inputPosition)) {
-          entry->c.inputPosition = (pos & LAYER_MASK) | ((pos & POSITION_MASK) % hiddenWidth);
+        if (entry->c.inputLayer) {
+          entry->c.inputPosition = pos % hiddenWidth;
         } else {
-          entry->c.inputPosition = (pos & LAYER_MASK) | ((pos & POSITION_MASK) % inputWidth);
+          entry->c.inputPosition = pos % inputWidth;
         }
       }
+      assert(entry->c.inputLayer < 7);
+      assert(entry->c.layer <= 7);
       randVal >>= 1;
     }
   }
@@ -327,7 +327,7 @@ namespace Optimization {
     vector<Trust<DataType> *> *childTrusts;
     LLRB_Tree<double *, uint64_t> childExpectations;
     vector<Info *> *childHiddenInfo, *tmpInfo;
-    LLRB_Tree<Info *, uint64_t> infoTree;
+    LLRB_Tree<Info *, Info> infoTree;
     HeuristicType *tmpHeuristic;
     double mutation_rate = this->error_rate;
     
@@ -343,11 +343,10 @@ namespace Optimization {
     childTrusts = this->answerCache;
     
     tmpInfo = dad->getHiddenInfo();
-    mutate(tmpInfo, childTrusts->size(), childInputs->size(),
-           dad->hiddenWidth, mutation_rate);
     
     for (uint64_t ix = 0; ix < tmpInfo->size(); ix++) {
-      infoTree.insert(tmpInfo->at(ix), tmpInfo->at(ix)->k);
+      Info *thisInfo = tmpInfo->at(ix);
+      infoTree.insert(thisInfo, *thisInfo);
     }
     
     tmpInfo = mom->getHiddenInfo();
@@ -356,20 +355,20 @@ namespace Optimization {
     
     for (uint64_t ix = 0; ix < tmpInfo->size(); ix++) {
       Info *thisInfo = tmpInfo->at(ix);
-      if (INFO_LAYER(thisInfo->c.position) != 7) {
-        thisInfo->c.position = (thisInfo->c.position & LAYER_MASK) | INFO_POSITION(thisInfo->c.position + dad->hiddenWidth);
+      if (thisInfo->c.layer != 7) {
+        thisInfo->c.position = thisInfo->c.position + dad->hiddenWidth;
       }
-      if (!(INFO_LAYER(thisInfo->c.inputPosition))) {
-        thisInfo->c.inputPosition = (thisInfo->c.inputPosition & LAYER_MASK) | INFO_POSITION(thisInfo->c.inputPosition + dad->hiddenWidth);
+      if (thisInfo->c.inputLayer != 0) {
+        thisInfo->c.inputPosition = thisInfo->c.inputPosition + dad->hiddenWidth;
       }
-      infoTree.insert(thisInfo, thisInfo->k);
+      infoTree.insert(thisInfo, *thisInfo);
     }
     
     childHiddenInfo = infoTree.select(NULL, NULL);
     
     for (uint64_t ix = 0; ix < childHiddenInfo->size(); ix++) {
-      if (INFO_LAYER(childHiddenInfo->at(ix)->c.position) == 7) {
-        double *reality = childTrusts->at(INFO_POSITION(childHiddenInfo->at(ix)->c.position))->actual;
+      if (childHiddenInfo->at(ix)->c.layer == 7) {
+        double *reality = childTrusts->at(childHiddenInfo->at(ix)->c.position)->actual;
         double *childExpect = new double(0.0);
         childExpectations.insert(childExpect, (uint64_t)reality);
         

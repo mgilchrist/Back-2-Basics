@@ -34,13 +34,13 @@ namespace Tree {
   
   
 
-  template <class TreeNodeType, class DataType, class KeyType>
+  template <class TreeNodeType, class EntryType, class KeyType>
   class Tree;
   
-  template <class TreeNodeType, class DataType, class KeyType>
+  template <class TreeNodeType, class EntryType, class KeyType>
   class TreeNode;
   
-  template <class TreeNodeType, class DataType, class KeyType>
+  template <class TreeNodeType, class EntryType, class KeyType>
   class TreeNode
   {
   protected:
@@ -48,19 +48,19 @@ namespace Tree {
     TreeNodeType *rightNode = NULL;
     
   public:
-    DataType data;
+    EntryType data;
     KeyType key;
     
     TreeNode() {
       
     }
     
-    friend Tree<TreeNodeType,DataType,KeyType>;
+    friend Tree<TreeNodeType,EntryType,KeyType>;
   };
   
   /* Tree */
   
-  template <class TreeNodeType, class DataType, class KeyType>
+  template <class TreeNodeType, class EntryType, class KeyType>
   class Tree
   {
     
@@ -78,7 +78,7 @@ namespace Tree {
     
   public:
     Tree() {
-      nullNode = new TreeNodeType(NULL,-1);
+      nullNode = new TreeNodeType();
       treeRoot = nullNode;
       
       nullNode->leftNode = nullNode;
@@ -105,35 +105,37 @@ namespace Tree {
     
     TreeNodeType *treeRoot;
     
-    DataType search(KeyType key);
+    EntryType search(KeyType key);
     static TreeNodeType *search(TreeNodeType *node, KeyType key);
     TreeNodeType *next(TreeNodeType *tNode);
     TreeNodeType *min(TreeNodeType *);
     
     uint64_t removal(bool (*action)(TreeNodeType *, void *), void *);
     uint64_t deletion(bool (*action)(TreeNodeType *, void *), void *);
-    vector<DataType> *select(bool (*criteria)(TreeNodeType *, void *), void *);
+    vector<EntryType> *select(bool (*criteria)(TreeNodeType *, void *), void *);
     void modifyAll(KeyType (*action)(TreeNodeType *, void *), void *);
     uint64_t size() {return numNodes;}
     
-    virtual void insert(DataType, KeyType) =0;
+    virtual void insert(EntryType, KeyType) =0;
     virtual void removeMax() =0;
     virtual void removeMin() =0;
-    virtual void remove(DataType, KeyType) =0;
+    virtual void remove(EntryType, KeyType) {
+      assert(false);
+    }
     
   };
   
   
   /* Tree */
   
-  template <class TreeNodeType, class DataType, class KeyType>
-  Tree<TreeNodeType,DataType,KeyType>::~Tree() {
-    delete select(NULL, NULL);
+  template <class TreeNodeType, class EntryType, class KeyType>
+  Tree<TreeNodeType,EntryType,KeyType>::~Tree() {
+    removal(NULL, NULL);
   }
   
   
-  template <class TreeNodeType, class DataType, class KeyType>
-  DataType Tree<TreeNodeType,DataType,KeyType>::search(KeyType key) {
+  template <class TreeNodeType, class EntryType, class KeyType>
+  EntryType Tree<TreeNodeType,EntryType,KeyType>::search(KeyType key) {
     TreeNodeType *ret;
     
     ret = search(treeRoot, key);
@@ -145,8 +147,8 @@ namespace Tree {
     return ret->data;
   }
   
-  template <class TreeNodeType, class DataType, class KeyType>
-  TreeNodeType *Tree<TreeNodeType,DataType,KeyType>::search(TreeNodeType *node, KeyType key) {
+  template <class TreeNodeType, class EntryType, class KeyType>
+  TreeNodeType *Tree<TreeNodeType,EntryType,KeyType>::search(TreeNodeType *node, KeyType key) {
     
     while (node != leftOf(node)) {
       if (key == node->key) {
@@ -160,8 +162,8 @@ namespace Tree {
     return NULL;
   }
   
-  template <class TreeNodeType, class DataType, class KeyType>
-  TreeNodeType *Tree<TreeNodeType,DataType,KeyType>::next(TreeNodeType *tNode) {
+  template <class TreeNodeType, class EntryType, class KeyType>
+  TreeNodeType *Tree<TreeNodeType,EntryType,KeyType>::next(TreeNodeType *tNode) {
     
     TreeNodeType *tmp;
     TreeNodeType *lastGT = nullNode;
@@ -201,8 +203,8 @@ namespace Tree {
     return lastGT;
   }
   
-  template <class TreeNodeType, class DataType, class KeyType>
-  TreeNodeType *Tree<TreeNodeType,DataType,KeyType>::min(TreeNodeType *tNode) {
+  template <class TreeNodeType, class EntryType, class KeyType>
+  TreeNodeType *Tree<TreeNodeType,EntryType,KeyType>::min(TreeNodeType *tNode) {
     
     while (leftOf(tNode) != nullNode) {
       tNode = leftOf(tNode);
@@ -211,8 +213,8 @@ namespace Tree {
     return tNode;
   }
   
-  template <class TreeNodeType, class DataType, class KeyType>
-  void Tree<TreeNodeType,DataType,KeyType>::rSelect(bool (*criteria)(TreeNodeType *, void *),
+  template <class TreeNodeType, class EntryType, class KeyType>
+  void Tree<TreeNodeType,EntryType,KeyType>::rSelect(bool (*criteria)(TreeNodeType *, void *),
                                                     void *object,
                                                     TreeNodeType *current,
                                                     vector<TreeNodeType *> *victims) {
@@ -249,8 +251,8 @@ namespace Tree {
     
   }
   
-  template <class TreeNodeType, class DataType, class KeyType>
-  void Tree<TreeNodeType,DataType,KeyType>::rModifyAll(KeyType (*action)(TreeNodeType *, void *),
+  template <class TreeNodeType, class EntryType, class KeyType>
+  void Tree<TreeNodeType,EntryType,KeyType>::rModifyAll(KeyType (*action)(TreeNodeType *, void *),
                                                        void *object,
                                                        TreeNodeType *current,
                                                        vector<TreeNodeType *> *updates) {
@@ -291,8 +293,8 @@ namespace Tree {
   }
   
   
-  template <class TreeNodeType, class DataType, class KeyType>
-  uint64_t Tree<TreeNodeType,DataType,KeyType>::removal(bool (*criteria)(TreeNodeType *, void *), void *object) {
+  template <class TreeNodeType, class EntryType, class KeyType>
+  uint64_t Tree<TreeNodeType,EntryType,KeyType>::removal(bool (*criteria)(TreeNodeType *, void *), void *object) {
     
     uint64_t ret;
     vector<TreeNodeType *> *victims = new vector<TreeNodeType *>();
@@ -303,7 +305,7 @@ namespace Tree {
     
     while (!victims->empty()) {
       TreeNodeType *tmp = victims->back();
-      this->remove(tmp->data, tmp->key);
+      remove(tmp->data, tmp->key);
       victims->resize(victims->size()-1);
     }
     
@@ -312,8 +314,8 @@ namespace Tree {
     return ret;
   }
   
-  template <class TreeNodeType, class DataType, class KeyType>
-  uint64_t Tree<TreeNodeType,DataType,KeyType>::deletion(bool (*criteria)(TreeNodeType *, void *), void *object) {
+  template <class TreeNodeType, class EntryType, class KeyType>
+  uint64_t Tree<TreeNodeType,EntryType,KeyType>::deletion(bool (*criteria)(TreeNodeType *, void *), void *object) {
     
     uint64_t ret;
     vector<TreeNodeType *> *victims = new vector<TreeNodeType *>();
@@ -324,9 +326,9 @@ namespace Tree {
     
     while (!victims->empty()) {
       TreeNodeType *tmp = victims->back();
-      DataType tmpData = tmp->data;
+      EntryType tmpData = tmp->data;
       this->remove(tmpData, tmp->key);
-      //delete tmpData;
+      delete tmpData;
       victims->resize(victims->size()-1);
     }
     
@@ -336,11 +338,11 @@ namespace Tree {
     
   }
   
-  template <class TreeNodeType, class DataType, class KeyType>
-  vector<DataType> *Tree<TreeNodeType,DataType,KeyType>::select(bool (*criteria)(TreeNodeType *, void *), void *object) {
+  template <class TreeNodeType, class EntryType, class KeyType>
+  vector<EntryType> *Tree<TreeNodeType,EntryType,KeyType>::select(bool (*criteria)(TreeNodeType *, void *), void *object) {
     
     vector<TreeNodeType *> *victims = new vector<TreeNodeType *>();
-    vector<DataType> *ret = new vector<DataType>();
+    vector<EntryType> *ret = new vector<EntryType>();
     
     rSelect(criteria,object,this->treeRoot,victims);
     
@@ -355,15 +357,15 @@ namespace Tree {
     
   }
   
-  template <class TreeNodeType, class DataType, class KeyType>
-  void Tree<TreeNodeType,DataType,KeyType>::modifyAll(KeyType (*action)(TreeNodeType *, void *), void *object) {
+  template <class TreeNodeType, class EntryType, class KeyType>
+  void Tree<TreeNodeType,EntryType,KeyType>::modifyAll(KeyType (*action)(TreeNodeType *, void *), void *object) {
     
     vector<TreeNodeType *> *updates = new vector<TreeNodeType *>();
     
     rModifyAll(action,object,this->treeRoot,updates);
     
     for (uint64_t ix = 0; ix < updates->size(); ix++) {
-      DataType data = updates->at(ix)->data;
+      EntryType data = updates->at(ix)->data;
       KeyType key = updates->at(ix)->key;
       remove(data, key);
       insert(data, key);

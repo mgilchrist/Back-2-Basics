@@ -25,6 +25,7 @@
 #include <iostream>
 using namespace std;
 
+#include "config.h"
 #include "Stack.h"
 #include "LLRB_Tree.h"
 using namespace Tree;
@@ -51,7 +52,10 @@ namespace Graph {
   template <class NodeType, class EdgeType>
   class Edge
   {
-    
+  private:
+#if (DEBUG == 1)
+    bool initialized = false;
+#endif
   protected:
     NodeType    *u;
     NodeType    *v;
@@ -84,6 +88,10 @@ namespace Graph {
   template <class NodeType, class EdgeType>
   class Node
   {
+  private:
+#if (DEBUG == 1)
+    bool initialized = false;
+#endif
     
   protected:
     LLRB_Tree<EdgeType *, uint64_t> *forwardEdges = NULL;
@@ -228,6 +236,8 @@ namespace Graph {
     assert(v != u);
     assert(u != NULL);
     assert(v != NULL);
+    assert(!initialized);
+    initialized = true;
     
     this->u = u;
     this->v = v;
@@ -242,6 +252,8 @@ namespace Graph {
   void Edge<NodeType,EdgeType>::deinitialize() {
     assert(v != NULL);
     assert(v->references != 0);
+    assert(initialized);
+    initialized = false;
     
     v->references--;
     
@@ -269,6 +281,8 @@ namespace Graph {
   template <class NodeType, class EdgeType>
   void Node<NodeType,EdgeType>::initialize() {
     assert(forwardEdges == NULL);
+    assert(!initialized);
+    initialized = true;
     
     forwardEdges = new LLRB_Tree<EdgeType *, uint64_t>();
   }
@@ -276,9 +290,11 @@ namespace Graph {
   template <class NodeType, class EdgeType>
   void Node<NodeType,EdgeType>::deinitialize() {
     assert(forwardEdges != NULL);
+    assert(initialized);
+    initialized = false;
     
     forwardEdges->deletion(NULL,NULL);
-    
+    delete forwardEdges;
     forwardEdges = NULL;
   }
   
@@ -539,16 +555,16 @@ namespace Graph {
   vector<EdgeType *> *Graph<NodeType,EdgeType>::minimumSpanningTree() {
     vector<NodeType *> *nodes = this->getReachableNodes(this->start,this->terminal);
     vector<EdgeType *> *ret = this->getEdges(nodes);
-    LLRB_Tree<EdgeType *, double> edges = new LLRB_Tree<EdgeType *, double>(false);
+    LLRB_Tree<EdgeType *, double> *edges = new LLRB_Tree<EdgeType *, double>(false);
     
     for (uint64_t ix = 0; ix < ret->size(); ix++) {
-      edges.insert(ret->at(ix), (ret->at(ix))->attrib);
+      edges->insert(ret->at(ix), (ret->at(ix))->attrib);
     }
     
     ret->resize(0);
     
-    while ((ret->size() < nodes->size()) && edges.size() ) {
-      EdgeType *edge = edges.min(edges.treeRoot)->data;
+    while ((ret->size() < nodes->size()) && edges->size() ) {
+      EdgeType *edge = edges->min(edges->treeRoot)->data;
       NodeType *u = edge->getBackward();
       NodeType *v = edge->getForward();
       
@@ -564,10 +580,11 @@ namespace Graph {
         ret->push_back(edge);
       }
       
-      edges.removeMin();
+      edges->removeMin();
     }
     
     /* Cleanup */
+    delete edges;
     for (uint64_t ix = 0; ix < nodes->size(); ix++) {
       nodes->at(ix)->previousEdge = NULL;
     }
