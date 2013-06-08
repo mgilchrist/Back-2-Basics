@@ -62,6 +62,10 @@ namespace Collection
     ElementType get(KeyType);
     void update(KeyType, ElementType);
     //ElementType *clone();
+    
+    std::vector<KeyType> *getKeys();
+    std::vector<ElementType> *getElements();
+    
   };
   
   
@@ -308,6 +312,33 @@ namespace Collection
     delete cond;
     
     return h;
+  }
+  
+  template <class ElementType, class KeyType>
+  std::vector<KeyType> *HashTable<ElementType,KeyType>::getKeys() {
+    std::vector<KeyType>  *ret = new std::vector<KeyType>();
+    
+    for (uint64_t ix = 1; ix < keyMap->size(); ix++) {
+      if (keyMap[ix] != NULL) {
+        KeyType tmpKey = *(keyMap[ix]);
+        ret->push_back(tmpKey);
+      }
+    }
+    
+    return ret;
+  }
+  
+  template <class ElementType, class KeyType>
+  std::vector<ElementType> *HashTable<ElementType,KeyType>::getElements() {
+    std::vector<ElementType>  *ret = new std::vector<ElementType>();
+    
+    for (uint64_t ix = 1; ix < keyMap->size(); ix++) {
+      if (keyMap[ix] != NULL) {
+        ret->push_back(elements[ix]);
+      }
+    }
+    
+    return ret;
   }
   
 }

@@ -162,7 +162,7 @@ namespace Graph {
       
       if (!current->data->blocked) {
         if (!(v = current->data->getForward())->discovered) {
-          ((vector<NodeType *> *)nextL)->push(v);
+          ((vector<NodeType *> *)nextL)->push_back(v);
         }
         
         v->discovered++;
@@ -334,10 +334,19 @@ namespace Graph {
     vector<NodeType *> *ret = new vector<NodeType *>();
     uint64_t totalNodes = 0;
     
-    layers = breadthFirstSearch(a, b);
+    if (b != NULL)
+    {
+      layers = breadthFirstSearch(a, b);
+    }
+    else
+    {
+      layers = breadthFirstSearchAll(a);
+    }
+    
     reverseLayers = new vector<vector<NodeType *> *>(layers->size());
     
-    while ((!layers->empty()) && ((layer = layers->back()) != NULL)) {
+    while ((!layers->empty()) && ((layer = layers->back()) != NULL))
+    {
       totalNodes += layer->size();
       reverseLayers->push_back(layer);
       layers->resize(layers->size()-1);
@@ -345,8 +354,10 @@ namespace Graph {
     
     ret->reserve(totalNodes);
     
-    while ((!reverseLayers->empty()) && ((layer = reverseLayers->back()) != NULL)) {
-      while ((!layer->empty()) && ((node = layer->back()) != NULL)) {
+    while ((!reverseLayers->empty()) && ((layer = reverseLayers->back()) != NULL))
+    {
+      while ((!layer->empty()) && ((node = layer->back()) != NULL))
+      {
         ret->push_back(node);
         layer->resize(layer->size()-1);
       }
@@ -360,10 +371,12 @@ namespace Graph {
   }
   
   template <class NodeType, class EdgeType>
-  vector<EdgeType *> *Graph<NodeType,EdgeType>::getEdges(vector<NodeType *> *nodes) {
+  vector<EdgeType *> *Graph<NodeType,EdgeType>::getEdges(vector<NodeType *> *nodes)
+  {
     vector<EdgeType *> *ret = new vector<EdgeType *>();
     
-    for (uint64_t ix = 0; ix < nodes->size(); ix++) {
+    for (uint64_t ix = 0; ix < nodes->size(); ix++)
+    {
       nodes->at(ix)->modifyAllAdjacent(Graph::getEdgeEach, ret);
     }
     
@@ -372,14 +385,17 @@ namespace Graph {
   
   template <class NodeType, class EdgeType>
   vector<vector<NodeType *> *> *
-  Graph<NodeType,EdgeType>::breadthFirstSearch(NodeType *start,
-                                               NodeType *terminal) {
+  Graph<NodeType,EdgeType>::breadthFirstSearch(NodeType *start, NodeType *terminal)
+  {
     
     vector<vector<NodeType *> *> *baseL;
     vector<NodeType *> *L, *first;
     vector<NodeType *> *nextL;
     NodeType *u;
     uint64_t terminalReachCnt = 0, lastTerminalLayer = 0, layerCnt = 0;
+    
+    assert(start != NULL);
+    assert(terminal != NULL);
     
     start->discovered = 1;
     terminal->discovered = 1;
@@ -389,21 +405,24 @@ namespace Graph {
     first = L;
     L->push_back(start);
     
-    while (!(L->empty())) {
-      
+    while (!(L->empty()))
+    {
       // Initialize new layer
       nextL = new vector<NodeType *>;
       baseL->push_back(nextL);
       layerCnt++;
       
-      for (uint64_t ix = 0; ix < L->size(); ix++) {
+      for (uint64_t ix = 0; ix < L->size(); ix++)
+      {
         u = L->at(ix);
         u->modifyAllAdjacent(Graph::pathDiscoveryBFSEach, nextL);
         
-        if (terminalReachCnt != terminal->discovered) {
+        if (terminalReachCnt != terminal->discovered)
+        {
           lastTerminalLayer = layerCnt;
           terminalReachCnt = terminal->discovered;
-          if (terminal->discovered > terminal->references) {
+          if (terminal->discovered > terminal->references)
+          {
             goto bfs_cleanup;
           }
         }
@@ -416,13 +435,16 @@ namespace Graph {
     first->resize(0);
     delete first;
     
-    for (int ix = 0; ix < baseL->size(); ix++) {
-      for (int jx = 0; jx < baseL->at(ix)->size(); jx++) {
+    for (int ix = 0; ix < baseL->size(); ix++)
+    {
+      for (int jx = 0; jx < baseL->at(ix)->size(); jx++)
+      {
         baseL->at(ix)->at(jx)->discovered = 0;
       }
     }
     
-    while (layerCnt > lastTerminalLayer) {
+    while (layerCnt > lastTerminalLayer)
+    {
       layerCnt--;
       baseL->back()->resize(0);
       baseL->pop_back();
@@ -434,28 +456,31 @@ namespace Graph {
   
   template <class NodeType, class EdgeType>
   vector<vector<NodeType *> *> *
-  Graph<NodeType,EdgeType>::breadthFirstSearchAll(NodeType *start) {
-    
+  Graph<NodeType,EdgeType>::breadthFirstSearchAll(NodeType *start)
+  {
     vector<vector<NodeType *> *> *baseL;
     vector<NodeType *> *L;
     vector<NodeType *> *nextL;
     NodeType *u;
+    
+    assert(start != NULL);
     
     start->discovered = 1;
     
     baseL = new vector<vector<NodeType *> *>();
     L = new vector<NodeType *>();
     
-    L->push(start);
+    L->push_back(start);
     
     
     while (!L->empty()) {
       
       // Initialize new layer
       nextL = new vector<NodeType *>;
-      baseL->push(nextL);
+      baseL->push_back(nextL);
       
-      for (uint64_t ix = 0; ix < L->size(); ix++) {
+      for (uint64_t ix = 0; ix < L->size(); ix++)
+      {
         u = L->at(ix);
         u->modifyAllAdjacent(Graph::pathDiscoveryBFSAllEach, nextL);
       }
@@ -465,9 +490,11 @@ namespace Graph {
     }
     
     
-    for (int ix = 0; ix < baseL->size(); ix++) {
-      for (int jx = 0; jx < baseL->atIndex(ix)->size(); jx++) {
-        baseL->atIndex(ix)->atIndex(jx)->discovered = 0;
+    for (int ix = 0; ix < baseL->size(); ix++)
+    {
+      for (int jx = 0; jx < baseL->at(ix)->size(); jx++)
+      {
+        baseL->at(ix)->at(jx)->discovered = 0;
       }
     }
     
@@ -478,8 +505,8 @@ namespace Graph {
   
   template <class NodeType, class EdgeType>
   vector<EdgeType *> *
-  Graph<NodeType,EdgeType>::findAPath(NodeType *start,
-                                      NodeType *terminal) {
+  Graph<NodeType,EdgeType>::findAPath(NodeType *start, NodeType *terminal)
+  {
     
     vector<vector<NodeType *> *> *baseL;
     vector<NodeType *> *L;
@@ -495,18 +522,20 @@ namespace Graph {
     
     L->push_back(start);
     
-    while (!L->empty()) {
-      
+    while (!L->empty())
+    {
       // Initialize new layer
       nextL = new vector<NodeType *>;
       baseL->push_back(nextL);
       
-      while ((!L->empty()) && ((u = L->back()) != NULL)) {
+      while ((!L->empty()) && ((u = L->back()) != NULL))
+      {
         u->modifyAllAdjacent(Graph::pathDiscoveryFAPEach, nextL);
         
         L->resize(L->size()-1);
         
-        if (terminal->discovered) {
+        if (terminal->discovered)
+        {
           goto findAPath_cleanup;
         }
       }
@@ -522,8 +551,10 @@ namespace Graph {
     
     v = terminal;
     
-    while (v->previousEdge != NULL) {
-      if (v->previousEdge->getBackward() != NULL) {
+    while (v->previousEdge != NULL)
+    {
+      if (v->previousEdge->getBackward() != NULL)
+      {
         ret->push_back(v->previousEdge);
       }
       v = v->previousEdge->getBackward();
@@ -534,58 +565,64 @@ namespace Graph {
   }
   
   template <class NodeType, class EdgeType>
-  Graph<NodeType,EdgeType>::Graph() {
+  Graph<NodeType,EdgeType>::Graph()
+  {
     
   }
   
   template <class NodeType, class EdgeType>
-  vector<vector<NodeType *> *> *Graph<NodeType,EdgeType>::getLayers() {
-    
+  vector<vector<NodeType *> *> *Graph<NodeType,EdgeType>::getLayers()
+  {
     return breadthFirstSearch(start, terminal);
   }
   
   template <class NodeType, class EdgeType>
-  vector<EdgeType *> *Graph<NodeType,EdgeType>::getPathToTerminal() {
-    
+  vector<EdgeType *> *Graph<NodeType,EdgeType>::getPathToTerminal()
+  {
     return findAPath(start, terminal);
   }
   
   
   template <class NodeType, class EdgeType>
-  vector<EdgeType *> *Graph<NodeType,EdgeType>::minimumSpanningTree() {
+  vector<EdgeType *> *Graph<NodeType,EdgeType>::minimumSpanningTree()
+  {
     vector<NodeType *> *nodes = this->getReachableNodes(this->start,this->terminal);
     vector<EdgeType *> *ret = this->getEdges(nodes);
     LLRB_Tree<EdgeType *, double> *edges = new LLRB_Tree<EdgeType *, double>(false);
     
-    for (uint64_t ix = 0; ix < ret->size(); ix++) {
+    for (uint64_t ix = 0; ix < ret->size(); ix++)
+    {
       edges->insert(ret->at(ix), (ret->at(ix))->attrib);
     }
     
     ret->resize(0);
     
-    while ((ret->size() < nodes->size()) && edges->size() ) {
+    while ((ret->size() < nodes->size()) && edges->size() )
+    {
       EdgeType *edge = edges->min(edges->treeRoot)->data;
       NodeType *u = edge->getBackward();
       NodeType *v = edge->getForward();
       
       if ((u->previousEdge->getBackward() != v->previousEdge->getBackward()) ||
-          (v->previousEdge->getBackward() == NULL)) {
+          (v->previousEdge->getBackward() == NULL))
+      {
         NodeType *tmp = v->previousEdge->getBackward();
-        for (uint64_t ix = 0; ix < nodes->size(); ix++) {
-          if (nodes->at(ix) == tmp ) {
+        for (uint64_t ix = 0; ix < nodes->size(); ix++)
+        {
+          if (nodes->at(ix) == tmp )
+          {
             nodes->at(ix) = u->previousEdge->getBackward();
           }
         }
-        
         ret->push_back(edge);
       }
-      
       edges->removeMin();
     }
     
     /* Cleanup */
     delete edges;
-    for (uint64_t ix = 0; ix < nodes->size(); ix++) {
+    for (uint64_t ix = 0; ix < nodes->size(); ix++)
+    {
       nodes->at(ix)->previousEdge = NULL;
     }
     
@@ -597,27 +634,33 @@ namespace Graph {
   }
   
   template <class NodeType, class EdgeType>
-  vector<EdgeType *> *Graph<NodeType,EdgeType>::maximumSpanningTree() {
+  vector<EdgeType *> *Graph<NodeType,EdgeType>::maximumSpanningTree()
+  {
     vector<NodeType *> *nodes = this->getReachableNodes(this->start,this->terminal);
     vector<EdgeType *> *ret = this->getEdges(nodes);
     LLRB_Tree<EdgeType *, double> edges = new LLRB_Tree<EdgeType *, double>(false);
     
-    for (uint64_t ix = 0; ix < ret->size(); ix++) {
+    for (uint64_t ix = 0; ix < ret->size(); ix++)
+    {
       edges.insert(ret->at(ix), -(ret->at(ix))->attrib); /* multiply by -1 to get maximum */
     }
     
     ret->resize(0);
     
-    while ((ret->size() < nodes->size()) && edges.size() ) {
+    while ((ret->size() < nodes->size()) && edges.size() )
+    {
       EdgeType *edge = edges.min(edges.treeRoot)->data;
       NodeType *u = edge->getBackward();
       NodeType *v = edge->getForward();
       
       if ((u->previousEdge->getBackward() != v->previousEdge->getBackward()) ||
-          (v->previousEdge->getBackward() == NULL)) {
+          (v->previousEdge->getBackward() == NULL))
+      {
         NodeType *tmp = v->previousEdge->getBackward();
-        for (uint64_t ix = 0; ix < nodes->size(); ix++) {
-          if (nodes->at(ix) == tmp ) {
+        for (uint64_t ix = 0; ix < nodes->size(); ix++)
+        {
+          if (nodes->at(ix) == tmp )
+          {
             nodes->at(ix) = u->previousEdge->getBackward();
           }
         }
@@ -629,7 +672,8 @@ namespace Graph {
     }
     
     /* Cleanup */
-    for (uint64_t ix = 0; ix < nodes->size(); ix++) {
+    for (uint64_t ix = 0; ix < nodes->size(); ix++)
+    {
       nodes->at(ix)->previousEdge = NULL;
     }
     
@@ -642,22 +686,26 @@ namespace Graph {
 
   
   template <class NodeType, class EdgeType>
-  void Graph<NodeType,EdgeType>::setStart(NodeType *start) {
+  void Graph<NodeType,EdgeType>::setStart(NodeType *start)
+  {
     this->start=start;
   }
   
   template <class NodeType, class EdgeType>
-  void Graph<NodeType,EdgeType>::setTerminal(NodeType *terminal) {
+  void Graph<NodeType,EdgeType>::setTerminal(NodeType *terminal)
+  {
     this->terminal=terminal;
   }
   
   template <class NodeType, class EdgeType>
-  NodeType *Graph<NodeType,EdgeType>::getStart() {
+  NodeType *Graph<NodeType,EdgeType>::getStart()
+  {
     return start;
   }
   
   template <class NodeType, class EdgeType>
-  NodeType *Graph<NodeType,EdgeType>::getTerminal() {
+  NodeType *Graph<NodeType,EdgeType>::getTerminal()
+  {
     return terminal;
   }
   
