@@ -181,7 +181,7 @@ namespace Vision {
   }
   
   template <class NodeType, class EdgeType>
-  std::vector<std::vector<EdgeType *> *> *ObjectSegmentation::getEdgeSegments(Graph *g)
+  vector<vector<EdgeType *> *> *ObjectSegmentation::getEdgeSegments(Graph *g)
   {
     std::vector<std::vector<NodeType *> *> *edgeRegions = new ;
     LLRB_Tree<NodeType *, double> *edgeR;
