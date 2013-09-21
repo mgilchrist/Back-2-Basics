@@ -80,6 +80,10 @@ namespace Graph {
     NodeType *getForward();
     NodeType *getBackward();
     
+    double getAttribute() {
+      return attrib;
+    }
+    
     friend class Node<NodeType,EdgeType>;
   };
   

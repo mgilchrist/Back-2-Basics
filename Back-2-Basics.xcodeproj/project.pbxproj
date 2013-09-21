@@ -67,7 +67,7 @@
 		2C1810CB16DB0E78002EEB66 /* ObjectSegmentation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObjectSegmentation.h; sourceTree = "<group>"; };
 		2C18931E171B648600FCA065 /* Config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Config.h; sourceTree = "<group>"; };
 		2C84AB661622793300572AF7 /* Test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Test; sourceTree = BUILT_PRODUCTS_DIR; };
-		2C84AB7616227C5B00572AF7 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = "Back-2-Basics/main.cpp"; sourceTree = "<group>"; };
+		2C84AB7616227C5B00572AF7 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = ../main.cpp; sourceTree = "<group>"; };
 		2C84AB7716227C5B00572AF7 /* Test.1 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.man; name = Test.1; path = "Back-2-Basics/Test.1"; sourceTree = "<group>"; };
 		2C898845160C434C0087B09C /* NeuralNetwork.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NeuralNetwork.cpp; sourceTree = "<group>"; };
 		2CA21462160C0DFD00347D58 /* libBack-2-Basics.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = "libBack-2-Basics.dylib"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -157,7 +157,6 @@
 			isa = PBXGroup;
 			children = (
 				2C1810CA16DB0E78002EEB66 /* Vision */,
-				2C84AB7616227C5B00572AF7 /* main.cpp */,
 				2C84AB7716227C5B00572AF7 /* Test.1 */,
 				2CA214EE160C17C100347D58 /* Collection */,
 				2CA214F7160C17C100347D58 /* Collection.h */,
@@ -176,6 +175,7 @@
 		2CA214EE160C17C100347D58 /* Collection */ = {
 			isa = PBXGroup;
 			children = (
+				2C84AB7616227C5B00572AF7 /* main.cpp */,
 				2CA214EF160C17C100347D58 /* Array */,
 				2CA214F3160C17C100347D58 /* Array.h */,
 				2CA214F4160C17C100347D58 /* List */,

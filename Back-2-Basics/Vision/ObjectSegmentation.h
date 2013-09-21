@@ -11,44 +11,62 @@
 
 #include <algorithm>    // std::min
 #include <vector>
-using std;
+using namespace std;
 #include "Graph.h"
-#inlcude "HashTable.h"
+#include "HashTable.h"
 
-namespace Vision {
+namespace Segmentation {
   
+  template <class EdgeType>
+  struct Segment
+  {
+    vector<EdgeType *> edges;
+    double credit;
+    bool mark = false;
+    bool isValid = false;
+  };
   
   /* Class: ObjectSegmentation */
-  class ObjectSegmentation<NodeType, EdgeType>
+  template <class NodeType, class EdgeType>
+  class ObjectSegmentation
   {
   private:
-    struct Segment {
-      vector<EdgeType *> edges;
-      double credit;
-      bool mark = FALSE;
-      bool isValid = FALSE;
-    }
-    HashTable<Segment *,NodeType *> regions;
     
-    Segment *segmentUnion(Segment *region1, Segment *region2);
+    HashTable<Segment<EdgeType> *,NodeType *> regions;
     
     vector<vector<NodeType *> *> *getEntangledNeuronGroups();
     
-    void edgeHeuristic();
-    void segmentation(Graph *g);
+    void edgeHeuristic(EdgeType *edge);
+    void segmentation(Graph<NodeType, EdgeType> *g);
+    double computeCredit(uint64_t);
+    
+    Segment<EdgeType> *segmentUnion(Segment<EdgeType> *region1, Segment<EdgeType> *region2);
   
   public:
-    vector<NodeType *> *getSegments();
+    vector<vector<EdgeType *> *> *getEdgeSegments(Graph<NodeType, EdgeType> *g);
+    vector<vector<NodeType *> *> *getNodeSegments(Graph<NodeType, EdgeType> *g);
+    
+    ObjectSegmentation() {
+      
+    }
   
+  };
+  
+  template<class NodeType, class EdgeType>
+  double ObjectSegmentation<NodeType,EdgeType>::computeCredit(uint64_t size)
+  {
+    // TODO
+    return (double)size;
   }
   
   template <class NodeType, class EdgeType>
-  Segment *ObjectSegmentation::segmentUnion(Segment *region1, Segment *region2)
+  Segment<EdgeType> *ObjectSegmentation<NodeType,EdgeType>::segmentUnion(Segment<EdgeType> *region1, Segment<EdgeType> *region2)
   {
-    for (ix = 0; ix < region2->edges.size(); ix++)
+    for (uint64_t ix = 0; ix < region2->edges.size(); ix++)
     {
       EdgeType *currentEdge = region2->edges.at(ix);
-      regions.update(currentEdge, region1);
+      regions.update(currentEdge->getForward(), region1);
+      regions.update(currentEdge->getBackward(), region1);
       region1->edges.push_back(currentEdge);
     }
     
@@ -59,78 +77,85 @@ namespace Vision {
   }
   
   template <class NodeType, class EdgeType>
-  void ObjectSegmentation::edgeHeuristic(Edge *edge)
+  void ObjectSegmentation<NodeType,EdgeType>::edgeHeuristic(EdgeType *edge)
   {
-    Segment *survivor;
-    Segment *region1 = regions.search(edge->getBackward);
-    Segment *region2 = regions.search(edge->getForward);
+    Segment<EdgeType> *survivor;
+    Segment<EdgeType> *region1 = regions.get(edge->getBackward());
+    Segment<EdgeType> *region2 = regions.get(edge->getForward());
     
     assert(region1 != NULL);
     assert(region2 != NULL);
     
     if (region1 != region2)
     {
-      credit = std::min(region1.credit, region2.credit);
-      if (credit > edge.weight)
+      double credit = std::min(region1->credit, region2->credit);
+      if (credit > edge->getAttribute())
       {
         survivor = segmentUnion(region1, region2);
-        survivor.credit = credit - edge.weight;
+        survivor->credit = credit - edge->getAttribute();
       }
     }
   }
   
   template <class NodeType, class EdgeType>
-  void ObjectSegmentation::segmentation(Graph *g)
+  void ObjectSegmentation<NodeType,EdgeType>::segmentation(Graph<NodeType, EdgeType> *g)
   {
     vector<EdgeType *> delayQueue;
-    vector<EdgeType *> edges = g->getEdges(g->getReachableNodes(g->start, NULL));
+    vector<EdgeType *> *edges = g->getEdges(g->getReachableNodes(g->getStart(), NULL));
     LLRB_Tree<EdgeType *, double> sorted;
-    std::vector<Segment *> *segments;
+    std::vector<Segment<EdgeType> *> *segments;
+    LLRB_TreeNode<EdgeType *, double> *currentNode;
     
     // sort edges, merging those with weight < minWeight;
-    for (uint64_t ix = 0; ix < edges.size(); ix++)
+    for (uint64_t ix = 0; ix < edges->size(); ix++)
     {
-      sorted.insert(edges[ix], edges[ix]->attrib);
+      sorted.insert(edges->at(ix), edges->at(ix)->getAttribute());
     }
     
-    edges.resize(0);
+    edges->resize(0);
     
-    while (sorted.size > 0)
+    currentNode = sorted.min(sorted.treeRoot);
+    
+    while (sorted.next(currentNode) != NULL)
     {
-      edges.push_back(sorted.removeMin(edges[ix], edges[ix]->attrib));
+      edges->push_back(currentNode->data);
+      currentNode = sorted.next(currentNode);
     }
     
-    segments = regions->getElements();
+    sorted.removal(NULL, NULL);
     
-    for (uint64_t ix = 0; ix < regions->size(); ix++)
+    segments = regions.getElements();
+    
+    for (uint64_t ix = 0; ix < regions.getSize(); ix++)
     {
-      r = segments->at(ix);
-      if (r->mark == TRUE)
+      Segment<EdgeType> *r = segments->at(ix);
+      if (r->mark == true)
       {
         continue;
       }
-      r->credit = ComputeCredit(r->nodes->size());
+      r->credit = computeCredit(r->edges.size());
       
-      r->mark = TRUE;
+      r->mark = true;
     }
     
     for (uint64_t ix = 0; ix < segments->size(); ix++)
     {
-      r = segments->at(ix);
-      r->mark = FALSE;
+      Segment<EdgeType> *r = segments->at(ix);
+      r->mark = false;
     }
 
-    for (uint64_t ix = 0; ix < edges.size(); ix++)
+    for (uint64_t ix = 0; ix < edges->size(); ix++)
     {
-      EdgeType edge = edges[ix];
-      region1 = regions.search(edge->getBackward());
-      region2 = regions.search(edge->getForward());
+      EdgeType *edge = edges->at(ix);
+      Segment<EdgeType> *region1 = regions.get(edge->getBackward());
+      Segment<EdgeType> *region2 = regions.get(edge->getForward());
       
-      if (region1 != region2) {
-        region1.mark = TRUE;
-        region2.mark = TRUE;
+      if (region1 != region2)
+      {
+        region1->mark = true;
+        region2->mark = true;
       }
-      else if (region1.mark && region2.mark)
+      else if (region1->mark && region2->mark)
       {
         delayQueue.push_back(edge);
       }
@@ -142,62 +167,69 @@ namespace Vision {
     
     for (uint64_t ix = 0; ix < segments->size(); ix++)
     {
-      r = segments->at(ix);
-      r->mark = FALSE;
+      Segment<EdgeType> *r = segments->at(ix);
+      r->mark = true;
     }
     
-    edges.resize(0);
+    edges->resize(0);
     
     for (uint64_t ix = 0; ix < delayQueue.size(); ix++)  //each edge 2 tile.delayQ do
     {
       edgeHeuristic(delayQueue[ix]);
     }
     
-    edgeHeuristic.resize(0);
-    
   }
   
   template <class NodeType, class EdgeType>
-  vector<vector<NodeType *> *> *ObjectSegmentation::getNodeSegments(Graph *g)
+  vector<vector<NodeType *> *> *ObjectSegmentation<NodeType,EdgeType>::getNodeSegments(Graph<NodeType, EdgeType> *g)
   {
     vector<vector<NodeType *> *> *nodeRegions = new vector<vector<NodeType *> *>();
-    LLRB_Tree<NodeType *, double> unique;
+    LLRB_Tree<NodeType *, uint64_t> unique;
+    std::vector<Segment<EdgeType> *> *segments;
+
     segmentation(g);
+    
+    segments = regions.getElements();
     
     for (uint64_t ix = 0; ix < segments->size(); ix++)
     {
-      r = segments->at(ix);
+      Segment<EdgeType> *r = segments->at(ix);
       
-      for (uint64_t ix = 0; ix < edges.size(); ix++)
+      for (uint64_t ix = 0; ix < r->edges.size(); ix++)
       {
-        unique.insert(edges[ix], (uint64_t)edges[ix]);
+        unique.insert(r->edges.at(ix)->getForward(), (uint64_t)r->edges.at(ix)->getForward());
+        unique.insert(r->edges.at(ix)->getBackward(), (uint64_t)r->edges.at(ix)->getBackward());
       }
       
-      nodeRegions->push_back(unique->select(NULL, NULL));
-      unique->removal(NULL, NULL);
+      nodeRegions->push_back(unique.select(NULL, NULL));
+      unique.removal(NULL, NULL);
     }
 
     return nodeRegions;
   }
   
   template <class NodeType, class EdgeType>
-  vector<vector<EdgeType *> *> *ObjectSegmentation::getEdgeSegments(Graph *g)
+  vector<vector<EdgeType *> *> *ObjectSegmentation<NodeType,EdgeType>::getEdgeSegments(Graph<NodeType, EdgeType> *g)
   {
-    std::vector<std::vector<NodeType *> *> *edgeRegions = new ;
-    LLRB_Tree<NodeType *, double> *edgeR;
+    std::vector<std::vector<NodeType *> *> *edgeRegions = new std::vector<std::vector<NodeType *> *>();
+    std::vector<NodeType *> *edgeR;
+    std::vector<Segment<EdgeType> *> *segments;
+
     segmentation(g);
+    
+    segments = regions->getElements();
     
     for (uint64_t ix = 0; ix < segments->size(); ix++)
     {
       edgeR = LLRB_Tree<NodeType *, double>();
-      r = segments->at(ix);
+      Segment<EdgeType> *r = segments->at(ix);
       
-      for (uint64_t ix = 0; ix < edges.size(); ix++)
+      for (uint64_t ix = 0; ix < r->edges.size(); ix++)
       {
-        edgeR.push_back(edges[ix]);
+        edgeR->push_back(r->edges->at(ix));
       }
       
-      nodeRegions->push_back(edgeR);
+      edgeRegions->push_back(edgeR);
     }
     
     return edgeRegions;
@@ -205,7 +237,7 @@ namespace Vision {
 
 #if 0
   template <class NodeType, class EdgeType>
-  ObjectSegmentation::relabeling()
+  void ObjectSegmentation<NodeType,EdgeType>::relabeling()
   {
     std::vector<Segment *> *segments;
     double min, max;
@@ -213,11 +245,15 @@ namespace Vision {
     std::vector<Nodetype *> *nodes = g->getReachableNodes(g->start, NULL)
     
     // compress regions
-    for (uint64_t ix = 0; ix < segments->size(); ix++) { //each r in regions
+    for (uint64_t ix = 0; ix < segments->size(); ix++) //each r in regions
+    {
       r = segments->at(ix);
-      if ((r->size < max) && (r->size >= min)) {
+      if ((r->size < max) && (r->size >= min))
+      {
         r->isValid = TRUE;
-      } else {
+      }
+      else
+      {
         r->isValid = FALSE;
       }
     }
@@ -241,7 +277,10 @@ namespace Vision {
   }
 #endif
 
-  vector<vector<Neuron *> *> *ObjectSegmentation::getEntangledNeuronGroups() {
+  
+#if 0
+  vector<vector<Neuron *> *> *ObjectSegmentation<NodeType,EdgeType>::getEntangledNeuronGroups()
+  {
     
     LLRB_Tree<vector<Neuron *>, uint64_t> rootsFound;
     vector<Neuron *> *nodes = this->getReachableNodes(this->start,this->terminal);
@@ -250,13 +289,15 @@ namespace Vision {
     
     /* Determine edge cutoff limit (one standard deviation below average) */
     
-    for (uint64_t ix = 0; ix < edgesMaxList->size(); ix++) {
+    for (uint64_t ix = 0; ix < edgesMaxList->size(); ix++)
+    {
       mean += edgesMaxList->at(ix)->attrib;
     }
     
     mean /= edgesMaxList->size();
     
-    for (uint64_t ix = 0; ix < edgesMaxList->size(); ix++) {
+    for (uint64_t ix = 0; ix < edgesMaxList->size(); ix++)
+    {
       stdDev += pow(mean - edgesMaxList->at(ix)->attrib, 2);
     }
     
@@ -265,36 +306,39 @@ namespace Vision {
     
     cutoff = mean - stdDev;
     
-    for (uint64_t ix = 0; ix < edgesMaxList->size(); ix++) {
-      if (edgesMaxList->at(ix)->length() >= cutoff) {
+    for (uint64_t ix = 0; ix < edgesMaxList->size(); ix++)
+    {
+      if (edgesMaxList->at(ix)->length() >= cutoff)
+      {
         edgesMaxList->at(ix)->getForward()->previousEdge = edgesMaxList->at(ix);
       }
     }
     
     /* For each node find its root parent and store base on root */
-    
-    for (uint64_t ix = 0; ix < nodes->size(); ix++) {
+    for (uint64_t ix = 0; ix < nodes->size(); ix++)
+    {
       vector<NodeType *> *group;
       NodeType *current = nodes->at(ix);
       NodeType *previous = nodes->at(ix);
       EdgeType *memo;
       
       /* get root node */
-      
-      while (current->previousEdge != NULL) {
+      while (current->previousEdge != NULL)
+      {
         memo = current->previousEdge;
         current = current->previousEdge->getBackward();
       }
       
       /* assign previous edges as edge connected to root to skip work */
-      
       current = nodes->at(ix);
-      while (current->previousEdge != NULL) {
+      while (current->previousEdge != NULL)
+      {
         current->previousEdge = memo;
         current = current->previousEdge->getBackward();
       }
       
-      if ((group = rootsFound.search((uint64_t)current)) == NULL) {
+      if ((group = rootsFound.search((uint64_t)current)) == NULL)
+      {
         group = new vector<NodeType *>();
         rootsFound.insert(group, (uint64_t)current);
       }
@@ -303,8 +347,8 @@ namespace Vision {
     }
     
     /* Cleanup */
-    
-    for (uint64_t ix = 0; ix < edgesMaxList->size(); ix++) {
+    for (uint64_t ix = 0; ix < edgesMaxList->size(); ix++)
+    {
       edgesMaxList->at(ix)->getForward()->previousEdge = NULL;
     }
     
@@ -316,7 +360,7 @@ namespace Vision {
     
     return rootsFound.select(NULL, NULL);
   }
-  
+#endif
 }
 
 #endif

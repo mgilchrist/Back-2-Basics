@@ -27,9 +27,8 @@
 #include "List.h"
 #include "Stack.h"
 
-namespace Collection {
-  
-  
+namespace Collection
+{
   
   template <class ElementType, class KeyType>
   class Heap
@@ -52,7 +51,8 @@ namespace Collection {
     uint64_t *push(ElementType,KeyType);
     ElementType pop();
     
-    uint64_t size() {
+    uint64_t size()
+    {
       return numEntries;
     }
     
@@ -65,29 +65,33 @@ namespace Collection {
   }
   
   template <class ElementType, class KeyType>
-  void Heap<ElementType,KeyType>::swap(uint64_t i,uint64_t j) {
+  void Heap<ElementType,KeyType>::swap(uint64_t i,uint64_t j)
+  {
     Comparable<ElementType,KeyType> *tmp;
     
     tmp = collection->at(i);
     collection->at(i) = collection->at(j);
     collection->at(j) = tmp;
     
-    if (collection->at(i) != NULL) {
+    if (collection->at(i) != NULL)
+    {
       *(collection->at(i)->index) = i;
     }
     
-    if (collection->at(j) != NULL) {
+    if (collection->at(j) != NULL)
+    {
       *(collection->at(j)->index) = j;
     }
   }
   
   template <class ElementType, class KeyType>
-  ElementType Heap<ElementType,KeyType>::pop() {
-    
+  ElementType Heap<ElementType,KeyType>::pop()
+  {
     Comparable<ElementType,KeyType> *entry = collection->at(0);
     ElementType ret;
     
-    if (entry == NULL) {
+    if (entry == NULL)
+    {
       return NULL;
     }
     
@@ -99,9 +103,10 @@ namespace Collection {
   }
   
   template <class ElementType, class KeyType>
-  void Heap<ElementType,KeyType>::remove(uint64_t index) {
-    
-    if (numEntries > index) {
+  void Heap<ElementType,KeyType>::remove(uint64_t index)
+  {
+    if (numEntries > index)
+    {
       delete collection->at(index)->index;
       delete collection->at(index);
       
@@ -117,8 +122,8 @@ namespace Collection {
   }
   
   template <class ElementType, class KeyType>
-  uint64_t *Heap<ElementType,KeyType>::update(uint64_t index, KeyType key) {
-    
+  uint64_t *Heap<ElementType,KeyType>::update(uint64_t index, KeyType key)
+  {
     ElementType mark = collection->at(index)->data;
     
     remove(index);
@@ -127,15 +132,16 @@ namespace Collection {
   }
   
   template <class ElementType, class KeyType>
-  void Heap<ElementType,KeyType>::heapifyUp(uint64_t i) {
-    
+  void Heap<ElementType,KeyType>::heapifyUp(uint64_t i)
+  {
     uint64_t j;
     
     if (i > 0) {
       j = (i-1) / 2; // parent of i
       
       if ((collection->at(j) == NULL) ||
-          (collection->at(i)->key < collection->at(j)->key)) {
+          (collection->at(i)->key < collection->at(j)->key))
+      {
         this->swap(i,j);
         this->heapifyUp(j);
       }
@@ -143,7 +149,8 @@ namespace Collection {
   }
   
   template <class ElementType, class KeyType>
-  void Heap<ElementType,KeyType>::heapifyDown(uint64_t i) {
+  void Heap<ElementType,KeyType>::heapifyDown(uint64_t i)
+  {
     
     uint64_t left;
     uint64_t right;
@@ -154,44 +161,58 @@ namespace Collection {
     left = (2 * (i + 1)) - 1;
     right = 2 * (i + 1);
     
-    if (right <= n) {
-      
-      if ((collection->at(left) == NULL) && (collection->at(right) == NULL)) {
+    if (right <= n)
+    {
+      if ((collection->at(left) == NULL) && (collection->at(right) == NULL))
+      {
         return;
       }
       
-      if (collection->at(right) == NULL) {
+      if (collection->at(right) == NULL)
+      {
         j = left;
-      } else if (collection->at(left) == NULL) {
+      }
+      else if (collection->at(left) == NULL)
+      {
         j = right;
-      } else {
-        if (collection->at(left)->key <= collection->at(right)->key) {
+      }
+      else
+      {
+        if (collection->at(left)->key <= collection->at(right)->key)
+        {
           j = left;
-        } else {
+        }
+        else
+        {
           j = right;
         }
       }
-    } else if ((collection->at(n) != NULL) && (left == n)) {
+    }
+    else if ((collection->at(n) != NULL) && (left == n))
+    {
       j = left;
     } else {
       return;
     }
     
-    if ((collection->at(i) == NULL) || (collection->at(i)->key > collection->at(j)->key)) {
+    if ((collection->at(i) == NULL) || (collection->at(i)->key > collection->at(j)->key))
+    {
       swap(i,j);
       heapifyDown(j);
     }
   }
   
   template <class ElementType, class KeyType>
-  uint64_t *Heap<ElementType,KeyType>::push(ElementType element, KeyType key) {
+  uint64_t *Heap<ElementType,KeyType>::push(ElementType element, KeyType key)
+  {
     Comparable<ElementType,KeyType> *tmp;
     
     tmp = new Comparable<ElementType,KeyType>(element,key);
     tmp->index = new uint64_t;
     *(tmp->index) = this->numEntries;
     
-    if (numEntries == collection->size()) {
+    if (numEntries == collection->size())
+    {
       collection->resize(collection->size()*2);
     }
     
@@ -206,9 +227,11 @@ namespace Collection {
   }
   
   template <class ElementType, class KeyType>
-  ElementType Heap<ElementType,KeyType>::at(uint64_t index) {
+  ElementType Heap<ElementType,KeyType>::at(uint64_t index)
+  {
     
-    if (collection->at(index) == NULL) {
+    if (collection->at(index) == NULL)
+    {
       return NULL;
     }
     

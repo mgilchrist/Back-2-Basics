@@ -47,6 +47,7 @@ namespace Collection
     std::vector<uint64_t> fullHashMap;
     
     uint8_t size;
+    uint64_t numElements;
     
     uint64_t murmurHash64A (uint8_t *key, uint64_t size, uint64_t seed);
     uint64_t search(KeyType);
@@ -65,6 +66,8 @@ namespace Collection
     
     std::vector<KeyType> *getKeys();
     std::vector<ElementType> *getElements();
+    
+    uint64_t getSize();
     
   };
   
@@ -121,6 +124,13 @@ namespace Collection
     fullHashMap.resize(1 << actualSize, 0);
     
     this->size = actualSize;
+    numElements = 0;
+  }
+  
+  template <class ElementType, class KeyType>
+  uint64_t HashTable<ElementType,KeyType>::getSize()
+  {
+    return numElements;
   }
   
   
@@ -206,6 +216,7 @@ namespace Collection
     keyMap[index] = 0;
     fullHashMap[index] = 0;
     elements[index] = 0;
+    numElements--;
   }
   
   template <class ElementType, class KeyType>
@@ -248,6 +259,8 @@ namespace Collection
       }
       
     }
+    
+    numElements++;
     
   }
   
@@ -332,7 +345,7 @@ namespace Collection
   std::vector<ElementType> *HashTable<ElementType,KeyType>::getElements() {
     std::vector<ElementType>  *ret = new std::vector<ElementType>();
     
-    for (uint64_t ix = 1; ix < keyMap->size(); ix++) {
+    for (uint64_t ix = 1; ix < keyMap.size(); ix++) {
       if (keyMap[ix] != NULL) {
         ret->push_back(elements[ix]);
       }

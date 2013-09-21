@@ -21,6 +21,7 @@
 
 #include <iostream>
 using namespace std;
+#include <fstream>
 
 #include "Array.h"
 using namespace Collection;
@@ -35,6 +36,12 @@ using namespace Graph;
 #include "NeuralNetwork.h"
 #include "Genetic.h"
 #include "Metaheuristic.h"
+#include "ObjectSegmentation.h"
+
+#define SUITE_NAME  "test"
+
+#define BINARY_FILE ".bin"
+#define TEXT_FILE ".txt"
 
 const uint64_t glbInputSize = 0x1000;
 const uint64_t glbOutputSize = 0x1000;
@@ -43,7 +50,149 @@ const uint64_t glbTestSize = 0x100000;
 const uint64_t glbSlowTestSize = 0x10000;
 
 
-int testHashTable() {
+typedef struct testEntry
+{
+  const char  *name;
+  int (*funct) (char **args, int nArgs, ifstream *inputStream, ofstream *outputData, ofstream *log);
+  uint64_t    defaultBufferSize;
+  uint8_t     nArgs;
+  uint8_t     argSize[16];
+} TEST_ENTRY;
+
+
+int testGenetic(char **args, int nArgs, ifstream *inputStream, ofstream *outputData, ofstream *log);
+
+
+TEST_ENTRY tests[256] =
+{
+  //{"genetic", testGenetic, 960*600, 0, {}},
+  {"end", NULL, 0, 0, {}},
+};
+
+
+#define openFileStreams(suiteName, testName)  \
+  do {  \
+    char *iFile = new char [strlen( suiteName )+2 + strlen ( testName )+1 + 2 + strlen ( BINARY_FILE )+1];  \
+    char *oFile = new char [strlen( suiteName )+2 + strlen ( testName )+1 + 2 + strlen ( BINARY_FILE )+1];  \
+    char *lFile = new char [strlen( suiteName )+2 + strlen ( testName )+1 + strlen ( TEXT_FILE )+1];        \
+    strcpy (iFile, suiteName);    \
+    strcat (iFile, "_");          \
+    strcat (iFile, testName);     \
+    strcat (iFile, "_i");         \
+    strcat (iFile, BINARY_FILE);  \
+    strcpy (oFile, suiteName);    \
+    strcat (oFile, "_");          \
+    strcat (oFile, testName);     \
+    strcat (iFile, "_o");         \
+    strcat (oFile, BINARY_FILE);  \
+    strcpy (lFile, suiteName);    \
+    strcat (lFile, testName);     \
+    strcat (lFile, TEXT_FILE);    \
+    ifstream inputStream(iFile, ios::in|ios::binary|ios::ate);  \
+    ofstream outputData(oFile, ios::out|ios::binary|ios::ate);  \
+    ofstream log(lFile);  \
+    delete iFile; \
+    delete oFile; \
+    delete lFile; \
+  } while ((0))
+
+#define closeFileStreams()  \
+  do {  \
+    inputStream.close();  \
+    outputData.close(); \
+    log.close();  \
+  } while ((0))
+
+
+TEST_ENTRY *lookupTest(const char *testName) {
+  
+  return NULL;
+}
+
+int executeTest(const char *suiteName, const char *testName, char **args, int nArgs)
+{
+  ifstream inputStream;
+  ofstream outputData;
+  ofstream log;
+  
+  TEST_ENTRY *uut = lookupTest(testName);
+  
+  openFileStreams(suiteName, testName);
+  
+  uut->funct(args, nArgs, &inputStream, &outputData, &log);
+  
+  closeFileStreams();
+  
+  return 0;
+}
+
+int testSegmentation(const char *suiteName)
+{
+  ifstream inputStream;
+  ofstream outputData;
+  ofstream log;
+  
+  uint64_t inputFileSize;
+  uint64_t sampleSize = 960 * 600 *sizeof(double);
+  
+  char *buffer0 = new char[sampleSize];
+  char *buffer1 = new char[sampleSize];
+  
+  char *nextData = buffer0;
+  char *inputData = buffer1;
+  
+  bool pingPong = false;
+  
+  NeuralNetwork::NeuralNetwork *graphToSegment;
+  
+  openFileStreams(suiteName, "_segmentation");
+  
+  Segmentation::ObjectSegmentation<NeuralNetwork::Neuron,NeuralNetwork::Axion> segmentor;
+  Optimization::Genetic<NeuralNetwork::NeuralNetwork,NeuralNetwork::Neuron,double> geneticExp;
+  vector<vector<NeuralNetwork::Neuron *> *> *objects;
+  
+  geneticExp.addInput((double *)inputData);
+  geneticExp.addOutput((double *)nextData);
+  
+  geneticExp.initInternals();
+  
+  inputFileSize = inputStream.tellg();
+  inputFileSize -= (inputFileSize % sampleSize);
+  
+  inputStream.seekg (0, ios::beg);
+  inputStream.read(nextData, sampleSize);
+  
+  for (uint64_t pos = sampleSize; pos < inputFileSize; pos += sampleSize)
+  {
+    inputStream.seekg (pos, ios::beg);
+    
+    if (pingPong)
+    {
+      inputData = buffer0;
+      nextData = buffer1;
+    }
+    else
+    {
+      inputData = buffer1;
+      nextData = buffer0;
+    }
+    
+    inputStream.read(nextData, sampleSize);
+    
+    geneticExp.optimizeAnwser();
+  }
+  
+  graphToSegment = geneticExp.candidates.min(geneticExp.candidates.treeRoot)->data;
+  
+  objects = segmentor.getNodeSegments(graphToSegment);
+  
+  closeFileStreams();
+  
+  return 0;
+}
+
+int testHashTable()
+{
   HashTable<uint64_t *,uint64_t> *hashTable;
   std::vector<uint64_t> verify;
   hashTable = new HashTable<uint64_t *,uint64_t>(glbTestSize);
@@ -53,9 +202,11 @@ int testHashTable() {
   
   verify.resize(glbTestSize);
   
-  for (int ix = 0; ix < glbTestSize; ix++) {
+  for (int ix = 0; ix < glbTestSize; ix++)
+  {
     
-    do {
+    do
+    {
       value = new uint64_t(random());
     } while (!hashTable->get(*value));
     
@@ -64,9 +215,10 @@ int testHashTable() {
     verify[ix] = *value;
   }
   
-  for (int ix = 0; ix < glbTestSize; ix++) {
-    
-    if (*hashTable->get(verify[ix]) != verify[ix]) {
+  for (int ix = 0; ix < glbTestSize; ix++)
+  {
+    if (*hashTable->get(verify[ix]) != verify[ix])
+    {
       hashTable->get(verify[ix]);
       cout << "Index ";
       cout << ix;
@@ -79,9 +231,10 @@ int testHashTable() {
     //}
   }
   
-  for (int ix = 0; ix < glbTestSize; ix++) {
-    
-    if (*hashTable->get(verify[ix]) != verify[ix]) {
+  for (int ix = 0; ix < glbTestSize; ix++)
+  {
+    if (*hashTable->get(verify[ix]) != verify[ix])
+    {
       cout << "Index ";
       cout << ix;
       cout << " does not match!\n";
@@ -102,7 +255,8 @@ int testHashTable() {
   return 0;
 }
 
-int testSecureHashTable() {
+int testSecureHashTable()
+{
   SecureHashTable<uint64_t *,uint64_t> *hashTable;
   std::vector<uint64_t> verify;
   hashTable = new SecureHashTable<uint64_t *,uint64_t>(glbSlowTestSize);
@@ -112,9 +266,10 @@ int testSecureHashTable() {
   
   cout << "\nTesting SecureHashTable.\n";
   
-  for (uint64_t ix = 0; ix < glbSlowTestSize; ix++) {
-    
-    do {
+  for (uint64_t ix = 0; ix < glbSlowTestSize; ix++)
+  {
+    do
+    {
       value = new uint64_t(random());
     } while (!hashTable->get(*value));
     
@@ -123,9 +278,10 @@ int testSecureHashTable() {
     verify[ix] = *value;
   }
   
-  for (uint64_t ix = 0; ix < glbSlowTestSize; ix++) {
-    
-    if (*hashTable->get(verify[ix]) != verify[ix]) {
+  for (uint64_t ix = 0; ix < glbSlowTestSize; ix++)
+  {
+    if (*hashTable->get(verify[ix]) != verify[ix])
+    {
       cout << "Index ";
       cout << ix;
       cout << " does not match!\n";
@@ -136,9 +292,10 @@ int testSecureHashTable() {
     //}
   }
   
-  for (uint64_t ix = 0; ix < glbSlowTestSize; ix++) {
-    
-    if (*hashTable->get(verify[ix]) != verify[ix]) {
+  for (uint64_t ix = 0; ix < glbSlowTestSize; ix++)
+  {
+    if (*hashTable->get(verify[ix]) != verify[ix])
+    {
       cout << "Index ";
       cout << ix;
       cout << " does not match!\n";
@@ -166,23 +323,28 @@ int testHeap() {
   
   cout << "\nTesting Heap.\n";
   
-  for (int ix = 0; ix < glbTestSize; ix++) {
+  for (int ix = 0; ix < glbTestSize; ix++)
+  {
     uint64_t value = random();
     heap->push(value, value);
   }
   
-  if (heap->at(0) != (tmp = heap->pop())) {
+  if (heap->at(0) != (tmp = heap->pop()))
+  {
     cout << "Heap Error!\n";
   }
   
-  for (int ix = 1; ix < glbTestSize; ix++) {
-    if (heap->at(0) != (tmp1 = heap->pop())) {
+  for (int ix = 1; ix < glbTestSize; ix++)
+  {
+    if (heap->at(0) != (tmp1 = heap->pop()))
+    {
       cout << "Index ";
       cout << ix;
       cout << " Error!\n";
     }
     
-    if (tmp > tmp1) {
+    if (tmp > tmp1)
+    {
       cout << "Index ";
       cout << ix;
       cout << " lower than previous!\n";
@@ -197,7 +359,8 @@ int testHeap() {
 }
 
 
-int testLLRBTree() {
+int testLLRBTree()
+{
   LLRB_Tree<uint64_t,uint64_t> *rbTree;
   vector<uint64_t> *addList;
   LLRB_TreeNode<uint64_t,uint64_t> *current;
@@ -227,7 +390,6 @@ int testLLRBTree() {
       } while (rbTree->size() == tmp);
       
       addList->push_back(value);
-      
     }
     
     /* Make sure things are in order */
@@ -343,7 +505,8 @@ int testLLRBTree() {
  }
  */
 
-int testArrayList() {
+int testArrayList()
+{
   ArrayList<uint64_t,uint64_t> *arrayList, *arrayListClone;
   arrayList = new ArrayList<uint64_t,uint64_t>();
   uint64_t *verify = new uint64_t[arrayList->getSize()];
@@ -351,14 +514,17 @@ int testArrayList() {
   
   cout << "\nTesting ArrayList\n";
   
-  for (int ix = 0; ix < arrayList->getSize(); ix++) {
+  for (int ix = 0; ix < arrayList->getSize(); ix++)
+  {
     uint64_t value = random();
     arrayList->setIndex(ix, new Comparable<uint64_t,uint64_t>(value, value));
     verify[ix] = value;
   }
   
-  for (int ix = 0; ix < arrayList->getSize(); ix++) {
-    if (arrayList->atIndex(ix)->data != verify[ix]) {
+  for (int ix = 0; ix < arrayList->getSize(); ix++)
+  {
+    if (arrayList->atIndex(ix)->data != verify[ix])
+    {
       cout << "Index ";
       cout << ix;
       cout << " does not match!\n";
@@ -371,14 +537,17 @@ int testArrayList() {
   arrayList = new ArrayList<uint64_t,uint64_t>(glbTestSize);
   verify = new uint64_t[arrayList->getSize()];
   
-  for (int ix = 0; ix < arrayList->getSize(); ix++) {
+  for (int ix = 0; ix < arrayList->getSize(); ix++)
+  {
     uint64_t value = random();
     arrayList->setIndex(ix, new Comparable<uint64_t,uint64_t>(value, value));
     verify[ix] = value;
   }
   
-  for (int ix = 0; ix < arrayList->getSize(); ix++) {
-    if (arrayList->atIndex(ix)->data != verify[ix]) {
+  for (int ix = 0; ix < arrayList->getSize(); ix++)
+  {
+    if (arrayList->atIndex(ix)->data != verify[ix])
+    {
       cout << "Index ";
       cout << ix;
       cout << " does not match!\n";
@@ -390,7 +559,8 @@ int testArrayList() {
   
   arrayList = new ArrayList<uint64_t,uint64_t>(glbTestSize);
   
-  for (int ix = 0; ix < arrayList->getSize(); ix++) {
+  for (int ix = 0; ix < arrayList->getSize(); ix++)
+  {
     uint64_t value = random();
     arrayList->setIndex(ix, new Comparable<uint64_t,uint64_t>(value, value));
   }
@@ -401,21 +571,25 @@ int testArrayList() {
   
   tmp = arrayList->atIndex(0)->key;
   
-  for (int ix = 1; ix < arrayList->getSize(); ix++) {
+  for (int ix = 1; ix < arrayList->getSize(); ix++)
+  {
     
-    if (arrayList->atIndex(ix)->key < tmp) {
+    if (arrayList->atIndex(ix)->key < tmp)
+    {
       cout << "Index ";
       cout << ix;
       cout << " not sorted!\n";
     }
     
-    if (arrayListClone->atIndex(ix)->key < tmp) {
+    if (arrayListClone->atIndex(ix)->key < tmp)
+    {
       cout << "Index ";
       cout << ix;
       cout << " not sorted!\n";
     }
     
-    if (arrayList->atIndex(ix)->key != arrayListClone->atIndex(ix)->key) {
+    if (arrayList->atIndex(ix)->key != arrayListClone->atIndex(ix)->key)
+    {
       cout << "Index ";
       cout << ix;
       cout << " not identical!\n";
@@ -444,8 +618,10 @@ int testNeuralNetwork() {
   uint64_t precision = (1 << 16);
   
   
-  for (uint32_t ix = 0; ix < glbInputSize; ix++) {
-    for (uint32_t jx = 0; jx < log2(glbOutputSize); jx++) {
+  for (uint32_t ix = 0; ix < glbInputSize; ix++)
+  {
+    for (uint32_t jx = 0; jx < log2(glbOutputSize); jx++)
+    {
       Info *info = new Info;
       info->c.inputPosition = ix;
       info->c.layer = 4;
@@ -454,8 +630,10 @@ int testNeuralNetwork() {
     }
   }
   
-  for (uint32_t ix = 0; ix < log2(glbOutputSize); ix++) {
-    for (uint32_t jx = 0; jx < glbOutputSize; jx++) {
+  for (uint32_t ix = 0; ix < log2(glbOutputSize); ix++)
+  {
+    for (uint32_t jx = 0; jx < glbOutputSize; jx++)
+    {
       Info *info = new Info;
       info->c.inputLayer = 4;
       info->c.inputPosition = jx;
@@ -474,12 +652,14 @@ int testNeuralNetwork() {
   thisInput->resize(glbInputSize);
   thisOutput->resize(glbOutputSize);  
   
-  for (int jx = 0; jx < glbInputSize; jx++) {
+  for (int jx = 0; jx < glbInputSize; jx++)
+  {
     thisInput->at(jx) = new double();
     thisOutput->at(jx)->actual = new double();
   }
   
-  for (uint64_t jx = 0; jx < glbOutputSize; jx++) {
+  for (uint64_t jx = 0; jx < glbOutputSize; jx++)
+  {
     thisExpect->insert(new double(), jx);
   }
   
@@ -492,11 +672,13 @@ int testNeuralNetwork() {
      (uint32_t)thisOutput->size()
     );
   
-  for (uint64_t jx = 0; jx < thisInput->size(); jx++) {
+  for (uint64_t jx = 0; jx < thisInput->size(); jx++)
+  {
     *(thisInput->at(jx)) = (random() % precision) / (precision * 1.0);
   }
   
-  do {
+  do
+  {
     /*for (uint64_t jx = 0; jx < thisInput->size(); jx++) {
      *(thisInput->at(jx)) = (rand() % 256) / 256.0;
      }*/
@@ -504,8 +686,10 @@ int testNeuralNetwork() {
     
     NNetwork->calcExpectation(iterations);
     
-    if (iterations > (glbIterations-4)) {
-      for (int ix = 0; ix < glbOutputSize; ix++) {
+    if (iterations > (glbIterations-4))
+    {
+      for (int ix = 0; ix < glbOutputSize; ix++)
+      {
         cout << "{";
         cout << (*thisOutput->at(ix)->actual);
         cout << ":";
@@ -515,15 +699,18 @@ int testNeuralNetwork() {
       cout << "\n\n";
     }
     
-    for (int ix = 0; ix < glbOutputSize; ix++) {
+    for (int ix = 0; ix < glbOutputSize; ix++)
+    {
       *(thisOutput->at(ix)->actual) = *(thisInput->at(ix));
     }
     
     
-    if (!(iterations % (uint64_t)(2*log2(glbIterations)))) {
+    if (!(iterations % (uint64_t)(2*log2(glbIterations))))
+    {
       errorRate = 0.0;
       
-      for (int ix = 0; ix < glbOutputSize; ix++) {
+      for (int ix = 0; ix < glbOutputSize; ix++)
+      {
         thisError = (*thisOutput->at(ix)->actual - *(thisExpect->search(ix))) / *thisOutput->at(ix)->actual;
         errorRate += thisError * thisError;
       }
@@ -566,24 +753,32 @@ int testNavigation() {
   navigation = new Navigation();
   locs.resize(width*length);
   
-  for (uint64_t ix = 0; ix < width; ix++) {
-    for (uint64_t jx = 0; jx < length; jx++) {
+  for (uint64_t ix = 0; ix < width; ix++)
+  {
+    for (uint64_t jx = 0; jx < length; jx++)
+    {
       Coordinate *thisCoordinate = new Coordinate(ix,jx,0);
       
       locs[ix+(jx*length)] = thisCoordinate;
     }
   }
   
-  for (uint64_t ix = neighborHops; ix < (width-neighborHops); ix++) {
-    for (uint64_t jx = neighborHops; jx < (length-neighborHops); jx++) {
+  for (uint64_t ix = neighborHops; ix < (width-neighborHops); ix++)
+  {
+    for (uint64_t jx = neighborHops; jx < (length-neighborHops); jx++)
+    {
       u = locs[ix+(jx*width)];
-      for (int kx = (-neighborHops); kx <= neighborHops; kx ++) {
-        for (int lx = (-neighborHops); lx <= neighborHops; lx++) {
-          if ((jx == (length/2)) && (ix < (width*0.8)) && (ix > (width*0.2))) {
+      for (int kx = (-neighborHops); kx <= neighborHops; kx ++)
+      {
+        for (int lx = (-neighborHops); lx <= neighborHops; lx++)
+        {
+          if ((jx == (length/2)) && (ix < (width*0.8)) && (ix > (width*0.2)))
+          {
             continue;
           }
           
-          if ((kx) || (lx)) {
+          if ((kx) || (lx))
+          {
             v = locs[(ix+kx)+((jx+lx)*width)];
             
             distance = Navigation::calcDistance(v->X, v->Y, v->Z, u->X, u->Y, u->Z);
@@ -596,12 +791,17 @@ int testNavigation() {
   
   /* Width sides */
   
-  for (uint64_t ix = 0; ix < neighborHops; ix++) {
-    for (uint64_t jx = neighborHops; jx < (length-neighborHops); jx++) {
+  for (uint64_t ix = 0; ix < neighborHops; ix++)
+  {
+    for (uint64_t jx = neighborHops; jx < (length-neighborHops); jx++)
+    {
       u = locs[ix+(jx*width)];
-      for (uint64_t kx = 0; kx < (ix+neighborHops); kx ++) {
-        for (int lx = (-neighborHops); lx < neighborHops; lx++) {
-          if ((kx != ix) || (lx)) {
+      for (uint64_t kx = 0; kx < (ix+neighborHops); kx ++)
+      {
+        for (int lx = (-neighborHops); lx < neighborHops; lx++)
+        {
+          if ((kx != ix) || (lx))
+          {
             v = locs[(kx)+((jx+lx)*width)];
             
             distance = Navigation::calcDistance(v->X, v->Y, v->Z, u->X, u->Y, u->Z);
@@ -612,12 +812,17 @@ int testNavigation() {
     }
   }
   
-  for (uint64_t ix = (width-neighborHops); ix < width; ix++) {
-    for (uint64_t jx = neighborHops; jx < (length-neighborHops); jx++) {
+  for (uint64_t ix = (width-neighborHops); ix < width; ix++)
+  {
+    for (uint64_t jx = neighborHops; jx < (length-neighborHops); jx++)
+    {
       u = locs[ix+(jx*width)];
-      for (uint64_t kx = (ix-neighborHops); kx < width; kx ++) {
-        for (int lx = (-neighborHops); lx < neighborHops; lx++) {
-          if ((kx != ix) || (lx)) {
+      for (uint64_t kx = (ix-neighborHops); kx < width; kx ++)
+      {
+        for (int lx = (-neighborHops); lx < neighborHops; lx++)
+        {
+          if ((kx != ix) || (lx))
+          {
             v = locs[(kx)+((jx+lx)*width)];
             
             distance = Navigation::calcDistance(v->X, v->Y, v->Z, u->X, u->Y, u->Z);
@@ -630,12 +835,17 @@ int testNavigation() {
   
   /* length sides */
   
-  for (uint64_t ix = neighborHops; ix < (width-neighborHops); ix++) {
-    for (uint64_t jx = 0; jx < neighborHops; jx++) {
+  for (uint64_t ix = neighborHops; ix < (width-neighborHops); ix++)
+  {
+    for (uint64_t jx = 0; jx < neighborHops; jx++)
+    {
       u = locs[ix+(jx*width)];
-      for (int kx = (-neighborHops); kx < neighborHops; kx++) {
-        for (uint64_t lx = 0; lx < (jx+neighborHops); lx++) {
-          if ((kx) || (lx != jx)) {
+      for (int kx = (-neighborHops); kx < neighborHops; kx++)
+      {
+        for (uint64_t lx = 0; lx < (jx+neighborHops); lx++)
+        {
+          if ((kx) || (lx != jx))
+          {
             v = locs[(ix+kx)+((lx)*width)];
             
             distance = Navigation::calcDistance(v->X, v->Y, v->Z, u->X, u->Y, u->Z);
@@ -646,12 +856,17 @@ int testNavigation() {
     }
   }
   
-  for (uint64_t ix = neighborHops; ix < (width-neighborHops); ix++) {
-    for (uint64_t jx = (length-neighborHops); jx < length; jx++) {
+  for (uint64_t ix = neighborHops; ix < (width-neighborHops); ix++)
+  {
+    for (uint64_t jx = (length-neighborHops); jx < length; jx++)
+    {
       u = locs[ix+(jx*width)];
-      for (int kx = (-neighborHops); kx < neighborHops; kx ++) {
-        for (uint64_t lx = (jx-neighborHops); lx < length; lx++) {
-          if ((kx) || (lx != jx)) {
+      for (int kx = (-neighborHops); kx < neighborHops; kx ++)
+      {
+        for (uint64_t lx = (jx-neighborHops); lx < length; lx++)
+        {
+          if ((kx) || (lx != jx))
+          {
             v = locs[(ix+kx)+((lx)*width)];
             
             distance = Navigation::calcDistance(v->X, v->Y, v->Z, u->X, u->Y, u->Z);
@@ -666,10 +881,12 @@ int testNavigation() {
   navigation->setStart(locs[(neighborHops)+((neighborHops) * width)]);
   navigation->setTerminal(locs[length*width-1]);
   
-  if ((shortPath = navigation->getShortestPath()) != NULL) {
+  if ((shortPath = navigation->getShortestPath()) != NULL)
+  {
     cout << "Path Hops ";
     cout << shortPath->size();
-    while ((!shortPath->empty()) && ((tmpPath = shortPath->back()) != NULL)) {
+    while ((!shortPath->empty()) && ((tmpPath = shortPath->back()) != NULL))
+    {
       u = tmpPath->getBackward();
       v = tmpPath->getForward();
       
@@ -698,7 +915,65 @@ int testNavigation() {
   return 0;
 }
 
-int testGenetic() {
+int testGeneticFile(const char *suiteName)
+{
+  ifstream inputStream;
+  ofstream outputData;
+  ofstream log;
+  
+  uint64_t inputFileSize;
+  uint64_t sampleSize = 960 * 600 * sizeof(double);
+
+  char *buffer0 = new char[sampleSize];
+  char *buffer1 = new char[sampleSize];
+
+  char *nextData = buffer0;
+  char *inputData = buffer1;
+  
+  bool pingPong = false;
+  
+  openFileStreams(suiteName, "_genetic");
+  
+  Optimization::Genetic<NeuralNetwork::NeuralNetwork,NeuralNetwork::Neuron,double> geneticExp;
+  
+  geneticExp.addInput((double *)inputData);
+  geneticExp.addOutput((double *)nextData);
+  
+  geneticExp.initInternals();
+  
+  inputFileSize = inputStream.tellg();
+  inputFileSize -= (inputFileSize % sampleSize);
+  
+  inputStream.seekg (0, ios::beg);
+  inputStream.read(nextData, sampleSize);
+  
+  for (uint64_t pos = sampleSize; pos < inputFileSize; pos += sampleSize)
+  {
+    inputStream.seekg (pos, ios::beg);
+    
+    if (pingPong)
+    {
+      inputData = buffer0;
+      nextData = buffer1;
+    }
+    else
+    {
+      inputData = buffer1;
+      nextData = buffer0;
+    }
+    
+    inputStream.read(nextData, sampleSize);
+    
+    geneticExp.optimizeAnwser();
+  }
+  
+  closeFileStreams();
+  
+  return 0;
+}
+
+int testGenetic(char **args, int nArgs)
+{
   Optimization::Genetic<NeuralNetwork::NeuralNetwork,NeuralNetwork::Neuron,double> *geneticExp;
   uint64_t iterations = 0;
   std::vector<double *> *thisInput, *thisOutput, *thisObjective;
@@ -713,7 +988,8 @@ int testGenetic() {
   
   layers->resize(0);
   
-  for (uint64_t ix = 0; ix < 1; ix++) {
+  for (uint64_t ix = 0; ix < 1; ix++)
+  {
     layers->push_back(log2(glbOutputSize));
   }
   
@@ -728,7 +1004,8 @@ int testGenetic() {
   thisObjective->resize(glbOutputSize);
   
   
-  for (int jx = 0; jx < glbInputSize; jx++) {
+  for (int jx = 0; jx < glbInputSize; jx++)
+  {
     thisInput->at(jx) = new double();
     thisOutput->at(jx) = new double();
     thisObjective->at(jx) = new double();
@@ -742,20 +1019,24 @@ int testGenetic() {
   geneticExp->initInternals();
   
   
-  for (int ix = 0; ix < glbOutputSize; ix++) {
+  for (int ix = 0; ix < glbOutputSize; ix++)
+  {
     *(thisObjective->at(ix)) = max(((random() % precision) / (precision * 1.0)), 0.05);
     *(thisOutput->at(ix)) = *(thisObjective->at(ix)) + (((rand()/(double)RAND_MAX)*0.1) - 0.05);
   }
   
-  do {
+  do
+  {
 #if 1
-    for (uint64_t jx = 0; jx < thisInput->size(); jx++) {
+    for (uint64_t jx = 0; jx < thisInput->size(); jx++)
+    {
       *(thisInput->at(jx)) = *(thisOutput->at(jx));
     }
 #endif
     
 #if 1
-    for (int ix = 0; ix < glbOutputSize; ix++) {
+    for (int ix = 0; ix < glbOutputSize; ix++)
+    {
       *(thisOutput->at(ix)) = *(thisObjective->at(((ix+(wShift%width)+(width*(hShift%height))))%glbOutputSize)) + (((rand()/(double)RAND_MAX)*0.1) - 0.05);
     }
 #endif
@@ -763,20 +1044,26 @@ int testGenetic() {
     geneticExp->optimizeAnwser();
     
     /* place objective reality for error rate */
-    for (int ix = 0; ix < glbOutputSize; ix++) {
+    for (int ix = 0; ix < glbOutputSize; ix++)
+    {
       *(thisOutput->at(ix)) = *(thisObjective->at(ix));
     }
     
     thisTrust = geneticExp->answer.select(NULL,NULL);
     
-    if (iterations > (glbIterations-4)) {
-      for (int ix = 0; ix < glbOutputSize; ix++) {
+    if (iterations > (glbIterations-4))
+    {
+      for (int ix = 0; ix < glbOutputSize; ix++)
+      {
         cout << "{";
         cout << (*thisTrust->at(ix)->actual);
         cout << ":";
-        if (thisTrust->at(ix)->prediction == NULL) {
+        if (thisTrust->at(ix)->prediction == NULL)
+        {
           cout << "NONE:NONE";
-        } else {
+        }
+        else
+        {
           cout << (thisTrust->at(ix)->prediction->expectation);
           cout << ":";
           cout << (thisTrust->at(ix)->prediction->confidence);
@@ -787,11 +1074,14 @@ int testGenetic() {
     }
     
     
-    if (!(iterations % (uint64_t)(2*log2(glbIterations)))) {
+    if (!(iterations % (uint64_t)(2*log2(glbIterations))))
+    {
       errorRate = 0.0;
       
-      for (int ix = 0; ix < glbOutputSize; ix++) {
-        if (thisTrust->at(ix)->prediction == NULL) {
+      for (int ix = 0; ix < glbOutputSize; ix++)
+      {
+        if (thisTrust->at(ix)->prediction == NULL)
+        {
           continue;
         }
         
@@ -846,26 +1136,36 @@ int testNetworkFlow() {
   network->setStart(start = new SimpleHub());
   network->setTerminal(terminal = new SimpleHub);
   
-  for (int ix = 0; ix < ((2*xDist)+1); ix++) {
-    for (int jx = 0; jx < ((2*yDist)+1); jx++) {
+  for (int ix = 0; ix < ((2*xDist)+1); ix++)
+  {
+    for (int jx = 0; jx < ((2*yDist)+1); jx++)
+    {
       capacity[ix][jx] = a * exp(-((pow(ix-xDist, 2)/(2*pow(xO, 2))) + (pow(jx-yDist, 2)/(2*pow(yO, 2)))));
     }
   }
   
-  for (int ix = 0; ix < xSize; ix++) {
-    for (int jx = 0; jx < glbSlowTestSize; jx++) {
+  for (int ix = 0; ix < xSize; ix++)
+  {
+    for (int jx = 0; jx < glbSlowTestSize; jx++)
+    {
       hubs[ix][jx] = new SimpleHub();
     }
   }
   
-  for (int ix = 0; ix < xSize; ix++) {
-    for (int jx = 0; jx < glbSlowTestSize; jx++) {
-      for (int xOff = -xDist; xOff <= xDist; xOff++) {
-        if ((ix + xOff < 0) || (ix + xOff >= xSize)) {
+  for (int ix = 0; ix < xSize; ix++)
+  {
+    for (int jx = 0; jx < glbSlowTestSize; jx++)
+    {
+      for (int xOff = -xDist; xOff <= xDist; xOff++)
+      {
+        if ((ix + xOff < 0) || (ix + xOff >= xSize))
+        {
           continue;
         }
-        for (int yOff = -yDist; yOff <= yDist; yOff++) {
-          if ((jx + yOff < 0) || (jx + yOff >= xSize)) {
+        for (int yOff = -yDist; yOff <= yDist; yOff++)
+        {
+          if ((jx + yOff < 0) || (jx + yOff >= xSize))
+          {
             continue;
           }
           new Pipe<SimpleHub,SimplePipe>(hubs[ix+xOff][jx+yOff],hubs[ix][jx],capacity[xOff+xDist][yOff+yDist]);
@@ -873,7 +1173,6 @@ int testNetworkFlow() {
       }
     }
   }
-  
   
   return 0;
   
@@ -899,10 +1198,11 @@ int main(int argc, const char * argv[])
   //ret |= testLLRBTree();
   //ret |= testStack();
   //ret |= testNeuralNetwork();
-  ret |= testGenetic();
+  //ret |= testGenetic();
   //ret |= testMetaheuristic();
   //ret |= testNavigation();
   //ret |= testNetworkFlow();
+  ret |= testSegmentation(SUITE_NAME);
   
   cout << "Finished Testing:";
   cout << ret;
