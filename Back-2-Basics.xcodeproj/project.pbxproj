@@ -46,6 +46,13 @@
 			remoteGlobalIDString = 2CA21461160C0DFD00347D58;
 			remoteInfo = "Back-2-Basics";
 		};
+		2C8F20C1185520CA00495A6E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2CA21459160C0DFD00347D58 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2C8F20A2185520C900495A6E;
+			remoteInfo = B2B_Display;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -70,6 +77,8 @@
 		2C84AB7616227C5B00572AF7 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = ../main.cpp; sourceTree = "<group>"; };
 		2C84AB7716227C5B00572AF7 /* Test.1 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.man; name = Test.1; path = "Back-2-Basics/Test.1"; sourceTree = "<group>"; };
 		2C898845160C434C0087B09C /* NeuralNetwork.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NeuralNetwork.cpp; sourceTree = "<group>"; };
+		2C8F20A3185520C900495A6E /* B2B_Display.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = B2B_Display.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2C8F20BE185520CA00495A6E /* B2B_DisplayTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = B2B_DisplayTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2CA21462160C0DFD00347D58 /* libBack-2-Basics.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = "libBack-2-Basics.dylib"; sourceTree = BUILT_PRODUCTS_DIR; };
 		2CA214F0160C17C100347D58 /* HashTable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HashTable.h; sourceTree = "<group>"; };
 		2CA214F1160C17C100347D58 /* Heap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Heap.h; sourceTree = "<group>"; };
@@ -94,6 +103,20 @@
 
 /* Begin PBXFrameworksBuildPhase section */
 		2C84AB631622793300572AF7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2C8F20A0185520C900495A6E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2C8F20BB185520CA00495A6E /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -149,6 +172,8 @@
 			children = (
 				2CA21462160C0DFD00347D58 /* libBack-2-Basics.dylib */,
 				2C84AB661622793300572AF7 /* Test */,
+				2C8F20A3185520C900495A6E /* B2B_Display.app */,
+				2C8F20BE185520CA00495A6E /* B2B_DisplayTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -316,6 +341,41 @@
 			productReference = 2C84AB661622793300572AF7 /* Test */;
 			productType = "com.apple.product-type.tool";
 		};
+		2C8F20A2185520C900495A6E /* B2B_Display */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2C8F20CF185520CA00495A6E /* Build configuration list for PBXNativeTarget "B2B_Display" */;
+			buildPhases = (
+				2C8F209F185520C900495A6E /* Sources */,
+				2C8F20A0185520C900495A6E /* Frameworks */,
+				2C8F20A1185520C900495A6E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = B2B_Display;
+			productName = B2B_Display;
+			productReference = 2C8F20A3185520C900495A6E /* B2B_Display.app */;
+			productType = "com.apple.product-type.application";
+		};
+		2C8F20BD185520CA00495A6E /* B2B_DisplayTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2C8F20D0185520CA00495A6E /* Build configuration list for PBXNativeTarget "B2B_DisplayTests" */;
+			buildPhases = (
+				2C8F20BA185520CA00495A6E /* Sources */,
+				2C8F20BB185520CA00495A6E /* Frameworks */,
+				2C8F20BC185520CA00495A6E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				2C8F20C2185520CA00495A6E /* PBXTargetDependency */,
+			);
+			name = B2B_DisplayTests;
+			productName = B2B_DisplayTests;
+			productReference = 2C8F20BE185520CA00495A6E /* B2B_DisplayTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		2CA21461160C0DFD00347D58 /* Back-2-Basics */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 2CA21466160C0DFD00347D58 /* Build configuration list for PBXNativeTarget "Back-2-Basics" */;
@@ -339,8 +399,13 @@
 		2CA21459160C0DFD00347D58 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0450;
+				LastUpgradeCheck = 0500;
 				ORGANIZATIONNAME = "Marcus Gilchrist";
+				TargetAttributes = {
+					2C8F20BD185520CA00495A6E = {
+						TestTargetID = 2CA21461160C0DFD00347D58;
+					};
+				};
 			};
 			buildConfigurationList = 2CA2145C160C0DFD00347D58 /* Build configuration list for PBXProject "Back-2-Basics" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -348,6 +413,7 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				Base,
 			);
 			mainGroup = 2CA21457160C0DFD00347D58;
 			productRefGroup = 2CA21463160C0DFD00347D58 /* Products */;
@@ -356,9 +422,28 @@
 			targets = (
 				2CA21461160C0DFD00347D58 /* Back-2-Basics */,
 				2C84AB651622793300572AF7 /* Test */,
+				2C8F20A2185520C900495A6E /* B2B_Display */,
+				2C8F20BD185520CA00495A6E /* B2B_DisplayTests */,
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		2C8F20A1185520C900495A6E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2C8F20BC185520CA00495A6E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		2C84AB621622793300572AF7 /* Sources */ = {
@@ -368,6 +453,20 @@
 				2C84AB86162506FB00572AF7 /* NeuralNetwork.cpp in Sources */,
 				2C84AB85162506EA00572AF7 /* Navigation.cpp in Sources */,
 				2C84AB7916227C5B00572AF7 /* main.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2C8F209F185520C900495A6E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2C8F20BA185520CA00495A6E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -389,6 +488,11 @@
 			target = 2CA21461160C0DFD00347D58 /* Back-2-Basics */;
 			targetProxy = 2C84AB821625046F00572AF7 /* PBXContainerItemProxy */;
 		};
+		2C8F20C2185520CA00495A6E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2C8F20A2185520C900495A6E /* B2B_Display */;
+			targetProxy = 2C8F20C1185520CA00495A6E /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
@@ -397,6 +501,10 @@
 			buildSettings = {
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_WARN_EMPTY_BODY = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"/Users/Marcus/Documents/Back-2-Basics",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -406,7 +514,131 @@
 			buildSettings = {
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_WARN_EMPTY_BODY = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"/Users/Marcus/Documents/Back-2-Basics",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		2C8F20CB185520CA00495A6E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "B2B_Display/B2B_Display-Prefix.pch";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				INFOPLIST_FILE = "B2B_Display/B2B_Display-Info.plist";
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				WRAPPER_EXTENSION = app;
+			};
+			name = Debug;
+		};
+		2C8F20CC185520CA00495A6E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "B2B_Display/B2B_Display-Prefix.pch";
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				INFOPLIST_FILE = "B2B_Display/B2B_Display-Info.plist";
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				WRAPPER_EXTENSION = app;
+			};
+			name = Release;
+		};
+		2C8F20CD185520CA00495A6E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/libBack-2-Basics.dylib";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				COMBINE_HIDPI_IMAGES = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(DEVELOPER_FRAMEWORKS_DIR)",
+					"$(inherited)",
+				);
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "B2B_Display/B2B_Display-Prefix.pch";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				INFOPLIST_FILE = "B2B_DisplayTests/B2B_DisplayTests-Info.plist";
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUNDLE_LOADER)";
+				WRAPPER_EXTENSION = xctest;
+			};
+			name = Debug;
+		};
+		2C8F20CE185520CA00495A6E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/libBack-2-Basics.dylib";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(DEVELOPER_FRAMEWORKS_DIR)",
+					"$(inherited)",
+				);
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "B2B_Display/B2B_Display-Prefix.pch";
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				INFOPLIST_FILE = "B2B_DisplayTests/B2B_DisplayTests-Info.plist";
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUNDLE_LOADER)";
+				WRAPPER_EXTENSION = xctest;
 			};
 			name = Release;
 		};
@@ -414,7 +646,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
@@ -442,7 +673,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
@@ -464,6 +694,10 @@
 			buildSettings = {
 				COMBINE_HIDPI_IMAGES = YES;
 				EXECUTABLE_PREFIX = lib;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"/Users/Marcus/Documents/Back-2-Basics",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -473,6 +707,10 @@
 			buildSettings = {
 				COMBINE_HIDPI_IMAGES = YES;
 				EXECUTABLE_PREFIX = lib;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"/Users/Marcus/Documents/Back-2-Basics",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -485,6 +723,24 @@
 			buildConfigurations = (
 				2C84AB6D1622793400572AF7 /* Debug */,
 				2C84AB6E1622793400572AF7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		2C8F20CF185520CA00495A6E /* Build configuration list for PBXNativeTarget "B2B_Display" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2C8F20CB185520CA00495A6E /* Debug */,
+				2C8F20CC185520CA00495A6E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		2C8F20D0185520CA00495A6E /* Build configuration list for PBXNativeTarget "B2B_DisplayTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2C8F20CD185520CA00495A6E /* Debug */,
+				2C8F20CE185520CA00495A6E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

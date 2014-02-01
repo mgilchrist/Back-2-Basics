@@ -14,9 +14,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "2CA21461160C0DFD00347D58"
-               BuildableName = "libBack-2-Basics.dylib"
-               BlueprintName = "Back-2-Basics"
+               BlueprintIdentifier = "2C8F20A2185520C900495A6E"
+               BuildableName = "B2B_Display.app"
+               BlueprintName = "B2B_Display"
                ReferencedContainer = "container:Back-2-Basics.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -28,13 +28,23 @@
       shouldUseLaunchSchemeArgsEnv = "YES"
       buildConfiguration = "Debug">
       <Testables>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "2C8F20BD185520CA00495A6E"
+               BuildableName = "B2B_DisplayTests.xctest"
+               BlueprintName = "B2B_DisplayTests"
+               ReferencedContainer = "container:Back-2-Basics.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "2C84AB651622793300572AF7"
-            BuildableName = "Test"
-            BlueprintName = "Test"
+            BlueprintIdentifier = "2C8F20A2185520C900495A6E"
+            BuildableName = "B2B_Display.app"
+            BlueprintName = "B2B_Display"
             ReferencedContainer = "container:Back-2-Basics.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
@@ -51,9 +61,9 @@
       <BuildableProductRunnable>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "2C84AB651622793300572AF7"
-            BuildableName = "Test"
-            BlueprintName = "Test"
+            BlueprintIdentifier = "2C8F20A2185520C900495A6E"
+            BuildableName = "B2B_Display.app"
+            BlueprintName = "B2B_Display"
             ReferencedContainer = "container:Back-2-Basics.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -66,6 +76,15 @@
       useCustomWorkingDirectory = "NO"
       buildConfiguration = "Release"
       debugDocumentVersioning = "YES">
+      <BuildableProductRunnable>
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "2C8F20A2185520C900495A6E"
+            BuildableName = "B2B_Display.app"
+            BlueprintName = "B2B_Display"
+            ReferencedContainer = "container:Back-2-Basics.xcodeproj">
+         </BuildableReference>
+      </BuildableProductRunnable>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">

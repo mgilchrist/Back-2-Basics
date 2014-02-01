@@ -103,7 +103,7 @@ namespace Segmentation {
     vector<EdgeType *> delayQueue;
     vector<EdgeType *> *edges = g->getEdges(g->getReachableNodes(g->getStart(), NULL));
     LLRB_Tree<EdgeType *, double> sorted;
-    std::vector<Segment<EdgeType> *> *segments;
+    vector<Segment<EdgeType> *> *segments;
     LLRB_TreeNode<EdgeType *, double> *currentNode;
     
     // sort edges, merging those with weight < minWeight;
@@ -235,132 +235,7 @@ namespace Segmentation {
     return edgeRegions;
   }
 
-#if 0
-  template <class NodeType, class EdgeType>
-  void ObjectSegmentation<NodeType,EdgeType>::relabeling()
-  {
-    std::vector<Segment *> *segments;
-    double min, max;
-    uint64_t numRegions = 0;
-    std::vector<Nodetype *> *nodes = g->getReachableNodes(g->start, NULL)
-    
-    // compress regions
-    for (uint64_t ix = 0; ix < segments->size(); ix++) //each r in regions
-    {
-      r = segments->at(ix);
-      if ((r->size < max) && (r->size >= min))
-      {
-        r->isValid = TRUE;
-      }
-      else
-      {
-        r->isValid = FALSE;
-      }
-    }
-  
-    for (uint64_t ix = 0; ix < nodes->size(); ix++) //each pixel do
-    { 
-      if (IsRepresentative(pixel) and regions.search(pixel).isValid)
-      {
-        numRegions++;
-      }
-    }
-  
-    for (uint64_t ix = 0; ix < nodes->size(); ix++) //each pixel do
-    {
-      if (IsRepresentative(pixel) && Find(pixel).isValid)
-      {
-        parents [pixel] = tile.startIndex;
-        tile.startIndex = tile.startIndex + 1;
-      }
-    }
-  }
-#endif
 
-  
-#if 0
-  vector<vector<Neuron *> *> *ObjectSegmentation<NodeType,EdgeType>::getEntangledNeuronGroups()
-  {
-    
-    LLRB_Tree<vector<Neuron *>, uint64_t> rootsFound;
-    vector<Neuron *> *nodes = this->getReachableNodes(this->start,this->terminal);
-    vector<Axion *> *edgesMaxList = maximumSpanningTree();
-    double mean = 0.0, stdDev = 0.0, cutoff;
-    
-    /* Determine edge cutoff limit (one standard deviation below average) */
-    
-    for (uint64_t ix = 0; ix < edgesMaxList->size(); ix++)
-    {
-      mean += edgesMaxList->at(ix)->attrib;
-    }
-    
-    mean /= edgesMaxList->size();
-    
-    for (uint64_t ix = 0; ix < edgesMaxList->size(); ix++)
-    {
-      stdDev += pow(mean - edgesMaxList->at(ix)->attrib, 2);
-    }
-    
-    stdDev /= edgesMaxList->size();
-    stdDev = sqrt(stdDev);
-    
-    cutoff = mean - stdDev;
-    
-    for (uint64_t ix = 0; ix < edgesMaxList->size(); ix++)
-    {
-      if (edgesMaxList->at(ix)->length() >= cutoff)
-      {
-        edgesMaxList->at(ix)->getForward()->previousEdge = edgesMaxList->at(ix);
-      }
-    }
-    
-    /* For each node find its root parent and store base on root */
-    for (uint64_t ix = 0; ix < nodes->size(); ix++)
-    {
-      vector<NodeType *> *group;
-      NodeType *current = nodes->at(ix);
-      NodeType *previous = nodes->at(ix);
-      EdgeType *memo;
-      
-      /* get root node */
-      while (current->previousEdge != NULL)
-      {
-        memo = current->previousEdge;
-        current = current->previousEdge->getBackward();
-      }
-      
-      /* assign previous edges as edge connected to root to skip work */
-      current = nodes->at(ix);
-      while (current->previousEdge != NULL)
-      {
-        current->previousEdge = memo;
-        current = current->previousEdge->getBackward();
-      }
-      
-      if ((group = rootsFound.search((uint64_t)current)) == NULL)
-      {
-        group = new vector<NodeType *>();
-        rootsFound.insert(group, (uint64_t)current);
-      }
-      
-      group->push_back(nodes->at(ix));
-    }
-    
-    /* Cleanup */
-    for (uint64_t ix = 0; ix < edgesMaxList->size(); ix++)
-    {
-      edgesMaxList->at(ix)->getForward()->previousEdge = NULL;
-    }
-    
-    nodes->resize(0);
-    delete nodes;
-    
-    edgesMaxList->resize(0);
-    delete edgesMaxList;
-    
-    return rootsFound.select(NULL, NULL);
-  }
-#endif
 }
 
 #endif
