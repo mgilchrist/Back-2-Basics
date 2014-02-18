@@ -147,6 +147,11 @@ int64_t addPattern(int64_t seed, uint64_t iterations)
   return seed + iterations;
 }
 
+int64_t idxPattern(int64_t seed, uint64_t iterations)
+{
+  return seed + iterations;
+}
+
 int64_t randomPattern(int64_t seed, uint64_t iterations)
 {
   return seed + (random() & 0x00FF);
@@ -155,28 +160,65 @@ int64_t randomPattern(int64_t seed, uint64_t iterations)
 int rModifyAndPrintMatrix(vector<int64_t> *array, vector<uint64_t> *dim, uint64_t offset,
                     uint8_t dimensions, int64_t (*pattern)(int64_t seed, uint64_t iter), uint64_t iter)
 {
-  cout << "{";
   
   if (dimensions > 1)
   {
+    for (uint8_t ix = dimensions; ix < dim->size(); ix++)
+    {
+      cout << " ";
+    }
+    cout << "{\n";
+    
     for (uint64_t ix = 0; ix < dim->at(dimensions - 1); ix++)
     {
-      rModifyAndPrintMatrix(array, dim, offset + (ix * dim->at(dimensions - 2)), dimensions-1, pattern, iter);
+      rModifyAndPrintMatrix(array, dim, (offset + ix) * dim->at(dimensions - 2), dimensions-1, pattern, iter);
+      cout << "\n";
+    }
+    
+    for (uint8_t ix = dimensions; ix < dim->size(); ix++)
+    {
+      cout << " ";
+    }
+    
+    if (dimensions == dim->size()) {
+      cout << "}";
+    }
+    else
+    {
+      cout << "},";
     }
   }
   else
   {
-    cout << ".";
-    for (uint64_t ix = 0; ix < dim->at(0); ix++)
+    for (uint8_t ix = dimensions; ix < dim->size(); ix++)
+    {
+      cout << " ";
+    }
+    cout << "{";
+    
+    cout << " ";
+    
+    for (uint64_t ix = 0; ; ix++)
     {
       uint64_t entry = pattern(array->at(ix + offset), iter);
-      cout << entry;
-      cout << ".";
       array->at(ix + offset) = entry;
+      
+      cout << ix + offset;
+      cout << ":";
+      cout << entry;
+      
+      if (ix >= (dim->at(0) - 1))
+      {
+        break;
+      }
+      
+      cout << ", ";
     }
+    
+    cout << " },";
   }
   
-  cout << "}";
+  
   
   return 0;
 }
@@ -305,7 +347,7 @@ int matrixConvolutionTest()
   vector<pair<int64_t, int64_t>> kDimRange;
   uint64_t mSize = 1, kSize = 1;
   
-  uint8_t dimension = 2;
+  uint8_t dimension = 4;
   
   for (uint8_t ix = 0; ix < dimension; ix++)
   {
@@ -321,9 +363,11 @@ int matrixConvolutionTest()
   
   cout << "\nCreating matrix\n";
   rModifyAndPrintMatrix(&matrix, &mDim, 0, dimension, randomPattern, 1);
-  //cout << "\nCreating kernel\n";
-  //rModifyAndPrintMatrix(&kernel, &kDim, 0, dimension, addPattern, 1);
-  kernel[kernel.size()/2] = 1;
+  cout << "\n";
+  
+  cout << "\nCreating kernel\n";
+  kernel[kernel.size()/2 + 1] = 1;
+  rModifyAndPrintMatrix(&kernel, &kDim, 0, dimension, addPattern, 0);
   cout << "\n";
   
   for (uint64_t ix = 0; ix < kernel.size(); ix++)
