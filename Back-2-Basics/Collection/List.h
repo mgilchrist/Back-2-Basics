@@ -49,14 +49,16 @@ namespace Collection {
   /* Indexed Comparable */
   
   template <class ElementType, class KeyType>
-  Comparable<ElementType,KeyType>::Comparable() {
+  Comparable<ElementType,KeyType>::Comparable()
+  {
     this->data = NULL;
     this->key = 0;
     this->index = NULL;
   }
   
   template <class ElementType, class KeyType>
-  Comparable<ElementType,KeyType>::Comparable(ElementType data, KeyType key) {
+  Comparable<ElementType,KeyType>::Comparable(ElementType data, KeyType key)
+  {
     this->data = data;
     this->key = key;
     this->index = new uint64_t;
@@ -90,32 +92,38 @@ namespace Collection {
   /* Comparable Collection */
   
   template <class ElementType, class KeyType>
-  List<ElementType,KeyType>::List() {
+  List<ElementType,KeyType>::List()
+  {
     
   }
   
   
   template <class ElementType, class KeyType>
-  uint64_t List<ElementType,KeyType>::chooseRandomPivot(uint64_t l, uint64_t r) {
+  uint64_t List<ElementType,KeyType>::chooseRandomPivot(uint64_t l, uint64_t r)
+  {
     return (((random())%(r-l+1))+l);
   }
   
   // Best: O(nlogn) Worst: O(n^2) Average: O(nlogn) Space: O(logn)
   template <class ElementType, class KeyType>
-  void List<ElementType,KeyType>::quickSort(uint64_t l, uint64_t r) {
-    
+  void List<ElementType,KeyType>::quickSort(uint64_t l, uint64_t r)
+  {
     uint64_t pIndex;
     uint64_t p;
     
-    if (l < r) {
+    if (l < r)
+    {
       p = this->choosePivot(l, r);
       
       pIndex = this->partition(p, l, r);
       
-      if (l < pIndex) {
+      if (l < pIndex)
+      {
         quickSort(l, pIndex-1);
       }
-      if (pIndex < r) {
+      
+      if (pIndex < r)
+      {
         quickSort(pIndex+1, r);
       }
       
@@ -124,23 +132,29 @@ namespace Collection {
   }
   
   template <class ElementType, class KeyType>
-  uint64_t List<ElementType,KeyType>::selection(uint64_t l, uint64_t r, uint64_t k) {
-    
+  uint64_t List<ElementType,KeyType>::selection(uint64_t l, uint64_t r, uint64_t k)
+  {
     uint64_t pIndex, p;
     uint64_t pDistance;
     
-    if (l < r) {
+    if (l < r)
+    {
       p = this->medianOfMedians(l, r);
       
       pIndex = this->partition(p, l, r);
       
       pDistance = pIndex - l + 1;
       
-      if (pDistance == k) {
+      if (pDistance == k)
+      {
         return pIndex;
-      } else if (k < pIndex) {
+      }
+      else if (k < pIndex)
+      {
         return selection(l, pIndex-1, k);
-      } else {
+      }
+      else
+      {
         return selection(pIndex+1, r, k);
       }
     }

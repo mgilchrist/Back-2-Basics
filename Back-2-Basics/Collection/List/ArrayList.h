@@ -246,22 +246,31 @@ namespace Collection {
     
     mergedArray = new ArrayList<ElementType,KeyType>(leftLength+rightLength);
     
-    while ((leftLength > 0) or (rightLength > 0)) {
-      if ((leftLength > 0) and (rightLength > 0)) {
-        if (leftList->atIndex(leftPos)->key <= rightList->atIndex(rightPos)->key) {
+    while ((leftLength > 0) or (rightLength > 0))
+    {
+      if ((leftLength > 0) and (rightLength > 0))
+      {
+        if (leftList->atIndex(leftPos)->key <= rightList->atIndex(rightPos)->key)
+        {
           mergedArray->setIndex(pos, leftList->atIndex(leftPos));
           leftPos++;
           leftLength--;
-        } else {
+        }
+        else
+        {
           mergedArray->setIndex(pos, rightList->atIndex(rightPos));
           rightPos++;
           rightLength--;
         }
-      } else if (leftLength > 0) {
+      }
+      else if (leftLength > 0)
+      {
         mergedArray->setIndex(pos, leftList->atIndex(leftPos));
         leftPos++;
         leftLength--;
-      } else if (rightLength > 0) {
+      }
+      else if (rightLength > 0)
+      {
         mergedArray->setIndex(pos, rightList->atIndex(rightPos));
         rightPos++;
         rightLength--;
@@ -275,16 +284,19 @@ namespace Collection {
     return mergedArray;
   }
   
+  
   template <class ElementType, class KeyType>
-  ArrayList<ElementType,KeyType> *ArrayList<ElementType,KeyType>::mergeSort(uint64_t l, uint64_t r) {
-    
+  ArrayList<ElementType,KeyType> *ArrayList<ElementType,KeyType>::mergeSort(uint64_t l, uint64_t r)
+  {
     ArrayList *left, *right;
     
-    if (r - l < 64) {
+    if (r - l < 64)
+    {
       uint64_t tmpSize = r-l+1;
       ArrayList *ret = new ArrayList(tmpSize);
       
-      for (uint64_t ix = 0; ix < tmpSize; ix++) {
+      for (uint64_t ix = 0; ix < tmpSize; ix++)
+      {
         ret->setIndex(ix, this->atIndex(l+ix));
       }
       
@@ -296,9 +308,12 @@ namespace Collection {
     
     left = mergeSort(l, middle);
     
-    if (r > middle) {
+    if (r > middle)
+    {
       right = mergeSort(middle+1, r);
-    } else {
+    }
+    else
+    {
       return left;
     }
     
@@ -309,47 +324,64 @@ namespace Collection {
   
   /* Search */
   template <class ElementType, class KeyType>
-  uint64_t ArrayList<ElementType,KeyType>::binary_search_first_term(uint64_t key, uint64_t min, uint64_t max) {
+  uint64_t ArrayList<ElementType,KeyType>::binary_search_first_term(uint64_t key, uint64_t min, uint64_t max)
+  {
     uint64_t mid;
     
-    while (max > min) {
+    while (max > min)
+    {
       mid = ((max - min) / 2) + min;
-      if (this->comparables[mid].key < key) {
+      if (this->comparables[mid].key < key)
+      {
         min = mid + 1;
-      } else {
+      }
+      else
+      {
         max = mid;
       }
     }
     
-    if ((max == min) && (this->comparables[min].key == key)) {
+    if ((max == min) && (this->comparables[min].key == key))
+    {
       return min;
-    } else {
+    }
+    else
+    {
       return ERROR;
     }
   }
   
   template <class ElementType, class KeyType>
-  uint64_t ArrayList<ElementType,KeyType>::binary_search_last_term(uint64_t key, uint64_t min, uint64_t max) {
+  uint64_t ArrayList<ElementType,KeyType>::binary_search_last_term(uint64_t key, uint64_t min, uint64_t max)
+  {
     uint64_t mid;
     
-    while (max > min) {
+    while (max > min)
+    {
       mid = ((max - min) / 2) + min;
-      if (this->comparables[mid].key > key) {
+      if (this->comparables[mid].key > key)
+      {
         max = mid - 1;
-      } else {
+      }
+      else
+      {
         min = mid;
       }
     }
     
-    if ((max == min) && (this->comparables[min].key == key)) {
+    if ((max == min) && (this->comparables[min].key == key))
+    {
       return min;
-    } else {
+    }
+    else
+    {
       return ERROR;
     }
   }
   
   template <class ElementType, class KeyType>
-  ArrayList<ElementType,KeyType> *ArrayList<ElementType,KeyType>::cloneSort() {
+  ArrayList<ElementType,KeyType> *ArrayList<ElementType,KeyType>::cloneSort()
+  {
     return mergeSort(0,size-1);
   }
   

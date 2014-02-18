@@ -12,6 +12,7 @@
 		2C166A3616212642005904C8 /* Key.h in Headers */ = {isa = PBXBuildFile; fileRef = 2C166A3516212642005904C8 /* Key.h */; };
 		2C1810CC16DB0E78002EEB66 /* ObjectSegmentation.h in Headers */ = {isa = PBXBuildFile; fileRef = 2C1810CB16DB0E78002EEB66 /* ObjectSegmentation.h */; };
 		2C18931F171B648600FCA065 /* Config.h in Headers */ = {isa = PBXBuildFile; fileRef = 2C18931E171B648600FCA065 /* Config.h */; };
+		2C654494189DB6EA00645CA8 /* SkipList.h in Headers */ = {isa = PBXBuildFile; fileRef = 2C654493189DB6EA00645CA8 /* SkipList.h */; };
 		2C84AB7816227C5B00572AF7 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2C84AB7616227C5B00572AF7 /* main.cpp */; };
 		2C84AB7916227C5B00572AF7 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2C84AB7616227C5B00572AF7 /* main.cpp */; };
 		2C84AB85162506EA00572AF7 /* Navigation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2C0034381617AC1A00CCC166 /* Navigation.cpp */; };
@@ -73,6 +74,7 @@
 		2C166A3516212642005904C8 /* Key.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Key.h; sourceTree = "<group>"; };
 		2C1810CB16DB0E78002EEB66 /* ObjectSegmentation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObjectSegmentation.h; sourceTree = "<group>"; };
 		2C18931E171B648600FCA065 /* Config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Config.h; sourceTree = "<group>"; };
+		2C654493189DB6EA00645CA8 /* SkipList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SkipList.h; sourceTree = "<group>"; };
 		2C84AB661622793300572AF7 /* Test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Test; sourceTree = BUILT_PRODUCTS_DIR; };
 		2C84AB7616227C5B00572AF7 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = ../main.cpp; sourceTree = "<group>"; };
 		2C84AB7716227C5B00572AF7 /* Test.1 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.man; name = Test.1; path = "Back-2-Basics/Test.1"; sourceTree = "<group>"; };
@@ -226,6 +228,7 @@
 			isa = PBXGroup;
 			children = (
 				2CA214F5160C17C100347D58 /* ArrayList.h */,
+				2C654493189DB6EA00645CA8 /* SkipList.h */,
 			);
 			path = List;
 			sourceTree = "<group>";
@@ -313,6 +316,7 @@
 				2CA2151C160C17C100347D58 /* Optimization.h in Headers */,
 				2C00343B1617AC1A00CCC166 /* Navigation.h in Headers */,
 				2C166A3616212642005904C8 /* Key.h in Headers */,
+				2C654494189DB6EA00645CA8 /* SkipList.h in Headers */,
 				2CDE7A6B1629F95D00805A47 /* LLRB_Tree.h in Headers */,
 				2CD9B8A116317A8A00F54B85 /* SecureHashTable.h in Headers */,
 				2C1810CC16DB0E78002EEB66 /* ObjectSegmentation.h in Headers */,

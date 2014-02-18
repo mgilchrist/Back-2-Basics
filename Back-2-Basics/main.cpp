@@ -71,7 +71,7 @@ typedef struct maxtrixConvInfo
 
 
 int testGenetic(char **args, int nArgs, ifstream *inputStream, ofstream *outputData, ofstream *log);
-MAXTRIX_CONV_INFO *rKernelWork(vector<double> *matrix, uint64_t matrixOffset, std::vector<uint64_t> *mDimensions,
+void rKernelWork(vector<double> *matrix, uint64_t matrixOffset, std::vector<uint64_t> *mDimensions,
                                vector<pair<double, double>> *kernel, int64_t kernelStartOffset, uint64_t kernelOffset, std::vector<uint64_t> *kDimensions,
                                std::vector<uint64_t> *kCenter,
                                uint8_t dimension, vector<double> *ret);
@@ -141,102 +141,209 @@ TEST_ENTRY *lookupTest(const char *testName)
   return NULL;
 }
 
-double getRandomInBetween(double first, double second)
+
+int64_t addPattern(int64_t seed, uint64_t iterations)
 {
-  return (first + second) / 2;
+  return seed + iterations;
 }
 
-MAXTRIX_CONV_INFO *rKernelWork(vector<double> *matrix, uint64_t matrixOffset, vector<uint64_t> *mDimensions,
-                               uint64_t retOffset, uint64_t negFirstCompareOffset,
-                               vector<pair<double, double>> *kernel, uint64_t kernelOffset, vector<uint64_t> *kDimensions, vector<uint64_t> *kCenter,
-                               uint8_t dimension, vector<double> *ret)
+int64_t randomPattern(int64_t seed, uint64_t iterations)
 {
-  MAXTRIX_CONV_INFO *increment;
-  matrixOffset *= mDimensions->at(dimension);
-  kernelOffset *= kDimensions->at(dimension);
+  return seed + (random() & 0x00FF);
+}
+
+int rModifyAndPrintMatrix(vector<int64_t> *array, vector<uint64_t> *dim, uint64_t offset,
+                    uint8_t dimensions, int64_t (*pattern)(int64_t seed, uint64_t iter), uint64_t iter)
+{
+  cout << "{";
   
-  if (dimension)
+  if (dimensions > 1)
   {
-    for (uint64_t kLoc = 0; kLoc < kDimensions->at(dimension); kLoc++)
+    for (uint64_t ix = 0; ix < dim->at(dimensions - 1); ix++)
     {
-      increment = rKernelWork(matrix, matrixOffset + (kLoc - kCenter->at(dimension)), mDimensions,
-                              retOffset, negFirstCompareOffset,
-                              kernel, kernelOffset + kLoc, kDimensions, kCenter,
-                              dimension-1, ret);
-      increment->matrixIncrement *= mDimensions->at(dimension-1);
-      increment->kernelIncrement *= kDimensions->at(dimension-1);
+      rModifyAndPrintMatrix(array, dim, offset + (ix * dim->at(dimensions - 2)), dimensions-1, pattern, iter);
+    }
+  }
+  else
+  {
+    cout << ".";
+    for (uint64_t ix = 0; ix < dim->at(0); ix++)
+    {
+      uint64_t entry = pattern(array->at(ix + offset), iter);
+      cout << entry;
+      cout << ".";
+      array->at(ix + offset) = entry;
+    }
+  }
+  
+  cout << "}";
+  
+  return 0;
+}
+
+int64_t getRandomInBetween(int64_t first, int64_t second)
+{
+  uint64_t diff;
+  int64_t ret;
+  
+  if (first == second)
+  {
+    return first;
+  }
+  
+  if (first > second)
+  {
+    diff = first - second;
+    ret = second + (random() % diff);
+  }
+  else
+  {
+    diff = second - first;
+    ret = first + (random() % diff);
+  }
+  
+  return ret;
+}
+
+void rKernelWork(vector<int64_t> *matrix, uint64_t matrixOffset, vector<uint64_t> *mDimensions,
+                               uint64_t retOffset,
+                               vector<pair<int64_t, int64_t>> *kernel, uint64_t kernelOffset, vector<uint64_t> *kDimensions, vector<uint64_t> *kCenter,
+                               uint8_t dimension, vector<int64_t> *ret)
+{
+  kernelOffset *= kDimensions->at(dimension-1);
+  
+  if (dimension > 1)
+  {
+    for (uint64_t kLoc = 0; kLoc < kDimensions->at(dimension-1); kLoc++)
+    {
+      int64_t modifier = ((kLoc - kCenter->at(dimension-1)) * mDimensions->at(dimension-2));
+      int64_t compareOffset = matrixOffset + modifier;
+      
+      if ((compareOffset < 0) ||
+          (compareOffset >= matrix->size()))
+      {
+        continue;
+      }
+      
+      rKernelWork(matrix, compareOffset, mDimensions,
+                  retOffset,
+                  kernel, kernelOffset + kLoc, kDimensions, kCenter,
+                  dimension-1, ret);
     }
   }
   else
   {
     for (uint64_t kLoc = 0; kLoc < kDimensions->at(0); kLoc++)
     {
-      increment = new MAXTRIX_CONV_INFO();
-      increment->matrixIncrement = 1;
-      increment->kernelIncrement = 1;
+      int64_t thisDimOffset = (matrixOffset % mDimensions->at(0)) + (kLoc - kCenter->at(0));
       
-      uint64_t unmoddedOffset = matrixOffset + (kLoc - kCenter->at(0));
-        
-      if (unmoddedOffset < negFirstCompareOffset) continue;
+      if (( thisDimOffset >= mDimensions->at(0) ) ||
+          ( thisDimOffset < 0 ))
+      {
+        continue;
+      }
       
-      uint64_t currentOffset = unmoddedOffset - negFirstCompareOffset;
-      
-      if (currentOffset >= matrix->size()) continue;
+      uint64_t currentOffset = matrixOffset + (kLoc - kCenter->at(0));
       
       pair<double, double> currentKernelPair = kernel->at(kernelOffset+kLoc);
       double k = getRandomInBetween(currentKernelPair.first, currentKernelPair.second);
-        
-      ret->at(matrixOffset) += matrix->at(currentOffset) * k;
+      
+      ret->at(retOffset) += matrix->at(currentOffset) * k;
     }
   }
-  
-  return increment;
 }
 
-void rArrayedMatrixTraverse(vector<double> *matrix, uint64_t matrixOffset, vector<uint64_t> *mDimensions, uint64_t negFirstCompareOffset,
-                                             vector<pair<double, double>> *kernel, vector<uint64_t> *kDimensions, vector<uint64_t> *kCenter,
-                                             uint8_t dimension, vector<double> *ret)
+void rArrayedMatrixTraverse(vector<int64_t> *matrix, uint64_t matrixOffset, vector<uint64_t> *mDimensions,
+                                             vector<pair<int64_t, int64_t>> *kernel, vector<uint64_t> *kDimensions, vector<uint64_t> *kCenter,
+                                             uint8_t dimension, vector<int64_t> *ret)
 {
-  matrixOffset *= mDimensions->at(dimension);
+  matrixOffset *= mDimensions->at(dimension-1);
   
-  if (dimension)
+  if (dimension > 1)
   {
-    for (uint64_t mLoc = 0; mLoc < mDimensions->at(dimension); mLoc++)
+    for (uint64_t mLoc = 0; mLoc < mDimensions->at(dimension-1); mLoc++)
     {
-      negFirstCompareOffset = (negFirstCompareOffset * mDimensions->at(dimension)) + mLoc - kCenter->at(dimension);
-      rArrayedMatrixTraverse(matrix, matrixOffset + mLoc, mDimensions, negFirstCompareOffset,
+      rArrayedMatrixTraverse(matrix, matrixOffset + mLoc, mDimensions,
                              kernel, kDimensions, kCenter,
                              dimension-1, ret);
     }
   }
   else
   {
-    for (uint64_t mLoc = 0; mLoc < mDimensions->at(dimension); mLoc++)
+    for (uint64_t mLoc = 0; mLoc < mDimensions->at(dimension-1); mLoc++)
     {
-      negFirstCompareOffset = (negFirstCompareOffset * mDimensions->at(dimension)) + mLoc - kCenter->at(dimension);
-      rKernelWork(matrix, 0, mDimensions,
-                  matrixOffset + mLoc, negFirstCompareOffset,
+      uint64_t arrayOffset = matrixOffset + mLoc;
+      
+      rKernelWork(matrix, arrayOffset, mDimensions,
+                  arrayOffset,
                   kernel, 0, kDimensions, kCenter,
-                  (uint8_t)(mDimensions->size()-1), ret);
+                  (uint8_t)(mDimensions->size()), ret);
     }
   }
 }
 
-vector<double> *matrixConvolution(vector<double> *matrix, vector<uint64_t> *mDimensions,
-                                  vector<pair<double, double>> *kernel, vector<uint64_t> *kDimensions,
+vector<int64_t> *matrixConvolution(vector<int64_t> *matrix, vector<uint64_t> *mDimensions,
+                                  vector<pair<int64_t, int64_t>> *kernel, vector<uint64_t> *kDimensions,
                                   vector<uint64_t> *kCenter)
 {
-  vector<double> *ret = new vector<double>();
+  vector<int64_t> *ret = new vector<int64_t>();
   ret->resize(matrix->size());
   
-  rArrayedMatrixTraverse(matrix, 0, mDimensions, 0,
+  rArrayedMatrixTraverse(matrix, 0, mDimensions,
                          kernel, kDimensions, kCenter,
-                         (uint8_t)(mDimensions->size()-1), ret);
+                         (uint8_t)(mDimensions->size()), ret);
   
   return ret;
   
 }
 
+
+int matrixConvolutionTest()
+{
+  vector<int64_t> matrix, kernel, *convMatrix;
+  vector<uint64_t> mDim, kDim, kCenter;
+  vector<pair<int64_t, int64_t>> kDimRange;
+  uint64_t mSize = 1, kSize = 1;
+  
+  uint8_t dimension = 2;
+  
+  for (uint8_t ix = 0; ix < dimension; ix++)
+  {
+    mDim.push_back( 4 );
+    mSize *= 4;
+    kDim.push_back( 3 );
+    kSize *= 3;
+    kCenter.push_back( 1 );
+  }
+  
+  matrix.resize(mSize);
+  kernel.resize(kSize);
+  
+  cout << "\nCreating matrix\n";
+  rModifyAndPrintMatrix(&matrix, &mDim, 0, dimension, randomPattern, 1);
+  //cout << "\nCreating kernel\n";
+  //rModifyAndPrintMatrix(&kernel, &kDim, 0, dimension, addPattern, 1);
+  kernel[kernel.size()/2] = 1;
+  cout << "\n";
+  
+  for (uint64_t ix = 0; ix < kernel.size(); ix++)
+  {
+    pair<uint64_t, uint64_t> thisPair;
+    
+    thisPair.first = kernel[ix];
+    thisPair.second = kernel[ix];
+    
+    kDimRange.push_back( thisPair );
+  }
+  
+  convMatrix = matrixConvolution(&matrix, &mDim, &kDimRange, &kDim, &kCenter);
+  
+  cout << "\nConvoluted matrix\n";
+  rModifyAndPrintMatrix(convMatrix, &mDim, 0, dimension, addPattern, 0);
+  cout << "\n";
+  
+  return 0;
+}
 
 
 int executeTest(const char *suiteName, const char *testName, char **args, int nArgs)
@@ -426,7 +533,8 @@ int testHashTable()
     do
     {
       value = new uint64_t(random());
-    } while (!hashTable->get(*value));
+    }
+    while (!hashTable->get(*value));
     
     hashTable->insert(value, *value);
     
@@ -1440,6 +1548,8 @@ int main(int argc, const char * argv[])
   cout << "This is free software, and you are welcome to redistribute it\n";
   cout << "under certain conditions; type `show c' for details.\n";
   
+  ret |= matrixConvolutionTest();
+  
   /* Generate data for tests */
   //ret |= setupNeuralNetworkData("reserved");
   
@@ -1451,12 +1561,12 @@ int main(int argc, const char * argv[])
   //ret |= testRBTree();
   //ret |= testLLRBTree();
   //ret |= testStack();
-  ret |= testNeuralNetwork("reserved");
-  ret |= testGenetic(NULL, NULL);
+  //ret |= testNeuralNetwork("reserved");
+  //ret |= testGenetic(NULL, NULL);
   //ret |= testMetaheuristic();
   //ret |= testNavigation();
   //ret |= testNetworkFlow();
-  ret |= testSegmentation(SUITE_NAME);
+  //ret |= testSegmentation(SUITE_NAME);
   
   cout << "Finished Testing:";
   cout << ret;
