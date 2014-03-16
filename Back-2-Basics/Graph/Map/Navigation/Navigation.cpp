@@ -27,31 +27,30 @@
 
 namespace Graph {
 
-  
   Coordinate::Coordinate() {
-    this->X = 0.0;
-    this->Y = 0.0;
-    this->Z = 0.0;
+    this->X = 0;
+    this->Y = 0;
+    this->Z = 0;
   }
   
-  Coordinate::Coordinate(double X, double Y, double Z) {
+  Coordinate::Coordinate(int64_t X, int64_t Y, int64_t Z) {
     this->X = X;
     this->Y = Y;
     this->Z = Z;
   }
   
   void HeuristicMap::aStar() {
-    Heap<Coordinate *,double> *open;
+    Heap<Coordinate *,int64_t> *open;
     HashTable<bool *,Coordinate *> *openTable;
-    HashTable<double *,Coordinate *> *closed;
+    HashTable<uint64_t *,Coordinate *> *closed;
     Coordinate *u;
     vector<Path *> *ret;
     vector <Coordinate *> *dirtyNodes;
     bool tmpTrue = true;
     
-    open = new Heap<Coordinate *,double>();
+    open = new Heap<Coordinate *,int64_t>();
     openTable = new HashTable<bool *,Coordinate *>();
-    closed = new HashTable<double *,Coordinate *>();
+    closed = new HashTable<uint64_t *,Coordinate *>();
     dirtyNodes = new vector<Coordinate *>();
     
     AStarStorage *aStarStorage = new AStarStorage;
@@ -60,9 +59,9 @@ namespace Graph {
     aStarStorage->openTable = openTable;
     aStarStorage->closed = closed;
     
-    this->start->distanceFromStart = 0.0;
+    this->start->distanceFromStart = 0;
     
-    start->auxIndex = open->push(this->start,0.0);
+    start->auxIndex = open->push(this->start, 0);
 
     openTable->insert(&tmpTrue, this->start);
     
@@ -122,7 +121,7 @@ namespace Graph {
   }
    */
   
-  Path::Path(Coordinate *v, Coordinate *u, double length) {
+  Path::Path(Coordinate *v, Coordinate *u, int64_t length) {
     this->u = u;
     this->v = v;
     this->attrib = length;

@@ -37,15 +37,15 @@ namespace NeuralNetwork
   
   class NeuralNetwork;
   class Neuron;
-  class Axion;
+  class Axon;
 
 #define RANDOM_INFLUENCE ((rand() > rand()) ? 1.0 : -1.0)
 #define PPM 1e-6
-#define LEARNING_RULE_DEFAULT   0.1082
+#define LEARNING_RULE_DEFAULT   1082
 #define OK  0
   
-  static const double glbElecConductivity = 0.1082;
-  static const double glbMagConductivity = 0.8928; // (1/30)^-30 = .8928; (1/90)^-90 = .95123
+  static const int64_t glbElecConductivity = 1082;
+  static const int64_t glbMagConductivity = 8928; // (1/30)^-30 = .8928; (1/90)^-90 = .95123
 
   
   enum SIG_FNCT_TYPE
@@ -54,10 +54,10 @@ namespace NeuralNetwork
     PULSE
   };
   
-  const double irrelevant = 10000.0 * PPM;
+  const int64_t irrelevant = 10000 * PPM;
   static unsigned long currentIteration = -1;
   
-  class Axion : public Pipe<Neuron,Axion>
+  class Axon : public Pipe<Neuron,Axon>
   {
   private:
 #if (DEBUG == 1)
@@ -65,17 +65,17 @@ namespace NeuralNetwork
 #endif
     
   protected:
-    double mFlux = 0.0;
-    double powerDissipation = 0.0;
+    int64_t mFlux = 0;
+    int64_t powerDissipation = 0;
     Info *adjacency = NULL;
     
     void initialize(Neuron *neuron, Neuron *input, Info *tree);
     
   public:
     
-    Axion();
+    Axon();
     
-    ~Axion()
+    ~Axon()
     {
       if (adjacency != NULL)
       {
@@ -84,17 +84,17 @@ namespace NeuralNetwork
       }
     }
     
-    Axion(Neuron *neuron, Neuron *input, Info *tree)
+    Axon(Neuron *neuron, Neuron *input, Info *tree)
     {
       initialize(neuron, input, tree);
     }
     
-    void changeInfluence(double capacity);
+    void changeInfluence(int64_t capacity);
     
     friend Neuron;
   };
   
-  class Neuron : public Hub<Neuron,Axion>
+  class Neuron : public Hub<Neuron,Axon>, public LogicOperator
   {
     
   private:
@@ -107,15 +107,15 @@ namespace NeuralNetwork
   protected:
     
     uint64_t iteration = 0;
-    const double inertia = glbMagConductivity;
+    const int64_t inertia = glbMagConductivity;
     
     SIG_FNCT_TYPE sigmoidFunctionType = NORMAL;
 
     
-    static bool optimalPruneEach(LLRB_TreeNode<Axion *, uint64_t> *current, void *neuron)
+    static bool optimalPruneEach(LLRB_TreeNode<Axon *, uint64_t> *current, void *neuron)
     {
       Neuron *input = current->data->getForward();
-      double tVal = sqrt(pow(current->data->capacity(),2) + pow(current->data->mFlux,2));
+      int64_t tVal = sqrt(pow(current->data->capacity(),2) + pow(current->data->mFlux,2));
       bool ret = false;
       
       if (tVal < irrelevant) /*|| (current->data->powerDissipation > 0.01)) */
@@ -137,12 +137,12 @@ namespace NeuralNetwork
       return ret;
     }
     
-    static bool probablisticPruneEach(LLRB_TreeNode<Axion *, uint64_t> *current, void *neuron)
+    static bool probablisticPruneEach(LLRB_TreeNode<Axon *, uint64_t> *current, void *neuron)
     {
       
       Neuron *input = current->data->getForward();
-      double tVal = sqrt(pow(current->data->capacity(),2) + pow(current->data->mFlux,2));
-      double cutoff = pow(rand() / RAND_MAX, 2);
+      int64_t tVal = sqrt(pow(current->data->capacity(),2) + pow(current->data->mFlux,2));
+      int64_t cutoff = pow(rand() / RAND_MAX, 2);
       bool ret = false;
       
       if ((tVal < cutoff) || (current->data->mFlux > 0.7))
@@ -164,9 +164,9 @@ namespace NeuralNetwork
       return ret;
     }
     
-    static uint64_t probeActivationEach(LLRB_TreeNode<Axion *, uint64_t> *current, void *neuron)
+    static uint64_t probeActivationEach(LLRB_TreeNode<Axon *, uint64_t> *current, void *neuron)
     {
-      Axion *synapse = current->data;
+      Axon *synapse = current->data;
       Neuron *input = synapse->getForward();
       
       if ((synapse != NULL) && (input != NULL))
@@ -177,9 +177,9 @@ namespace NeuralNetwork
       return current->key;
     }
     
-    static uint64_t calcDeltaEach(LLRB_TreeNode<Axion *, uint64_t> *current, void *neuron)
+    static uint64_t calcDeltaEach(LLRB_TreeNode<Axon *, uint64_t> *current, void *neuron)
     {
-      Axion *synapse = current->data;
+      Axon *synapse = current->data;
       Neuron *input = current->data->getForward();
       
       if (input->discovered < input->references)
@@ -190,7 +190,7 @@ namespace NeuralNetwork
       
       if (input->discovered == input->references)
       {
-        double nCurrentOutput = *(input->memory);
+        int64_t nCurrentOutput = *(input->memory);
         
         input->delta = (nCurrentOutput * (1.0 - nCurrentOutput) * input->delta);
         
@@ -204,10 +204,10 @@ namespace NeuralNetwork
       return current->key;
     }
     
-    static uint64_t changeInputInfluenceEach(LLRB_TreeNode<Axion *, uint64_t> *current, void *neuron)
+    static uint64_t changeInputInfluenceEach(LLRB_TreeNode<Axon *, uint64_t> *current, void *neuron)
     {
-      double correction;
-      Axion *synapse = current->data;
+      int64_t correction;
+      Axon *synapse = current->data;
       Neuron *input = synapse->getForward();
       Neuron *pCurrentNeuron = ((Neuron *)neuron);
       
@@ -227,14 +227,14 @@ namespace NeuralNetwork
     }
     
     void deinitialize();
-    void initialize(double *, double *, NeuralNetwork *);
+    void initialize(int64_t *, int64_t *, NeuralNetwork *);
     
   public:
     
-    double delta = 0.0;
-    double *memory = NULL;
-    double *ptrInput = NULL;
-    double totalInputs = 0.0;
+    int64_t delta = 0.0;
+    int64_t *memory = NULL;
+    int64_t *ptrInput = NULL;
+    int64_t totalInputs = 0.0;
     bool privateMemory, privateInput;
     
     Neuron()
@@ -247,19 +247,19 @@ namespace NeuralNetwork
       deinitialize();
     }
     
-    Neuron(double *inputData, double *expectation, NeuralNetwork *neuralNetwork)
+    Neuron(int64_t *inputData, int64_t *expectation, NeuralNetwork *neuralNetwork)
     {
       initialize(inputData, expectation, neuralNetwork);
     }
     
-    double probeActivation(uint64_t iteration);
+    int64_t probeActivation(uint64_t iteration);
     
     friend class NeuralNetwork;
-    friend class Axion;
+    friend class Axon;
   };
   
   
-  class NeuralNetwork : public Network<Neuron,Axion> , public Heuristic<NeuralNetwork, Neuron, double>
+  class NeuralNetwork : public Network<Neuron,Axon> , public Heuristic<Neuron>
   {
     
   private:
@@ -272,9 +272,9 @@ namespace NeuralNetwork
     vector<Info *> hiddenInfo;
     vector<vector<Neuron *> *> *layers;
     bool layersDetermined = false;
-    double networkBias = -1.0;
-    //double learningRule = LEARNING_RULE_DEFAULT;
-    vector<Axion *> terminalEdges;
+    int64_t networkBias = -1.0;
+    //int64_t learningRule = LEARNING_RULE_DEFAULT;
+    vector<Axon *> terminalEdges;
     
   protected:
     
@@ -302,8 +302,8 @@ namespace NeuralNetwork
     static void doCorrectionEach(Harmony<Neuron> *current)
     {
       Neuron *pCurrentNeuron = (Neuron *)(current->logicElement);
-      double reality = *(current->reality);
-      double expectation = *(pCurrentNeuron->memory);
+      int64_t reality = *(current->reality);
+      int64_t expectation = *(pCurrentNeuron->memory);
       
       /* TODO don't propagate small errors or no data */
       if (reality > irrelevant) {
@@ -322,16 +322,16 @@ namespace NeuralNetwork
     
     static uint64_t addInputToVectorEach(LLRB_TreeNode<Neuron *, uint64_t> *current, void *vect)
     {
-      ((vector<double *> *)vect)->push_back(current->data->ptrInput);
+      ((vector<int64_t *> *)vect)->push_back(current->data->ptrInput);
       
       return current->key;
     }
     
     void deinitialize();
     
-    void initialize(vector<double *> *input,
-                    vector<Trust<double> *> *output,
-                    LLRB_Tree<double *, uint64_t> *expectation,
+    void initialize(vector<int64_t *> *input,
+                    vector<Trust<int64_t> *> *output,
+                    LLRB_Tree<int64_t *, uint64_t> *expectation,
                     vector<Info *> *layers,
                     uint32_t maxHiddenWidth);
     
@@ -348,9 +348,9 @@ namespace NeuralNetwork
       deinitialize();
     }
     
-    NeuralNetwork(vector<double *> *input,
-                  vector<Trust<double> *> *output,
-                  LLRB_Tree<double *, uint64_t> *expectation,
+    NeuralNetwork(vector<int64_t *> *input,
+                  vector<Trust<int64_t> *> *output,
+                  LLRB_Tree<int64_t *, uint64_t> *expectation,
                   vector<Info *> *layers,
                   uint32_t maxHiddenWidth)
     {
@@ -360,7 +360,7 @@ namespace NeuralNetwork
     void calcExpectation(uint64_t);
     void doCorrection();
     
-    vector<double *> *getInputs();
+    vector<int64_t *> *getInputs();
     vector<Info *> *getHiddenInfo();
     vector<Harmony<Neuron> *> *getHarmony();
         

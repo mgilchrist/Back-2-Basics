@@ -31,13 +31,13 @@ using namespace std;
 namespace NeuralNetwork
 {
   
-  static double zero = 0.0;
+  static int64_t zero = 0.0;
   
-  Axion::Axion() {
+  Axon::Axon() {
     
   }
   
-  void Axion::initialize(Neuron *input, Neuron *neuron, Info *info)
+  void Axon::initialize(Neuron *input, Neuron *neuron, Info *info)
   {
     assert(!initialized);
     initialized = true;
@@ -49,14 +49,14 @@ namespace NeuralNetwork
     adjacency = info;
   }
   
-  void Axion::changeInfluence(double correction)
+  void Axon::changeInfluence(int64_t correction)
   {
     this->setCapacity(this->capacity() + (correction * glbElecConductivity) + mFlux);
     powerDissipation = pow(correction, 2) * mFlux;
     mFlux = (correction * glbElecConductivity) + (glbMagConductivity * mFlux);
   }
   
-  void Neuron::initialize(double *inputData, double *expectation, NeuralNetwork *neuralNetwork)
+  void Neuron::initialize(int64_t *inputData, int64_t *expectation, NeuralNetwork *neuralNetwork)
   {
     assert(inputData);
     assert(!initialized);
@@ -72,7 +72,7 @@ namespace NeuralNetwork
     }
     else
     {
-      this->ptrInput = new double();
+      this->ptrInput = new int64_t();
       privateInput = true;
       *(this->ptrInput) = 0.0;
     }
@@ -84,7 +84,7 @@ namespace NeuralNetwork
     }
     else
     {
-      memory = new double();
+      memory = new int64_t();
       privateMemory = true;
     }
     
@@ -115,7 +115,7 @@ namespace NeuralNetwork
     //Hub::deinitialize();
   }
   
-  double Neuron::probeActivation(uint64_t iteration)
+  int64_t Neuron::probeActivation(uint64_t iteration)
   {
     if (this->iteration == iteration)
     {
@@ -135,7 +135,7 @@ namespace NeuralNetwork
     
     totalInputs = *memory;
     
-    *memory = (1.0 / (1.0 + exp(double((-1.0) * totalInputs))));
+    *memory = (1.0 / (1.0 + exp(int64_t((-1.0) * totalInputs))));
     
     this->iteration = iteration;
     
@@ -159,16 +159,16 @@ namespace NeuralNetwork
     assert(!numberOfNeurons);
   }
   
-  void NeuralNetwork::initialize(std::vector<double *> *input,
-                               std::vector<Trust<double> *> *output,
-                               LLRB_Tree<double *, uint64_t> *expectation,
+  void NeuralNetwork::initialize(std::vector<int64_t *> *input,
+                               std::vector<Trust<int64_t> *> *output,
+                               LLRB_Tree<int64_t *, uint64_t> *expectation,
                                std::vector<Info *> *connectivity,
                                uint32_t maxHiddenWidth)
   {
     
     Neuron *currentNeuron;
     Neuron **neuronArray[8];
-    Axion *tmpAxion;
+    Axon *tmpAxion;
     
     assert(!initialized);
     initialized = true;
@@ -212,8 +212,8 @@ namespace NeuralNetwork
       if (outLayer == 7)
       {
         uint32_t pos = outPosition;
-        double *reality = output->at(pos)->actual;
-        double *expect = expectation->search((uint64_t)reality);
+        int64_t *reality = output->at(pos)->actual;
+        int64_t *expect = expectation->search((uint64_t)reality);
         currentNeuron = new Neuron(&zero, expect, this);
         
         Harmony<Neuron> *tmp = new Harmony<Neuron>;
@@ -223,7 +223,7 @@ namespace NeuralNetwork
         outputs.push_back(tmp);
         neuronArray[7][pos] = currentNeuron;
         
-        tmpAxion = new Axion(bias, currentNeuron, NULL);
+        tmpAxion = new Axon(bias, currentNeuron, NULL);
         
         neuronArray[7][pos]->references = 1;
       }
@@ -246,10 +246,10 @@ namespace NeuralNetwork
           currentNeuron = new Neuron(&zero, NULL, this);
         }
         neuronArray[inLayer][inPosition] = currentNeuron;
-        tmpAxion = new Axion(bias, currentNeuron, NULL);
+        tmpAxion = new Axon(bias, currentNeuron, NULL);
       }
                                        
-      tmpAxion = new Axion(neuronArray[inLayer][inPosition],
+      tmpAxion = new Axon(neuronArray[inLayer][inPosition],
                   neuronArray[outLayer][outPosition], conn);
       
       hiddenInfo.push_back(conn);
@@ -333,9 +333,9 @@ namespace NeuralNetwork
     
   }
   
-  vector<double *> *NeuralNetwork::getInputs()
+  vector<int64_t *> *NeuralNetwork::getInputs()
   {
-    vector<double *> *ret = new vector<double *>();
+    vector<int64_t *> *ret = new vector<int64_t *>();
     
     for (uint64_t ix = 0; ix < inputs.size(); ix++)
     {

@@ -35,6 +35,17 @@
 		2CA2151A160C17C100347D58 /* Genetic.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA21507160C17C100347D58 /* Genetic.h */; };
 		2CA2151B160C17C100347D58 /* Stochastic.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA21508160C17C100347D58 /* Stochastic.h */; };
 		2CA2151C160C17C100347D58 /* Optimization.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CA21509160C17C100347D58 /* Optimization.h */; };
+		2CB0E3E818B967A800681972 /* MatrixConvolution.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2CB0E3E718B967A800681972 /* MatrixConvolution.cpp */; };
+		2CD6777F18C3E4900062ED8D /* MatrixConvolution.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2CB0E3E718B967A800681972 /* MatrixConvolution.cpp */; };
+		2CD6778018C3E4BB0062ED8D /* MatrixConvolution.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2CB0E3E718B967A800681972 /* MatrixConvolution.cpp */; };
+		2CD6778218C3E6580062ED8D /* ObjectSegmentation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2CD6778118C3E6580062ED8D /* ObjectSegmentation.cpp */; };
+		2CD6778318C3E6580062ED8D /* ObjectSegmentation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2CD6778118C3E6580062ED8D /* ObjectSegmentation.cpp */; };
+		2CD6778518C4074B0062ED8D /* Genetic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2CD6778418C4074B0062ED8D /* Genetic.cpp */; };
+		2CD6778618C4074B0062ED8D /* Genetic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2CD6778418C4074B0062ED8D /* Genetic.cpp */; };
+		2CD6778818C408510062ED8D /* Stochastic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2CD6778718C408510062ED8D /* Stochastic.cpp */; };
+		2CD6778918C408510062ED8D /* Stochastic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2CD6778718C408510062ED8D /* Stochastic.cpp */; };
+		2CD6778C18C40AA70062ED8D /* Optimization.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2CD6778A18C40AA70062ED8D /* Optimization.cpp */; };
+		2CD6778D18C40AA70062ED8D /* Optimization.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2CD6778A18C40AA70062ED8D /* Optimization.cpp */; };
 		2CD9B8A116317A8A00F54B85 /* SecureHashTable.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CD9B8A016317A8A00F54B85 /* SecureHashTable.h */; };
 		2CDE7A6B1629F95D00805A47 /* LLRB_Tree.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CDE7A6A1629F95D00805A47 /* LLRB_Tree.h */; };
 /* End PBXBuildFile section */
@@ -99,6 +110,12 @@
 		2CA21507160C17C100347D58 /* Genetic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Genetic.h; sourceTree = "<group>"; };
 		2CA21508160C17C100347D58 /* Stochastic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Stochastic.h; sourceTree = "<group>"; };
 		2CA21509160C17C100347D58 /* Optimization.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Optimization.h; path = "Back-2-Basics/Optimization.h"; sourceTree = "<group>"; };
+		2CB0E3E618B9607000681972 /* MatrixConvolution.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MatrixConvolution.h; sourceTree = "<group>"; };
+		2CB0E3E718B967A800681972 /* MatrixConvolution.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MatrixConvolution.cpp; sourceTree = "<group>"; };
+		2CD6778118C3E6580062ED8D /* ObjectSegmentation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ObjectSegmentation.cpp; sourceTree = "<group>"; };
+		2CD6778418C4074B0062ED8D /* Genetic.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Genetic.cpp; sourceTree = "<group>"; };
+		2CD6778718C408510062ED8D /* Stochastic.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Stochastic.cpp; sourceTree = "<group>"; };
+		2CD6778A18C40AA70062ED8D /* Optimization.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Optimization.cpp; sourceTree = "<group>"; };
 		2CD9B8A016317A8A00F54B85 /* SecureHashTable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SecureHashTable.h; sourceTree = "<group>"; };
 		2CDE7A6A1629F95D00805A47 /* LLRB_Tree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LLRB_Tree.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -156,6 +173,7 @@
 			isa = PBXGroup;
 			children = (
 				2C1810CB16DB0E78002EEB66 /* ObjectSegmentation.h */,
+				2CD6778118C3E6580062ED8D /* ObjectSegmentation.cpp */,
 			);
 			name = Vision;
 			path = "Back-2-Basics/Vision";
@@ -194,6 +212,7 @@
 				2CA21503160C17C100347D58 /* Metaheuristic.h */,
 				2CA21504160C17C100347D58 /* Optimization */,
 				2CA21509160C17C100347D58 /* Optimization.h */,
+				2CD6778A18C40AA70062ED8D /* Optimization.cpp */,
 				2C18931E171B648600FCA065 /* Config.h */,
 			);
 			name = "Back-2-Basics";
@@ -220,6 +239,8 @@
 				2CA214F1160C17C100347D58 /* Heap.h */,
 				2CA214F2160C17C100347D58 /* Stack.h */,
 				2CD9B8A016317A8A00F54B85 /* SecureHashTable.h */,
+				2CB0E3E618B9607000681972 /* MatrixConvolution.h */,
+				2CB0E3E718B967A800681972 /* MatrixConvolution.cpp */,
 			);
 			path = Array;
 			sourceTree = "<group>";
@@ -270,6 +291,7 @@
 				2CA21505160C17C100347D58 /* Offline */,
 				2CA21506160C17C100347D58 /* Online */,
 				2CA21508160C17C100347D58 /* Stochastic.h */,
+				2CD6778718C408510062ED8D /* Stochastic.cpp */,
 			);
 			name = Optimization;
 			path = "Back-2-Basics/Optimization";
@@ -286,6 +308,7 @@
 			isa = PBXGroup;
 			children = (
 				2CA21507160C17C100347D58 /* Genetic.h */,
+				2CD6778418C4074B0062ED8D /* Genetic.cpp */,
 			);
 			path = Online;
 			sourceTree = "<group>";
@@ -454,7 +477,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2CD6778D18C40AA70062ED8D /* Optimization.cpp in Sources */,
+				2CD6778018C3E4BB0062ED8D /* MatrixConvolution.cpp in Sources */,
+				2CD6778618C4074B0062ED8D /* Genetic.cpp in Sources */,
+				2CD6778318C3E6580062ED8D /* ObjectSegmentation.cpp in Sources */,
 				2C84AB86162506FB00572AF7 /* NeuralNetwork.cpp in Sources */,
+				2CD6778918C408510062ED8D /* Stochastic.cpp in Sources */,
 				2C84AB85162506EA00572AF7 /* Navigation.cpp in Sources */,
 				2C84AB7916227C5B00572AF7 /* main.cpp in Sources */,
 			);
@@ -471,6 +499,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2CD6777F18C3E4900062ED8D /* MatrixConvolution.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -478,9 +507,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2CD6778C18C40AA70062ED8D /* Optimization.cpp in Sources */,
 				2C898846160C434C0087B09C /* NeuralNetwork.cpp in Sources */,
+				2CD6778518C4074B0062ED8D /* Genetic.cpp in Sources */,
+				2CD6778218C3E6580062ED8D /* ObjectSegmentation.cpp in Sources */,
 				2C00343A1617AC1A00CCC166 /* Navigation.cpp in Sources */,
+				2CD6778818C408510062ED8D /* Stochastic.cpp in Sources */,
 				2C84AB7816227C5B00572AF7 /* main.cpp in Sources */,
+				2CB0E3E818B967A800681972 /* MatrixConvolution.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -649,7 +683,7 @@
 		2CA21464160C0DFD00347D58 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
+				ALWAYS_SEARCH_USER_PATHS = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
@@ -676,7 +710,7 @@
 		2CA21465160C0DFD00347D58 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
+				ALWAYS_SEARCH_USER_PATHS = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;

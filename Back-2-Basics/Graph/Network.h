@@ -41,7 +41,7 @@ namespace Graph {
     
   protected:
     
-    void initialize(HubType *v, HubType *u, double capacity);
+    void initialize(HubType *v, HubType *u, int64_t capacity);
     void deinitialize();
     
   public:
@@ -49,15 +49,15 @@ namespace Graph {
       
     }
     
-    Pipe<HubType,PipeType>(HubType *v, HubType *u, double capacity) {
+    Pipe<HubType,PipeType>(HubType *v, HubType *u, int64_t capacity) {
       initialize(v,u,capacity);
     }
     
-    inline double capacity() {
+    inline int64_t capacity() {
       return this->attrib;
     }
     
-    inline void setCapacity(double capacity) {
+    inline void setCapacity(int64_t capacity) {
       this->attrib = capacity;
     }
   };
@@ -77,7 +77,7 @@ namespace Graph {
 
     
   public:
-    double capacity = 0.0;
+    int64_t capacity = 0.0;
     
   public:
     
@@ -93,7 +93,7 @@ namespace Graph {
   /* Pipe */
   
   template <class HubType, class PipeType>
-  void Pipe<HubType,PipeType>::initialize(HubType *v, HubType *u, double capacity)
+  void Pipe<HubType,PipeType>::initialize(HubType *v, HubType *u, int64_t capacity)
   {
     assert(!initialized);
     initialized = true;
@@ -139,20 +139,20 @@ namespace Graph {
   template <class NodeType, class EdgeType>
   class Network : public Graph<NodeType, EdgeType>
   {
-    std::vector<double> *flow = NULL;
+    std::vector<int64_t> *flow = NULL;
     
   protected:
     vector<Pipe<NodeType,EdgeType> *> *createAuxNetwork(vector<Pipe<NodeType,EdgeType> *> *);
     void deleteAuxNetwork(vector<Pipe<NodeType,EdgeType> *> *auxEdges);
-    double bottleneck(double *, vector<Pipe<NodeType,EdgeType> *> *);
-    double *augment(double *, vector<Pipe<NodeType,EdgeType> *> *,vector<Pipe<NodeType,EdgeType> *> *);
+    int64_t bottleneck(int64_t *, vector<Pipe<NodeType,EdgeType> *> *);
+    int64_t *augment(int64_t *, vector<Pipe<NodeType,EdgeType> *> *,vector<Pipe<NodeType,EdgeType> *> *);
     void maxFlow(NodeType *, NodeType *);
     
   public:
     Network();
     ~Network();
     
-    virtual std::vector<double> *getMaximumFlow();
+    virtual std::vector<int64_t> *getMaximumFlow();
   };
   
   template <class NodeType, class EdgeType>
@@ -201,8 +201,8 @@ namespace Graph {
   }
   
   template <class NodeType, class EdgeType>
-  double Network<NodeType,EdgeType>::bottleneck(double *flow, vector<Pipe<NodeType,EdgeType> *> *path) {
-    double bottleneck = path->at(0)->capacity() - flow[0];
+  int64_t Network<NodeType,EdgeType>::bottleneck(int64_t *flow, vector<Pipe<NodeType,EdgeType> *> *path) {
+    int64_t bottleneck = path->at(0)->capacity() - flow[0];
     
     for (int ix = 1; ix < path->size(); ix++) {
       if (bottleneck > (path->at(ix)->capacity() - flow[ix])) {
@@ -214,12 +214,12 @@ namespace Graph {
   }
   
   template <class NodeType, class EdgeType>
-  double *Network<NodeType,EdgeType>::augment(double *flow,
+  int64_t *Network<NodeType,EdgeType>::augment(int64_t *flow,
                                               vector<Pipe<NodeType,EdgeType> *> *path,
                                               vector<Pipe<NodeType,EdgeType> *> *edges) {
     
-    double *fPrime = new double[path->size()];
-    double b = bottleneck(flow, path);
+    int64_t *fPrime = new int64_t[path->size()];
+    int64_t b = bottleneck(flow, path);
     
     for (int ix = 0; ix < path->size(); ix++) {
       bool isAug = (((path->at(ix)) >= edges->at(0)) && ((path->at(ix)) < edges->at(edges->size()))) ? false : true;
@@ -237,20 +237,20 @@ namespace Graph {
   void Network<NodeType,EdgeType>::maxFlow(NodeType *s, NodeType *t) {
     
     vector<Pipe<NodeType,EdgeType> *> *path;
-    std::vector<double> *flow;
-    double *subFlow, *subFlowPrime;
+    std::vector<int64_t> *flow;
+    int64_t *subFlow, *subFlowPrime;
     std::vector<NodeType *> *nodes = this->getReachableNodes(s,t);
     
     std::vector<Pipe<NodeType,EdgeType> *> *edges = (vector<Pipe<NodeType,EdgeType> *> *)this->getEdges(nodes);
     
     std::vector<Pipe<NodeType,EdgeType> *> *auxEdges = createAuxNetwork(edges);
     
-    flow = new std::vector<double>();
+    flow = new std::vector<int64_t>();
     
     flow->resize(nodes->size(),0.0);
     
     while ((path = (vector<Pipe<NodeType,EdgeType> *> *)this->findAPath(s, t)) != NULL) {
-      subFlow = new double[path->size()];
+      subFlow = new int64_t[path->size()];
       
       for (int ix = 0; ix < path->size(); ix++) {
         uint64_t index = ((((path->at(ix)) >= edges->at(0)) && ((path->at(ix)) < edges->at(edges->size()))) ?
@@ -292,7 +292,7 @@ namespace Graph {
   }
   
   template<class NodeType, class EdgeType>
-  std::vector<double> *Network<NodeType,EdgeType>::getMaximumFlow() {
+  std::vector<int64_t> *Network<NodeType,EdgeType>::getMaximumFlow() {
     
     if (this->flow == NULL) {
       maxFlow(this->getStart(), this->getTerminal());

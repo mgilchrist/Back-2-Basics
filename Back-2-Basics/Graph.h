@@ -60,7 +60,7 @@ namespace Graph {
     NodeType    *u;
     NodeType    *v;
     
-    double      attrib = 0.0;
+    int64_t      attrib = 0.0;
     
     void initialize(NodeType *v, NodeType *u);
     void deinitialize();
@@ -80,7 +80,7 @@ namespace Graph {
     NodeType *getForward();
     NodeType *getBackward();
     
-    double getAttribute() {
+    int64_t getAttribute() {
       return attrib;
     }
     
@@ -592,7 +592,7 @@ namespace Graph {
   {
     vector<NodeType *> *nodes = this->getReachableNodes(this->start,this->terminal);
     vector<EdgeType *> *ret = this->getEdges(nodes);
-    LLRB_Tree<EdgeType *, double> *edges = new LLRB_Tree<EdgeType *, double>(false);
+    LLRB_Tree<EdgeType *, int64_t> *edges = new LLRB_Tree<EdgeType *, int64_t>(false);
     
     for (uint64_t ix = 0; ix < ret->size(); ix++)
     {
@@ -642,7 +642,7 @@ namespace Graph {
   {
     vector<NodeType *> *nodes = this->getReachableNodes(this->start,this->terminal);
     vector<EdgeType *> *ret = this->getEdges(nodes);
-    LLRB_Tree<EdgeType *, double> edges = new LLRB_Tree<EdgeType *, double>(false);
+    LLRB_Tree<EdgeType *, int64_t> edges = new LLRB_Tree<EdgeType *, int64_t>(false);
     
     for (uint64_t ix = 0; ix < ret->size(); ix++)
     {

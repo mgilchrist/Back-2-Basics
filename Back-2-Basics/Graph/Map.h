@@ -38,7 +38,7 @@ namespace Graph {
   {
     
   protected:
-    void initialize(Location<LocationType,Via> *v, Location<LocationType,Via> *u, double length) {
+    void initialize(Location<LocationType,Via> *v, Location<LocationType,Via> *u, int64_t length) {
       this->u = u;
       this->v = v;
       
@@ -53,15 +53,15 @@ namespace Graph {
       
     }
     
-    Via<LocationType>(Location<LocationType,Via> *v, Location<LocationType,Via> *u, double length) {
+    Via<LocationType>(Location<LocationType,Via> *v, Location<LocationType,Via> *u, int64_t length) {
       initialize(v,u,length);
     }
     
-    inline double length() {
+    inline int64_t length() {
       return this->attrib;
     }
     
-    inline void setLength(double length) {
+    inline void setLength(int64_t length) {
       this->attrib = length;
     }
   };
@@ -74,7 +74,7 @@ namespace Graph {
   public:
     
     bool        explored = false;
-    double      distanceFromStart = 1.0/0.0;
+    uint64_t    distanceFromStart = UINT64_MAX;
     uint64_t    *auxIndex = NULL;
     
   public:
@@ -128,16 +128,16 @@ namespace Graph {
         
         NodeType *u = current->data->getBackward();
         NodeType *v = current->data->getForward();
-        double tmp = u->distanceFromStart + current->data->length();
+        int64_t tmp = u->distanceFromStart + current->data->length();
         
         if (tmp < v->distanceFromStart) {
           v->distanceFromStart = tmp;
           v->previousEdge = current->data;
           
           if (v->auxIndex == NULL) {
-            v->auxIndex = ((Heap<NodeType *,double> *)queue)->push(v, tmp);
+            v->auxIndex = ((Heap<NodeType *,int64_t> *)queue)->push(v, tmp);
           } else {
-            v->auxIndex = ((Heap<NodeType *,double> *)queue)->update(*(v->auxIndex), tmp);
+            v->auxIndex = ((Heap<NodeType *,int64_t> *)queue)->update(*(v->auxIndex), tmp);
           }
         }
       }
@@ -152,7 +152,7 @@ namespace Graph {
     Map();
     ~Map();
     
-    EdgeType *addEdge(NodeType *a, NodeType *b, double location);
+    EdgeType *addEdge(NodeType *a, NodeType *b, int64_t location);
     void setStart(NodeType *start);
     void setTerminal(NodeType *terminal);
     virtual vector<EdgeType *> *getShortestPath();
@@ -260,7 +260,7 @@ namespace Graph {
   /* Dijkstra's (For non-negative graphs) */
   template <class NodeType, class EdgeType>
   void Map<NodeType,EdgeType>::dijkstras() {
-    Heap<NodeType *,double> *queue = new Heap<NodeType *,double>();
+    Heap<NodeType *,int64_t> *queue = new Heap<NodeType *,int64_t>();
     NodeType *u;
     vector<EdgeType *> *ret;
     vector<NodeType *> *dirtyNodes = new vector<NodeType *>();
@@ -336,7 +336,7 @@ namespace Graph {
   
   template <class NodeType, class EdgeType>
   EdgeType *Map<NodeType,EdgeType>::addEdge(NodeType *v, NodeType *u,
-                                            double location) {
+                                            int64_t location) {
     EdgeType *tmpEdge = new EdgeType(v,u,location);
     
     if (location < 0.0) {

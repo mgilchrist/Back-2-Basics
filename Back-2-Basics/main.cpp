@@ -37,6 +37,7 @@ using namespace Graph;
 #include "Genetic.h"
 #include "Metaheuristic.h"
 #include "ObjectSegmentation.h"
+#include "MatrixConvolution.h"
 
 
 #define SUITE_NAME  "test"
@@ -71,14 +72,7 @@ typedef struct maxtrixConvInfo
 
 
 int testGenetic(char **args, int nArgs, ifstream *inputStream, ofstream *outputData, ofstream *log);
-void rKernelWork(vector<double> *matrix, uint64_t matrixOffset, std::vector<uint64_t> *mDimensions,
-                               vector<pair<double, double>> *kernel, int64_t kernelStartOffset, uint64_t kernelOffset, std::vector<uint64_t> *kDimensions,
-                               std::vector<uint64_t> *kCenter,
-                               uint8_t dimension, vector<double> *ret);
-void rArrayedMatrixTraverse(vector<double> *matrix, uint64_t matrixOffset, std::vector<uint64_t> *mDimensions,
-                            vector<pair<double, double>> *kernel, std::vector<uint64_t> *kDimensions,
-                            std::vector<uint64_t> *kCenter,
-                            uint8_t dimension, vector<double> *ret);
+
 
 
 
@@ -131,212 +125,14 @@ TEST_ENTRY tests[256] =
   } while ((0))
 
 
-MAXTRIX_CONV_INFO *rMatrixConvolution(vector<double> *matrix, uint64_t matrixOffset, std::vector<uint64_t> *mDimensions,
-                                             vector<pair<double, double>> *kernel, std::vector<uint64_t> *kDimensions,
-                                             uint8_t dimension, vector<double> *ret);
+MAXTRIX_CONV_INFO *rMatrixConvolution(vector<int64_t> *matrix, uint64_t matrixOffset, std::vector<uint64_t> *mDimensions,
+                                             vector<pair<int64_t, int64_t>> *kernel, std::vector<uint64_t> *kDimensions,
+                                             uint8_t dimension, vector<int64_t> *ret);
 
 
 TEST_ENTRY *lookupTest(const char *testName)
 {
   return NULL;
-}
-
-
-int64_t addPattern(int64_t seed, uint64_t iterations)
-{
-  return seed + iterations;
-}
-
-int64_t idxPattern(int64_t seed, uint64_t iterations)
-{
-  return seed + iterations;
-}
-
-int64_t randomPattern(int64_t seed, uint64_t iterations)
-{
-  return seed + (random() & 0x00FF);
-}
-
-int rModifyAndPrintMatrix(vector<int64_t> *array, vector<uint64_t> *dim, uint64_t offset,
-                    uint8_t dimensions, int64_t (*pattern)(int64_t seed, uint64_t iter), uint64_t iter)
-{
-  
-  if (dimensions > 1)
-  {
-    for (uint8_t ix = dimensions; ix < dim->size(); ix++)
-    {
-      cout << " ";
-    }
-    cout << "{\n";
-    
-    for (uint64_t ix = 0; ix < dim->at(dimensions - 1); ix++)
-    {
-      rModifyAndPrintMatrix(array, dim, (offset + ix) * dim->at(dimensions - 2), dimensions-1, pattern, iter);
-      cout << "\n";
-    }
-    
-    for (uint8_t ix = dimensions; ix < dim->size(); ix++)
-    {
-      cout << " ";
-    }
-    
-    if (dimensions == dim->size()) {
-      cout << "}";
-    }
-    else
-    {
-      cout << "},";
-    }
-  }
-  else
-  {
-    for (uint8_t ix = dimensions; ix < dim->size(); ix++)
-    {
-      cout << " ";
-    }
-    cout << "{";
-    
-    cout << " ";
-    
-    for (uint64_t ix = 0; ; ix++)
-    {
-      uint64_t entry = pattern(array->at(ix + offset), iter);
-      array->at(ix + offset) = entry;
-      
-      cout << ix + offset;
-      cout << ":";
-      cout << entry;
-      
-      if (ix >= (dim->at(0) - 1))
-      {
-        break;
-      }
-      
-      cout << ", ";
-    }
-    
-    cout << " },";
-  }
-  
-  
-  
-  return 0;
-}
-
-int64_t getRandomInBetween(int64_t first, int64_t second)
-{
-  uint64_t diff;
-  int64_t ret;
-  
-  if (first == second)
-  {
-    return first;
-  }
-  
-  if (first > second)
-  {
-    diff = first - second;
-    ret = second + (random() % diff);
-  }
-  else
-  {
-    diff = second - first;
-    ret = first + (random() % diff);
-  }
-  
-  return ret;
-}
-
-void rKernelWork(vector<int64_t> *matrix, uint64_t matrixOffset, vector<uint64_t> *mDimensions,
-                               uint64_t retOffset,
-                               vector<pair<int64_t, int64_t>> *kernel, uint64_t kernelOffset, vector<uint64_t> *kDimensions, vector<uint64_t> *kCenter,
-                               uint8_t dimension, vector<int64_t> *ret)
-{
-  kernelOffset *= kDimensions->at(dimension-1);
-  
-  if (dimension > 1)
-  {
-    for (uint64_t kLoc = 0; kLoc < kDimensions->at(dimension-1); kLoc++)
-    {
-      int64_t modifier = ((kLoc - kCenter->at(dimension-1)) * mDimensions->at(dimension-2));
-      int64_t compareOffset = matrixOffset + modifier;
-      
-      if ((compareOffset < 0) ||
-          (compareOffset >= matrix->size()))
-      {
-        continue;
-      }
-      
-      rKernelWork(matrix, compareOffset, mDimensions,
-                  retOffset,
-                  kernel, kernelOffset + kLoc, kDimensions, kCenter,
-                  dimension-1, ret);
-    }
-  }
-  else
-  {
-    for (uint64_t kLoc = 0; kLoc < kDimensions->at(0); kLoc++)
-    {
-      int64_t thisDimOffset = (matrixOffset % mDimensions->at(0)) + (kLoc - kCenter->at(0));
-      
-      if (( thisDimOffset >= mDimensions->at(0) ) ||
-          ( thisDimOffset < 0 ))
-      {
-        continue;
-      }
-      
-      uint64_t currentOffset = matrixOffset + (kLoc - kCenter->at(0));
-      
-      pair<double, double> currentKernelPair = kernel->at(kernelOffset+kLoc);
-      double k = getRandomInBetween(currentKernelPair.first, currentKernelPair.second);
-      
-      ret->at(retOffset) += matrix->at(currentOffset) * k;
-    }
-  }
-}
-
-void rArrayedMatrixTraverse(vector<int64_t> *matrix, uint64_t matrixOffset, vector<uint64_t> *mDimensions,
-                                             vector<pair<int64_t, int64_t>> *kernel, vector<uint64_t> *kDimensions, vector<uint64_t> *kCenter,
-                                             uint8_t dimension, vector<int64_t> *ret)
-{
-  matrixOffset *= mDimensions->at(dimension-1);
-  
-  if (dimension > 1)
-  {
-    for (uint64_t mLoc = 0; mLoc < mDimensions->at(dimension-1); mLoc++)
-    {
-      rArrayedMatrixTraverse(matrix, matrixOffset + mLoc, mDimensions,
-                             kernel, kDimensions, kCenter,
-                             dimension-1, ret);
-    }
-  }
-  else
-  {
-    for (uint64_t mLoc = 0; mLoc < mDimensions->at(dimension-1); mLoc++)
-    {
-      uint64_t arrayOffset = matrixOffset + mLoc;
-      
-      rKernelWork(matrix, arrayOffset, mDimensions,
-                  arrayOffset,
-                  kernel, 0, kDimensions, kCenter,
-                  (uint8_t)(mDimensions->size()), ret);
-    }
-  }
-}
-
-vector<int64_t> *matrixConvolution(vector<int64_t> *matrix, vector<uint64_t> *mDimensions,
-                                  vector<pair<int64_t, int64_t>> *kernel, vector<uint64_t> *kDimensions,
-                                  vector<uint64_t> *kCenter)
-{
-  vector<int64_t> *ret = new vector<int64_t>();
-  ret->resize(matrix->size());
-  
-  rArrayedMatrixTraverse(matrix, 0, mDimensions,
-                         kernel, kDimensions, kCenter,
-                         (uint8_t)(mDimensions->size()), ret);
-  
-  return ret;
-  
 }
 
 
@@ -362,12 +158,12 @@ int matrixConvolutionTest()
   kernel.resize(kSize);
   
   cout << "\nCreating matrix\n";
-  rModifyAndPrintMatrix(&matrix, &mDim, 0, dimension, randomPattern, 1);
+  modifyAndPrintMatrix(&matrix, &mDim, 0, dimension, randomPattern, 1);
   cout << "\n";
   
   cout << "\nCreating kernel\n";
   kernel[kernel.size()/2 + 1] = 1;
-  rModifyAndPrintMatrix(&kernel, &kDim, 0, dimension, addPattern, 0);
+  modifyAndPrintMatrix(&kernel, &kDim, 0, dimension, addPattern, 0);
   cout << "\n";
   
   for (uint64_t ix = 0; ix < kernel.size(); ix++)
@@ -383,7 +179,7 @@ int matrixConvolutionTest()
   convMatrix = matrixConvolution(&matrix, &mDim, &kDimRange, &kDim, &kCenter);
   
   cout << "\nConvoluted matrix\n";
-  rModifyAndPrintMatrix(convMatrix, &mDim, 0, dimension, addPattern, 0);
+  modifyAndPrintMatrix(convMatrix, &mDim, 0, dimension, addPattern, 0);
   cout << "\n";
   
   return 0;
@@ -411,7 +207,7 @@ int createDataFor(const char *testName, std::vector<uint64_t> *dimensions,
                   std::vector<uint64_t> *seed, std::vector<uint64_t> *pattern)
 {
   uint64_t filePosition = 0;
-  uint64_t sampleSize = sizeof(double);
+  uint64_t sampleSize = sizeof(int64_t);
   uint64_t duration = dimensions->at(dimensions->size()-1);
   
   char oFile[strlen( testName )+2 + 2 + strlen ( BINARY_FILE )+1];
@@ -452,7 +248,7 @@ int setupNeuralNetworkData(const char *suiteName, std::vector<uint64_t> *dimensi
 {
   const char *testName = "Neural_Network";
   uint64_t filePosition = 0;
-  uint64_t sampleSize = sizeof(double);
+  uint64_t sampleSize = sizeof(int64_t);
   uint64_t duration = dimensions->at(dimensions->size()-1);
   
   char oFile[strlen( suiteName )+2 + strlen( testName )+2 + 2 + strlen ( BINARY_FILE )+1];
@@ -495,7 +291,7 @@ int testSegmentation(const char *suiteName)
   ofstream log;
   
   uint64_t inputFileSize;
-  uint64_t sampleSize = 960 * 600 *sizeof(double);
+  uint64_t sampleSize = 960 * 600 *sizeof(int64_t);
   
   char *buffer0 = new char[sampleSize];
   char *buffer1 = new char[sampleSize];
@@ -505,16 +301,16 @@ int testSegmentation(const char *suiteName)
   
   bool pingPong = false;
   
-  NeuralNetwork::NeuralNetwork *graphToSegment;
+  Graph<Segmentation::Pixel, Segmentation::Link> *graphToSegment;
   
   openFileStreams(suiteName, "_segmentation");
   
-  Segmentation::ObjectSegmentation<NeuralNetwork::Neuron,NeuralNetwork::Axion> segmentor;
-  Optimization::Genetic<NeuralNetwork::NeuralNetwork,NeuralNetwork::Neuron,double> geneticExp;
-  vector<vector<NeuralNetwork::Neuron *> *> *objects;
+  Segmentation::ObjectSegmentation segmentor;
+  Optimization::Genetic_NN geneticExp;
+  vector<vector<Segmentation::Pixel *> *> *objects;
   
-  geneticExp.addInput((double *)inputData);
-  geneticExp.addOutput((double *)nextData);
+  geneticExp.addInput((int64_t *)inputData);
+  geneticExp.addOutput((int64_t *)nextData);
   
   geneticExp.initInternals();
   
@@ -551,7 +347,7 @@ int testSegmentation(const char *suiteName)
     geneticExp.optimizeAnwser();
   }
   
-  graphToSegment = geneticExp.candidates.min(geneticExp.candidates.treeRoot)->data;
+  graphToSegment = (Graph<Segmentation::Pixel, Segmentation::Link> *)geneticExp.candidates.min(geneticExp.candidates.treeRoot)->data;
   
   objects = segmentor.getNodeSegments(graphToSegment);
   
@@ -979,11 +775,11 @@ int testArrayList()
 int testNeuralNetwork(const char *suiteName) {
   NeuralNetwork::NeuralNetwork *NNetwork;
   uint64_t iterations = 0;
-  std::vector<double *> *thisInput;
-  LLRB_Tree<double *, uint64_t> *thisExpect;
-  std::vector<Trust<double> *> *thisOutput;
-  double errorRate = 0.0;
-  double thisError;
+  std::vector<int64_t *> *thisInput;
+  LLRB_Tree<int64_t *, uint64_t> *thisExpect;
+  std::vector<Trust<int64_t> *> *thisOutput;
+  int64_t errorRate = 0.0;
+  int64_t thisError;
   std::vector<Info *> *hiddenInfo = new std::vector<Info *>();
   
   ifstream inputStream;
@@ -992,8 +788,8 @@ int testNeuralNetwork(const char *suiteName) {
   ofstream log;
   
   uint64_t inputFileSize, verifyFileSize;
-  uint64_t inSampleSize = 960 * 600 * sizeof(double);
-  uint64_t outSampleSize = 960 * 600 * sizeof(double);
+  uint64_t inSampleSize = 960 * 600 * sizeof(int64_t);
+  uint64_t outSampleSize = 960 * 600 * sizeof(int64_t);
   
   char *verifyData = new char[inSampleSize];
   char *inputData = new char[outSampleSize];
@@ -1041,23 +837,23 @@ int testNeuralNetwork(const char *suiteName) {
   
   cout << "\nTesting NeuralNetwork\n";
   
-  thisInput = new std::vector<double *>();
-  thisOutput = new std::vector<Trust<double> *>();
-  thisExpect = new LLRB_Tree<double *, uint64_t>();
+  thisInput = new std::vector<int64_t *>();
+  thisOutput = new std::vector<Trust<int64_t> *>();
+  thisExpect = new LLRB_Tree<int64_t *, uint64_t>();
   
   thisInput->resize(glbInputSize);
   thisOutput->resize(glbOutputSize);  
   
   for (int jx = 0; jx < inSampleSize; jx++)
   {
-    thisInput->at(jx) = &(((double *)inputData)[jx]);
+    thisInput->at(jx) = &(((int64_t *)inputData)[jx]);
   }
   
   for (uint64_t jx = 0; jx < outSampleSize; jx++)
   {
-    thisOutput->at(jx) = new Trust<double>();
-    thisOutput->at(jx)->actual = &(((double *)verifyData)[jx]);
-    thisExpect->insert(new double(), jx);
+    thisOutput->at(jx) = new Trust<int64_t>();
+    thisOutput->at(jx)->actual = &(((int64_t *)verifyData)[jx]);
+    thisExpect->insert(new int64_t(), jx);
   }
   
   NNetwork = new NeuralNetwork::NeuralNetwork
@@ -1111,13 +907,13 @@ int testNeuralNetwork(const char *suiteName) {
       
       for (int ix = 0; ix < glbOutputSize; ix++)
       {
-        double thisActual = *thisOutput->at(ix)->actual;
+        int64_t thisActual = *thisOutput->at(ix)->actual;
         thisError = (*(thisExpect->search(ix)) - thisActual) / thisActual;
         errorRate += thisError * thisError;
       }
       
       cout << "Error Rate is ";
-      cout << sqrt(errorRate/((double)(glbOutputSize)));
+      cout << sqrt(errorRate/((int64_t)(glbOutputSize)));
       cout << "\n";
     }
     
@@ -1147,7 +943,7 @@ int testNavigation()
   vector<Path *> *shortPath;
   uint64_t width = 100;
   uint64_t length = 100;
-  double distance;
+  int64_t distance;
   int neighborHops = 1;
   
   cout << "\nTesting Navigation\n";
@@ -1323,7 +1119,7 @@ int testGeneticFile(const char *suiteName)
   ofstream log;
   
   uint64_t inputFileSize;
-  uint64_t sampleSize = 960 * 600 * sizeof(double);
+  uint64_t sampleSize = 960 * 600 * sizeof(int64_t);
 
   char *buffer0 = new char[sampleSize];
   char *buffer1 = new char[sampleSize];
@@ -1335,10 +1131,10 @@ int testGeneticFile(const char *suiteName)
   
   openFileStreams(suiteName, "_genetic");
   
-  Optimization::Genetic<NeuralNetwork::NeuralNetwork,NeuralNetwork::Neuron,double> geneticExp;
+  Optimization::Genetic_NN geneticExp;
   
-  geneticExp.addInput((double *)inputData);
-  geneticExp.addOutput((double *)nextData);
+  geneticExp.addInput((int64_t *)inputData);
+  geneticExp.addOutput((int64_t *)nextData);
   
   geneticExp.initInternals();
   
@@ -1375,12 +1171,12 @@ int testGeneticFile(const char *suiteName)
 
 int testGenetic(char **args, int nArgs)
 {
-  Optimization::Genetic<NeuralNetwork::NeuralNetwork,NeuralNetwork::Neuron,double> *geneticExp;
+  Optimization::Genetic *geneticExp;
   uint64_t iterations = 0;
-  std::vector<double *> *thisInput, *thisOutput, *thisObjective;
-  std::vector<Trust<double> *> *thisTrust;
-  double errorRate = 0.0;
-  double thisError;
+  std::vector<int64_t *> *thisInput, *thisOutput, *thisObjective;
+  std::vector<Trust<int64_t> *> *thisTrust;
+  int64_t errorRate = 0.0;
+  int64_t thisError;
   std::vector<uint64_t> *layers = new std::vector<uint64_t>();
   uint64_t precision = (1 << 16);
   uint64_t hShift = 0, wShift = 0;
@@ -1396,9 +1192,9 @@ int testGenetic(char **args, int nArgs)
   
   cout << "\nTesting Genetic\n";
   
-  thisInput = new std::vector<double *>();
-  thisOutput = new std::vector<double *>();
-  thisObjective = new std::vector<double *>();
+  thisInput = new std::vector<int64_t *>();
+  thisOutput = new std::vector<int64_t *>();
+  thisObjective = new std::vector<int64_t *>();
   
   thisInput->resize(glbInputSize);
   thisOutput->resize(glbOutputSize);
@@ -1407,12 +1203,12 @@ int testGenetic(char **args, int nArgs)
   
   for (int jx = 0; jx < glbInputSize; jx++)
   {
-    thisInput->at(jx) = new double();
-    thisOutput->at(jx) = new double();
-    thisObjective->at(jx) = new double();
+    thisInput->at(jx) = new int64_t();
+    thisOutput->at(jx) = new int64_t();
+    thisObjective->at(jx) = new int64_t();
   }
   
-  geneticExp = new Optimization::Genetic<NeuralNetwork::NeuralNetwork,NeuralNetwork::Neuron,double>();
+  geneticExp = new Optimization::Genetic_NN();
   
   geneticExp->addInput(thisInput);
   geneticExp->addOutput(thisOutput);
@@ -1423,7 +1219,7 @@ int testGenetic(char **args, int nArgs)
   for (int ix = 0; ix < glbOutputSize; ix++)
   {
     *(thisObjective->at(ix)) = max(((random() % precision) / (precision * 1.0)), 0.05);
-    *(thisOutput->at(ix)) = *(thisObjective->at(ix)) + (((rand()/(double)RAND_MAX)*0.1) - 0.05);
+    *(thisOutput->at(ix)) = *(thisObjective->at(ix)) + (((rand()/(int64_t)RAND_MAX)*0.1) - 0.05);
   }
   
   do
@@ -1436,9 +1232,12 @@ int testGenetic(char **args, int nArgs)
 #endif
     
 #if 1
-    for (int ix = 0; ix < glbOutputSize; ix++)
+    // Shifting and adding noise
+    
+    
+    for (uint64_t ix = 0; ix < glbOutputSize; ix++)
     {
-      *(thisOutput->at(ix)) = *(thisObjective->at(((ix+(wShift%width)+(width*(hShift%height))))%glbOutputSize)) + (((rand()/(double)RAND_MAX)*0.1) - 0.05);
+      *(thisOutput->at(ix)) = *(thisObjective->at(((ix+(wShift%width)+(width*(hShift%height))))%glbOutputSize)) + (((rand()/(int64_t)RAND_MAX)*0.1) - 0.05);
     }
 #endif
     
@@ -1490,7 +1289,7 @@ int testGenetic(char **args, int nArgs)
         errorRate += thisError * thisError;
       }
       
-      errorRate = sqrt(errorRate/((double)(glbOutputSize)));
+      errorRate = sqrt(errorRate/((int64_t)(glbOutputSize)));
       
       cout << "Error Rate: ";
       cout << errorRate;
@@ -1530,8 +1329,8 @@ int testNetworkFlow()
 //  const uint64_t tSize = 60;
   const int xDist = log2(xSize);
   const int yDist = log2(ySize);
-  const double a = 1, xO = 1.0, yO = 1.0;
-  double capacity[(2*xDist)+1][(2*yDist)+1];
+  const int64_t a = 1, xO = 1.0, yO = 1.0;
+  int64_t capacity[(2*xDist)+1][(2*yDist)+1];
   SimpleHub *hubs[glbSlowTestSize][glbSlowTestSize];
   
   network = new Network<SimpleHub, SimplePipe>();

@@ -25,17 +25,18 @@
 #include "LLRB_Tree.h"
 #include "Heuristic.h"
 
+#define LOGIC_TYPE NeuralNetwork::Neuron
+
 
 namespace Optimization {
   
-  template <class HeuristicType, class DataType>
   class Optimization {
     
   private:
     typedef struct RandSection {
       uint64_t begin;
       uint64_t requests;
-      double probability;
+      int64_t probability;
     } URandom;
     
   protected:
@@ -43,20 +44,20 @@ namespace Optimization {
     virtual void doEpoch() =0;
     uint32_t spawnHiddenWidth;
     
-    vector<DataType *> *questionCache = NULL;
-    vector<Trust<DataType> *> *answerCache = NULL;
+    vector<int64_t *> *questionCache = NULL;
+    vector<Trust<int64_t> *> *answerCache = NULL;
     
   public:
     
-    double error_rate = 0.0;
+    int64_t error_rate = 0;
     
-    LLRB_Tree<DataType *, uint64_t> question;
-    LLRB_Tree<Trust<DataType> *, uint64_t> answer;
+    LLRB_Tree<int64_t *, uint64_t> question;
+    LLRB_Tree<Trust<int64_t> *, uint64_t> answer;
     
     
   public:
     
-    LLRB_Tree<HeuristicType *, uint64_t> candidates;
+    LLRB_Tree<Heuristic<> *, uint64_t> candidates;
     
     Optimization();
     
@@ -64,94 +65,23 @@ namespace Optimization {
       
     }
     
-    void addInput(DataType *);
-    void addOutput(DataType *);
+    void addInput(int64_t *);
+    void addOutput(int64_t *);
     
-    void addInput(vector<DataType *> *);
-    void addOutput(vector<DataType *> *);
+    void addInput(vector<int64_t *> *);
+    void addOutput(vector<int64_t *> *);
     
     virtual void initInternals() =0;
+    virtual Heuristic<> *createNewHeuristic(vector<int64_t *> *input,
+                                          vector<Trust<int64_t> *> *output,
+                                          LLRB_Tree<int64_t *, uint64_t> *expectation,
+                                          vector<Info *> *layers,
+                                          uint32_t maxHiddenWidth) =0;
     void optimizeAnwser();
     
   };
   
-  template <class HeuristicType, class DataType>
-  Optimization<HeuristicType,DataType>::Optimization() {
-    
-  }
   
-  template <class HeuristicType, class DataType>
-  void Optimization<HeuristicType,DataType>::addInput(DataType *input) {
-    question.insert(input, (uint64_t)input);
-    
-    spawnHiddenWidth = log2(max(question.size(),answer.size()));
-    
-    if (questionCache != NULL) {
-      questionCache->resize(0);
-      delete questionCache;
-      questionCache = NULL;
-    }
-  }
-  
-  template <class HeuristicType, class DataType>
-  void Optimization<HeuristicType,DataType>::addOutput(DataType *output) {
-    Trust<DataType> *trust = new Trust<DataType>;
-    
-    trust->actual = output;
-    
-    answer.insert(trust, (uint64_t)output);
-    
-    spawnHiddenWidth = log2(max(question.size(),answer.size()));
-    
-    if (answerCache != NULL) {
-      answerCache->resize(0);
-      delete answerCache;
-      answerCache = NULL;
-    }
-
-  }
-  
-  template <class HeuristicType, class DataType>
-  void Optimization<HeuristicType,DataType>::addInput(vector<DataType *> *input) {
-    for (uint64_t ix = 0; ix < input->size(); ix++) {
-      question.insert(input->at(ix), (uint64_t)(input->at(ix)));
-    }
-    
-    spawnHiddenWidth = log2(max(question.size(),answer.size()));
-    
-    if (questionCache != NULL) {
-      questionCache->resize(0);
-      delete questionCache;
-      questionCache = NULL;
-    }
-
-  }
-  
-  template <class HeuristicType, class DataType>
-  void Optimization<HeuristicType,DataType>::addOutput(vector<DataType *> *output) {
-    Trust<DataType> *trust;
-    
-    for (uint64_t ix = 0; ix < output->size(); ix++) {
-      trust = new Trust<DataType>;
-      
-      trust->actual = output->at(ix);
-      
-      answer.insert(trust, (uint64_t)output->at(ix));
-    }
-    
-    spawnHiddenWidth = log2(max(question.size(), answer.size()));
-    
-    if (answerCache != NULL) {
-      answerCache->resize(0);
-      delete answerCache;
-      answerCache = NULL;
-    }
-  }
-  
-  template <class HeuristicType, class DataType>
-  void Optimization<HeuristicType,DataType>::optimizeAnwser() {
-    doEpoch();
-  }
   
   
 }

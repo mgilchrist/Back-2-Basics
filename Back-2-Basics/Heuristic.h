@@ -29,11 +29,13 @@ using namespace Tree;
 #include "Stack.h"
 #include <vector>
 
-template <class LogicType>
+class LogicOperator;
+
+template <class LogicType=LogicOperator>
 struct Harmony {
   LogicType *logicElement = NULL;
-  double *reality = NULL;
-  double *expectation = NULL;
+  int64_t *reality = NULL;
+  int64_t *expectation = NULL;
 };
 
 //#define LAYER_SHIFT 28
@@ -60,6 +62,11 @@ union Info_union {
     uint32_t layer;
   };
   uint32_t ca[4];
+};
+
+class LogicOperator
+{
+  
 };
 
 class Info { /* NOT RIGHT!! TODO */
@@ -130,7 +137,7 @@ template <class DataType>
 struct Prediction {
   LLRB_Tree<DataType *, uint64_t> predictions;
   DataType expectation = 0;
-  double confidence = 0.0;
+  int64_t confidence = 0.0;
 };
 
 template <class DataType>
@@ -139,13 +146,13 @@ struct Trust {
   Prediction<DataType> *prediction = NULL;
 };
 
-template <class HeuristicType, class LogicType, class DataType>
+template <class LogicType=LogicOperator>
 class Heuristic {
   
 public:
   
-  double persistance = 0.0;
-  double energy = 0.0;
+  int64_t persistance = 0;
+  int64_t energy = 0;
   uint64_t experiencedEpochs = 0;
   bool registered = false;
   uint32_t hiddenWidth = 0;
@@ -166,7 +173,7 @@ public:
   virtual void calcExpectation(uint64_t) =0;
   virtual void doCorrection() =0;
   
-  virtual vector<DataType *> *getInputs() =0;
+  virtual vector<int64_t *> *getInputs() =0;
   virtual vector<Info *> *getHiddenInfo() =0;
   virtual vector<Harmony<LogicType> *> *getHarmony() =0;
   

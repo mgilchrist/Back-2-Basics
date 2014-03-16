@@ -28,30 +28,30 @@ namespace Graph {
   class Vector;
   
   typedef struct AStarStorage {
-    Heap<Coordinate *,double> *open;
+    Heap<Coordinate *,int64_t> *open;
     HashTable<bool *,Coordinate *> *openTable;
-    HashTable<double *,Coordinate *> *closed;
+    HashTable<uint64_t *,Coordinate *> *closed;
   } AStarStorage;
   
   class Path : public Via<Coordinate,Path>
   {
   public:
     Path();
-    Path(Coordinate *v, Coordinate *u, double length);
+    Path(Coordinate *v, Coordinate *u, int64_t length);
   };
   
   
   class Coordinate : public Location<Coordinate,Path>
   {
   public:
-    double X;
-    double Y;
-    double Z;
+    int64_t X;
+    int64_t Y;
+    int64_t Z;
     
-    double *heuritic;
+    int64_t *heuritic;
     
     Coordinate();
-    Coordinate(double X, double Y, double Z);
+    Coordinate(int64_t X, int64_t Y, int64_t Z);
   };
   
   class Vector : public Location<Coordinate,Path>
@@ -63,12 +63,12 @@ namespace Graph {
     
   public:
     
-    double X;
-    double Y;
-    double Z;
-    double deltaX;
-    double deltaY;
-    double deltaZ;
+    int64_t X;
+    int64_t Y;
+    int64_t Z;
+    int64_t deltaX;
+    int64_t deltaY;
+    int64_t deltaZ;
     
     Vector() {
       origin = NULL;
@@ -85,9 +85,9 @@ namespace Graph {
         return;
       }
       
-      double deltaAlpha;
-      double deltaBeta;
-      double deltaGamma;
+      int64_t deltaAlpha;
+      int64_t deltaBeta;
+      int64_t deltaGamma;
       
       deltaAlpha = tanh(((origin->deltaX)-(deltaX)) / deltaX);
       deltaBeta = tanh(((origin->deltaY)-(deltaY)) / deltaY);
@@ -111,21 +111,21 @@ namespace Graph {
   protected:
     const char *name;
     Vector *origin;
-    std::vector<double> *costHeuristic;
+    std::vector<int64_t> *costHeuristic;
     
     static uint64_t aStarGambit(LLRB_TreeNode<Path *, uint64_t> *current, void *storage) {
       
       Path *uv = current->data;
       bool tmpTrue, tmpFalse;
       bool *available;
-      Heap<Coordinate *,double> *open = ((AStarStorage *)storage)->open;
+      Heap<Coordinate *,int64_t> *open = ((AStarStorage *)storage)->open;
       HashTable<bool *,Coordinate *> *openTable = ((AStarStorage *)storage)->openTable;
-      HashTable<double *,Coordinate *> *closed = ((AStarStorage *)storage)->closed;
+      HashTable<uint64_t *,Coordinate *> *closed = ((AStarStorage *)storage)->closed;
       
       if (!uv->blocked) {
         Coordinate *u = uv->getBackward();
         Coordinate *v = uv->getForward();
-        double cost = u->distanceFromStart + uv->length();
+        int64_t cost = u->distanceFromStart + uv->length();
         
         if (cost < v->distanceFromStart) {
           available = openTable->get(u);
@@ -167,9 +167,9 @@ namespace Graph {
     static uint64_t calcPathLengthEach(LLRB_TreeNode<Path *, uint64_t> *current, void *reserved) {
       Path *path = current->data;
       
-      double deltaX = path->getForward()->X - path->getBackward()->X;
-      double deltaY = path->getForward()->Y - path->getBackward()->Y;
-      double deltaZ = path->getForward()->Z - path->getBackward()->Z;
+      int64_t deltaX = path->getForward()->X - path->getBackward()->X;
+      int64_t deltaY = path->getForward()->Y - path->getBackward()->Y;
+      int64_t deltaZ = path->getForward()->Z - path->getBackward()->Z;
       
       path->setLength( sqrt((deltaX * deltaX) +
                           (deltaY * deltaY) +
@@ -186,10 +186,10 @@ namespace Graph {
       }
       
       vector<Coordinate *> *nodes;
-      double X, Y, Z;
-      double deltaAlpha;
-      double deltaBeta;
-      double deltaGamma;
+      int64_t X, Y, Z;
+      int64_t deltaAlpha;
+      int64_t deltaBeta;
+      int64_t deltaGamma;
       
       deltaAlpha = tanh((origin->deltaX - this->origin->deltaX) / this->origin->deltaX);
       deltaBeta = tanh((origin->deltaY - this->origin->deltaY) / this->origin->deltaY);
@@ -250,7 +250,7 @@ namespace Graph {
       origin->deltaZ = 1.0;
     }
     
-    static double calcDistance(double X, double Y, double Z, double tX, double tY, double tZ) {
+    static int64_t calcDistance(int64_t X, int64_t Y, int64_t Z, int64_t tX, int64_t tY, int64_t tZ) {
       return sqrt(pow(X-tX,2)+pow(Y-tY,2)+pow(Z-tZ,2));
     }
     

@@ -38,13 +38,14 @@
 #if 0
 
 template <class HeuristicType, class DataType>
-class Metaheuristic {
+class Metaheuristic
+{
   
 private:
-  Genetic<HeuristicType,double> *optFunction;
-  Collection::ArrayList<HeuristicType *, double> *theory;
-  double *theoryRating;
-  double *theoryExpectation;
+  Genetic<HeuristicType, int64_t> *optFunction;
+  Collection::ArrayList<HeuristicType *, int64_t> *theory;
+  int64_t *theoryRating;
+  int64_t *theoryExpectation;
   uint64_t numCandidates = STD_NUM_CANDIDATES;
   uint64_t epoch;
   
@@ -56,7 +57,7 @@ public:
   Metaheuristic(std::vector<DataType> *input, std::vector<HeuristicType *> *candidates);
   
   virtual void postResult(DataType result);
-  virtual void getConsensus(std::vector<double> *);
+  virtual void getConsensus(std::vector<int64_t> *);
 };
 
 //
@@ -76,7 +77,7 @@ public:
  public:
  Stoichastic();
  
- Stack<uint64_t> *selections(Stack<double *>,uint64_t *,uint64_t);
+ Stack<uint64_t> *selections(Stack<int64_t *>,uint64_t *,uint64_t);
  
  };
  */
@@ -107,10 +108,10 @@ Metaheuristic<HeuristicType,DataType>::Metaheuristic() {
 template <class HeuristicType, class DataType>
 Metaheuristic<HeuristicType,DataType>::Metaheuristic(std::vector<DataType> *input, std::vector<HeuristicType *> *candidates) {
   HeuristicType *thisTheory;
-  Collection::Comparable<HeuristicType *, double> *comp;
+  Collection::Comparable<HeuristicType *, int64_t> *comp;
   
-  theory = new Collection::ArrayList<HeuristicType *,double>(numCandidates);
-  comp = new Collection::Comparable<HeuristicType *, double>();
+  theory = new Collection::ArrayList<HeuristicType *,int64_t>(numCandidates);
+  comp = new Collection::Comparable<HeuristicType *, int64_t>();
   
   epoch = 0;
   
@@ -136,10 +137,10 @@ void Metaheuristic<HeuristicType,DataType>::postResult(DataType result) {
 }
 
 template <class HeuristicType, class DataType>
-void Metaheuristic<HeuristicType,DataType>::getConsensus(std::vector<double> *expectation) {
+void Metaheuristic<HeuristicType,DataType>::getConsensus(std::vector<int64_t> *expectation) {
   //HeuristicType *tmp;
   //uint64_t current = theory->getTreeRoot();
-  std::vector<double> *tmp;
+  std::vector<int64_t> *tmp;
   
   for (int ix = 0; ix < theory->getSize(); ix++) {
     if (theory->atIndex(ix)->data == NULL) {
