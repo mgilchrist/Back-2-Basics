@@ -119,10 +119,10 @@ vector<int64_t *> *Genetic::crossover(vector<int64_t *> *dad, vector<int64_t *> 
 
 
 void Genetic::mutate(vector<Info *> *vect,
-                                                       uint64_t outputWidth,
-                                                       uint64_t inputWidth,
-                                                       uint64_t hiddenWidth,
-                                                       int64_t error_rate)
+                     uint64_t outputWidth,
+                     uint64_t inputWidth,
+                     uint64_t hiddenWidth,
+                     int64_t error_rate)
 {
   uint64_t mutations = (int64_t)vect->size() * error_rate;
   uint32_t pos;
@@ -238,15 +238,14 @@ Heuristic<> *Genetic::reproduce(Heuristic<> *dad, Heuristic<> *mom)
     }
   }
   
-  
   tmpHeuristic = this->createNewHeuristic
   (
    childInputs,
    childTrusts,
    &childExpectations,
    childHiddenInfo,
-   dad->hiddenWidth+mom->hiddenWidth
-   );
+   dad->hiddenWidth + mom->hiddenWidth
+  );
   
   tmpHeuristic->persistance = dad->persistance + mom->persistance;
   tmpHeuristic->energy *= childHiddenInfo->size() * glbEnergyCnst;

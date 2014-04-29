@@ -79,7 +79,7 @@ namespace Collection
   {
     uint64_t index = search(key);
     
-    assert(index);
+    if (!index) return NULL;
     
     return elements[index];
     
@@ -90,7 +90,7 @@ namespace Collection
   {
     uint64_t index = search(key);
     
-    assert(index);
+    if (!index) return;
     
     elements[index] = data;
     
@@ -110,13 +110,13 @@ namespace Collection
   {
     uint8_t actualSize;
     
-    if (size > 16)
+    if (size > 64)
     {
       actualSize = exp2(log2(size)+1);
     }
     else
     {
-      actualSize = 4;
+      actualSize = 6;
     }
     
     elements.resize(1 << actualSize, 0);

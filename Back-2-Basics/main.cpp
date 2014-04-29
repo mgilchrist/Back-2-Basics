@@ -369,12 +369,11 @@ int testHashTable()
   
   for (int ix = 0; ix < glbTestSize; ix++)
   {
-    
     do
     {
       value = new uint64_t(random());
     }
-    while (!hashTable->get(*value));
+    while (hashTable->get(*value) == NULL);
     
     hashTable->insert(value, *value);
     
@@ -1391,13 +1390,44 @@ int main(int argc, const char * argv[])
   cout << "This is free software, and you are welcome to redistribute it\n";
   cout << "under certain conditions; type `show c' for details.\n";
   
+  uint64_t curr = 0;
+  
+  vector<uint64_t> dimensions, seed, pattern;
+  dimensions.push_back(960);
+  dimensions.push_back(600);
+  
+  seed.resize(1);
+  pattern.resize(1);
+  
+  for (uint64_t ix = 0; ix < dimensions.size(); ix++)
+  {
+    seed.resize(seed.size() * dimensions.at(ix));
+    pattern.resize(pattern.size() * dimensions.at(ix));
+    for (uint64_t jx = 0; jx < dimensions.at(ix); jx++)
+    {
+      seed.at(curr) = random();
+      curr++;
+    }
+  }
+  
+  for (uint64_t ix = 0; ix < dimensions.size(); ix++)
+  {
+    for (uint64_t jx = 0; jx < dimensions.at(ix); jx++)
+    {
+      pattern.at(curr) = random();
+      curr++;
+    }
+  }
+  
+  createDataFor("segmentation", &dimensions, &seed, &pattern);
+  
   ret |= matrixConvolutionTest();
   
   /* Generate data for tests */
   //ret |= setupNeuralNetworkData("reserved");
   
   
-  //ret |= testHashTable();
+  ret |= testHashTable();
   //ret |= testSecureHashTable();
   //ret |= testArrayList();
   //ret |= testHeap();
